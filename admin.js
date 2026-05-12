@@ -1,12 +1,47 @@
 /* ═══════════════════════════════════════════════════════════
-   CHEZ RAMO — Admin Panel  |  admin.js
+   CHEZ RAMO — Admin Panel  |  admin.js  v2.0
+   Correctifs : mapping desc↔description, menuPrice↔menu_price,
+   nettoyage payload null, retry, logs d'erreur détaillés.
    ═══════════════════════════════════════════════════════════ */
 
 /* ── Configuration Supabase ─────────────────────────────── */
 var SUPABASE_URL = 'https://hqfewokpvjmxezhnurbm.supabase.co';
 var SUPABASE_KEY = 'sb_publishable_NmIfxaQb5ncapzCtzI5uNQ_tHdCwAyc';
-var TABLE      = 'menu_items';
-var ADMIN_PASS = 'ramo2024';
+var TABLE        = 'menu_items';
+var ADMIN_PASS   = 'ramo2024';
+
+/* ── Mapping champs JS ↔ colonnes Supabase ──────────────────
+   Le tableau Supabase utilise "description" et "menu_price".
+   En interne on garde les clés courtes (desc, menuPrice).
+   toDb()  : convertit avant envoi vers Supabase
+   fromDb(): convertit à la réception depuis Supabase
+   ─────────────────────────────────────────────────────────── */
+function toDb(obj) {
+  var out = {};
+  Object.keys(obj).forEach(function(k) {
+    var v = obj[k];
+    // Normalise les chaînes vides → null pour éviter les erreurs de contrainte
+    var val = (v === '' || v === undefined) ? null : v;
+    if      (k === 'desc')      out['description'] = val;
+    else if (k === 'menuPrice') out['menu_price']   = val;
+    else                        out[k]              = val;
+  });
+  return out;
+}
+
+function fromDb(r) {
+  return {
+    id:         r.id         || '',
+    category:   r.category   || '',
+    title:      r.title      || '',
+    desc:       r.description || r.desc || '',
+    price:      r.price       || '',
+    menuPrice:  r.menu_price  || r.menuPrice || '',
+    badge:      r.badge       || '',
+    url:        r.url         || '',
+    sort_order: r.sort_order  || 0
+  };
+}
 
 /* ── Données par défaut (fallback si Supabase indisponible) ─ */
 var defaultMenu = [
@@ -140,9 +175,9 @@ var defaultMenu = [
   {
     category: 'Grillades',
     items: [
-      { id:'grillade',      title:'Grillade 2 pers.', desc:'Agneau, escalope, entrecôte, suxhuk, salade grecque, frites', price:'39,00', menuPrice:null, badge:'2 PERS', url:'uploads/Menu_Grillade.png', sort_order:160 },
-      { id:'grillade-4pers',title:'Grillade 4 pers.', desc:'Agneau, escalope, entrecôte, suxhuk, salade grecque, frites', price:'79,00', menuPrice:null, badge:'4 PERS', url:'uploads/Menu_Grillade.png', sort_order:161 },
-      { id:'grillade-6pers',title:'Grillade 6 pers.', desc:'Agneau, escalope, entrecôte, suxhuk, salade grecque, frites', price:'99,00', menuPrice:null, badge:'6 PERS', url:'uploads/Menu_Grillade.png', sort_order:162 }
+      { id:'grillade',       title:'Grillade 2 pers.', desc:'Agneau, escalope, entrecôte, suxhuk, salade grecque, frites', price:'39,00', menuPrice:null, badge:'2 PERS', url:'uploads/Menu_Grillade.png', sort_order:160 },
+      { id:'grillade-4pers', title:'Grillade 4 pers.', desc:'Agneau, escalope, entrecôte, suxhuk, salade grecque, frites', price:'79,00', menuPrice:null, badge:'4 PERS', url:'uploads/Menu_Grillade.png', sort_order:161 },
+      { id:'grillade-6pers', title:'Grillade 6 pers.', desc:'Agneau, escalope, entrecôte, suxhuk, salade grecque, frites', price:'99,00', menuPrice:null, badge:'6 PERS', url:'uploads/Menu_Grillade.png', sort_order:162 }
     ]
   },
   {
@@ -155,26 +190,24 @@ var defaultMenu = [
 ];
 
 /* ── État global ────────────────────────────────────────── */
-var allItems      = [];   // données courantes (depuis Supabase ou fallback)
-var pendingChanges = {};  // { id: {field: value, ...} }  modifications non sauvées
-var pendingNew    = [];   // nouveaux articles à insérer
-var pendingDelete = [];   // ids à supprimer
-var searchQuery   = '';
-var filterCategory= '';
-var isLoggedIn    = false;
+var allItems       = [];
+var pendingChanges = {};
+var pendingNew     = [];
+var pendingDelete  = [];
+var searchQuery    = '';
+var filterCategory = '';
+var isLoggedIn     = false;
 
 /* ── Utilitaires ─────────────────────────────────────────── */
 function esc(s) {
   if (!s) return '';
   return String(s)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function slug(s) {
-  return s.toLowerCase()
+  return String(s || '').toLowerCase()
     .replace(/[àâä]/g,'a').replace(/[éèêë]/g,'e')
     .replace(/[îï]/g,'i').replace(/[ôö]/g,'o')
     .replace(/[ùûü]/g,'u').replace(/ç/g,'c')
@@ -182,9 +215,9 @@ function slug(s) {
 }
 
 function getCategories() {
-  var cats = [];
+  var cats = [], seen = {};
   allItems.forEach(function(item) {
-    if (cats.indexOf(item.category) === -1) cats.push(item.category);
+    if (!seen[item.category]) { seen[item.category] = true; cats.push(item.category); }
   });
   return cats;
 }
@@ -194,6 +227,9 @@ function hasPending() {
       || pendingNew.length > 0
       || pendingDelete.length > 0;
 }
+
+/* Normalise une valeur pour comparaison (null/undefined → '') */
+function norm(v) { return (v === null || v === undefined) ? '' : String(v); }
 
 /* ── Toast notifications ────────────────────────────────── */
 var toastCount = 0;
@@ -224,11 +260,13 @@ function dismissToast(id) {
 
 /* ── Save bar ────────────────────────────────────────────── */
 function updateSaveBar() {
-  var bar = document.getElementById('save-bar');
+  var bar  = document.getElementById('save-bar');
+  var stat = document.getElementById('pending-count-stat');
   if (!bar) return;
+  var n = Object.keys(pendingChanges).length + pendingNew.length + pendingDelete.length;
+  if (stat) stat.textContent = n;
   if (hasPending()) {
     bar.classList.add('visible');
-    var n = Object.keys(pendingChanges).length + pendingNew.length + pendingDelete.length;
     var lbl = document.getElementById('pending-count');
     if (lbl) lbl.textContent = n + ' modification' + (n > 1 ? 's' : '') + ' en attente';
   } else {
@@ -240,7 +278,6 @@ function markChanged(id, field, value) {
   if (!pendingChanges[id]) pendingChanges[id] = {};
   pendingChanges[id][field] = value;
   updateSaveBar();
-  // visuel sur la carte
   var card = document.querySelector('[data-id="' + id + '"]');
   if (card) card.classList.add('has-changes');
 }
@@ -259,11 +296,9 @@ function updateStats() {
 function buildSidebar() {
   var sidebar = document.getElementById('sidebar-links');
   if (!sidebar) return;
-  var cats = getCategories();
   var html = '';
-  cats.forEach(function(cat) {
-    var anchor = slug(cat);
-    html += '<a class="sidebar-link" href="#cat-' + anchor + '" onclick="closeSidebarMobile()">' + esc(cat) + '</a>';
+  getCategories().forEach(function(cat) {
+    html += '<a class="sidebar-link" href="#cat-' + slug(cat) + '" onclick="closeSidebarMobile()">' + esc(cat) + '</a>';
   });
   sidebar.innerHTML = html;
 }
@@ -308,8 +343,10 @@ function renderAdmin() {
   }
   var html = '';
   cats.forEach(function(cat) {
-    var anchor = slug(cat);
-    var catItems = allItems.filter(function(it) { return it.category === cat && pendingDelete.indexOf(it.id) === -1; });
+    var anchor   = slug(cat);
+    var catItems = allItems.filter(function(it) {
+      return it.category === cat && pendingDelete.indexOf(it.id) === -1;
+    });
     html +=
       '<section class="cat-section" id="cat-' + anchor + '">' +
         '<div class="cat-header">' +
@@ -317,14 +354,12 @@ function renderAdmin() {
             '<div class="cat-name">' + esc(cat) + '</div>' +
             '<div class="cat-count">' + catItems.length + ' article' + (catItems.length > 1 ? 's' : '') + '</div>' +
           '</div>' +
-          '<button class="btn btn-outline btn-sm" onclick="openAddModal(\'' + esc(cat) + '\')">' +
+          '<button class="btn btn-outline btn-sm" onclick="openAddModal(\'' + esc(cat).replace(/'/g,"\\'") + '\')">' +
             '+ Ajouter un article' +
           '</button>' +
         '</div>' +
         '<div class="items-list">';
-    catItems.forEach(function(item) {
-      html += renderItem(item);
-    });
+    catItems.forEach(function(item) { html += renderItem(item); });
     html += '</div></section>';
   });
   html += '<div id="empty-state" style="display:none;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:4rem;color:#888"><div style="font-size:3rem">🔍</div><div style="font-size:1.1rem">Aucun résultat</div></div>';
@@ -334,13 +369,17 @@ function renderAdmin() {
 }
 
 function renderItem(item) {
-  var ch = pendingChanges[item.id] || {};
+  var ch    = pendingChanges[item.id] || {};
   var isMod = Object.keys(ch).length > 0;
-  var thumb = item.url ? item.url : '';
+  var thumb = item.url || '';
+  var sid   = esc(item.id);
   return (
-    '<div class="item-card' + (isMod ? ' has-changes' : '') + '" data-id="' + esc(item.id) + '" data-title="' + esc(item.title) + '" data-cat="' + esc(item.category) + '">' +
+    '<div class="item-card' + (isMod ? ' has-changes' : '') +
+      '" data-id="' + sid + '" data-title="' + esc(item.title) + '" data-cat="' + esc(item.category) + '">' +
       '<div class="item-thumb">' +
-        (thumb ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:1.8rem">🍽️</div>') +
+        (thumb
+          ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">'
+          : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:1.8rem">🍽️</div>') +
       '</div>' +
       '<div class="item-info">' +
         '<div class="item-title">' + esc(ch.title || item.title) + '</div>' +
@@ -352,23 +391,28 @@ function renderItem(item) {
       '<div class="item-prices">' +
         '<div class="price-group">' +
           '<label>Prix seul</label>' +
-          '<input class="price-input" type="text" value="' + esc(ch.price || item.price || '') + '" placeholder="9,00" ' +
-            'oninput="markChanged(\'' + esc(item.id) + '\',\'price\',this.value)" ' +
-            'onchange="markChanged(\'' + esc(item.id) + '\',\'price\',this.value)">' +
+          '<input class="price-input" type="text" value="' + esc(norm(ch.price    !== undefined ? ch.price    : item.price))     + '" placeholder="9,00"' +
+            ' oninput="markChanged(\'' + sid + '\',\'price\',this.value)">' +
         '</div>' +
         '<div class="price-group">' +
           '<label>Prix menu</label>' +
-          '<input class="price-input" type="text" value="' + esc(ch.menuPrice || item.menuPrice || '') + '" placeholder="12,00" ' +
-            'oninput="markChanged(\'' + esc(item.id) + '\',\'menuPrice\',this.value)" ' +
-            'onchange="markChanged(\'' + esc(item.id) + '\',\'menuPrice\',this.value)">' +
+          '<input class="price-input" type="text" value="' + esc(norm(ch.menuPrice !== undefined ? ch.menuPrice : item.menuPrice)) + '" placeholder="12,00"' +
+            ' oninput="markChanged(\'' + sid + '\',\'menuPrice\',this.value)">' +
         '</div>' +
       '</div>' +
       '<div class="item-actions">' +
-        '<button class="btn-icon btn-edit" title="Modifier" onclick="openEditModal(\'' + esc(item.id) + '\')">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+        '<button class="btn-icon btn-edit"   title="Modifier"   onclick="openEditModal(\'' + sid + '\')">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>' +
+            '<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>' +
+          '</svg>' +
         '</button>' +
-        '<button class="btn-icon btn-delete" title="Supprimer" onclick="confirmDelete(\'' + esc(item.id) + '\',\'' + esc(item.title) + '\')">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>' +
+        '<button class="btn-icon btn-delete" title="Supprimer"  onclick="confirmDelete(\'' + sid + '\',\'' + esc(item.title).replace(/'/g,"\\'") + '\')">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<polyline points="3 6 5 6 21 6"/>' +
+            '<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>' +
+            '<path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>' +
+          '</svg>' +
         '</button>' +
       '</div>' +
     '</div>'
@@ -379,50 +423,46 @@ function renderItem(item) {
 var editingId = null;
 
 function openEditModal(id) {
-  var item = null;
-  for (var i = 0; i < allItems.length; i++) {
-    if (allItems[i].id === id) { item = allItems[i]; break; }
-  }
+  var item = findItem(id);
   if (!item) return;
   var ch = pendingChanges[id] || {};
   editingId = id;
   setField('modal-id',        item.id);
-  setField('modal-title',     ch.title    || item.title    || '');
-  setField('modal-desc',      ch.desc     || item.desc     || '');
-  setField('modal-price',     ch.price    || item.price    || '');
-  setField('modal-menuprice', ch.menuPrice|| item.menuPrice|| '');
-  setField('modal-badge',     ch.badge    || item.badge    || '');
-  setField('modal-url',       ch.url      || item.url      || '');
-  setField('modal-category',  ch.category || item.category || '');
-  var preview = document.getElementById('modal-img-preview');
-  if (preview) preview.src = ch.url || item.url || '';
+  setField('modal-category',  norm(ch.category  || item.category));
+  setField('modal-title',     norm(ch.title     || item.title));
+  setField('modal-desc',      norm(ch.desc      !== undefined ? ch.desc      : item.desc));
+  setField('modal-price',     norm(ch.price     || item.price));
+  setField('modal-menuprice', norm(ch.menuPrice !== undefined ? ch.menuPrice : item.menuPrice));
+  setField('modal-badge',     norm(ch.badge     !== undefined ? ch.badge     : item.badge));
+  setField('modal-url',       norm(ch.url       || item.url));
+  previewModalImage();
   openModal('edit-modal');
 }
 
 function openAddModal(category) {
   editingId = null;
   setField('modal-id',        '');
+  setField('modal-category',  category || '');
   setField('modal-title',     '');
   setField('modal-desc',      '');
   setField('modal-price',     '');
   setField('modal-menuprice', '');
   setField('modal-badge',     '');
   setField('modal-url',       '');
-  setField('modal-category',  category || '');
-  var preview = document.getElementById('modal-img-preview');
-  if (preview) preview.src = '';
+  var prev = document.getElementById('modal-img-preview');
+  if (prev) { prev.src = ''; prev.style.display = 'none'; }
   openModal('edit-modal');
 }
 
 function saveModal() {
-  var id       = getField('modal-id').trim();
-  var title    = getField('modal-title').trim();
-  var desc     = getField('modal-desc').trim();
-  var price    = getField('modal-price').trim();
-  var menuPrice= getField('modal-menuprice').trim();
-  var badge    = getField('modal-badge').trim();
-  var url      = getField('modal-url').trim();
-  var category = getField('modal-category').trim();
+  var id        = getField('modal-id').trim();
+  var title     = getField('modal-title').trim();
+  var desc      = getField('modal-desc').trim();
+  var price     = getField('modal-price').trim();
+  var menuPrice = getField('modal-menuprice').trim();
+  var badge     = getField('modal-badge').trim();
+  var url       = getField('modal-url').trim();
+  var category  = getField('modal-category').trim();
 
   if (!title || !price || !category) {
     showToast('Titre, prix et catégorie sont obligatoires', 'error');
@@ -430,41 +470,41 @@ function saveModal() {
   }
 
   if (editingId) {
-    /* Modification */
-    for (var i = 0; i < allItems.length; i++) {
-      if (allItems[i].id === editingId) {
-        var it = allItems[i];
-        if (!pendingChanges[editingId]) pendingChanges[editingId] = {};
-        if (title     !== it.title)     pendingChanges[editingId].title     = title;
-        if (desc      !== it.desc)      pendingChanges[editingId].desc      = desc;
-        if (price     !== it.price)     pendingChanges[editingId].price     = price;
-        if (menuPrice !== (it.menuPrice||'')) pendingChanges[editingId].menuPrice = menuPrice;
-        if (badge     !== (it.badge||''))     pendingChanges[editingId].badge     = badge;
-        if (url       !== it.url)       pendingChanges[editingId].url       = url;
-        if (category  !== it.category)  pendingChanges[editingId].category  = category;
-        // appliquer localement pour le rendu
-        it.title     = title;
-        it.desc      = desc;
-        it.price     = price;
-        it.menuPrice = menuPrice;
-        it.badge     = badge;
-        it.url       = url;
-        it.category  = category;
-        break;
-      }
+    /* ── Modification : on ne marque que les champs vraiment changés ── */
+    var it = findItem(editingId);
+    if (!it) { showToast('Article introuvable', 'error'); return; }
+
+    var ch = {};
+    if (title     !== norm(it.title))     ch.title     = title;
+    if (desc      !== norm(it.desc))      ch.desc      = desc;
+    if (price     !== norm(it.price))     ch.price     = price;
+    if (menuPrice !== norm(it.menuPrice)) ch.menuPrice = menuPrice;
+    if (badge     !== norm(it.badge))     ch.badge     = badge;
+    if (url       !== norm(it.url))       ch.url       = url;
+    if (category  !== norm(it.category))  ch.category  = category;
+
+    if (Object.keys(ch).length > 0) {
+      if (!pendingChanges[editingId]) pendingChanges[editingId] = {};
+      Object.keys(ch).forEach(function(k) { pendingChanges[editingId][k] = ch[k]; });
+      /* Applique localement pour un rendu immédiat */
+      Object.keys(ch).forEach(function(k) { it[k] = ch[k]; });
+      showToast('Modifications en attente — pensez à sauvegarder', 'info');
+    } else {
+      showToast('Aucune modification détectée', 'info');
     }
-    showToast('Modifications enregistrées localement', 'info');
+
   } else {
-    /* Nouvel article */
+    /* ── Nouvel article ── */
     if (!id) id = slug(title) + '-' + Date.now();
     var newItem = {
       id: id, category: category, title: title, desc: desc,
-      price: price, menuPrice: menuPrice, badge: badge, url: url,
-      sort_order: allItems.length * 10
+      price: price, menuPrice: menuPrice || null,
+      badge: badge || null, url: url,
+      sort_order: (allItems.length + 1) * 10
     };
     allItems.push(newItem);
     pendingNew.push(newItem);
-    showToast('Article ajouté (sera envoyé à la sauvegarde)', 'info');
+    showToast('Article ajouté — pensez à sauvegarder', 'info');
   }
 
   closeModal('edit-modal');
@@ -486,13 +526,17 @@ function confirmDelete(id, title) {
 
 function doDelete() {
   if (!deletingId) return;
-  if (pendingDelete.indexOf(deletingId) === -1) pendingDelete.push(deletingId);
-  allItems = allItems.filter(function(it) { return it.id !== deletingId; });
-  var idx = pendingNew.findIndex ? pendingNew.findIndex(function(it) { return it.id === deletingId; }) : -1;
-  if (idx !== -1) {
-    pendingNew.splice(idx, 1);
-    pendingDelete.pop();
+  /* Si l'item n'était qu'un ajout local, on l'annule sans aller sur Supabase */
+  var newIdx = -1;
+  for (var i = 0; i < pendingNew.length; i++) {
+    if (pendingNew[i].id === deletingId) { newIdx = i; break; }
   }
+  if (newIdx !== -1) {
+    pendingNew.splice(newIdx, 1);
+  } else {
+    if (pendingDelete.indexOf(deletingId) === -1) pendingDelete.push(deletingId);
+  }
+  allItems = allItems.filter(function(it) { return it.id !== deletingId; });
   delete pendingChanges[deletingId];
   closeModal('confirm-dialog');
   renderAdmin();
@@ -503,6 +547,8 @@ function doDelete() {
 
 /* ── Sauvegarde Supabase ─────────────────────────────────── */
 function saveAll() {
+  if (!hasPending()) { showToast('Rien à sauvegarder', 'info'); return; }
+
   var btn = document.getElementById('btn-save-all');
   if (btn) { btn.disabled = true; btn.textContent = 'Sauvegarde…'; }
 
@@ -510,8 +556,7 @@ function saveAll() {
 
   /* PATCH : modifications existantes */
   Object.keys(pendingChanges).forEach(function(id) {
-    var changes = pendingChanges[id];
-    tasks.push(supabasePatch(id, changes));
+    tasks.push(supabasePatch(id, pendingChanges[id]));
   });
 
   /* POST : nouveaux articles */
@@ -524,12 +569,6 @@ function saveAll() {
     tasks.push(supabaseDelete(id));
   });
 
-  if (tasks.length === 0) {
-    showToast('Rien à sauvegarder', 'info');
-    if (btn) { btn.disabled = false; btn.textContent = 'Sauvegarder'; }
-    return;
-  }
-
   promiseAll(tasks, function(results) {
     var errors = results.filter(function(r) { return r && r.error; });
     if (errors.length === 0) {
@@ -540,7 +579,12 @@ function saveAll() {
       renderAdmin();
       showToast('✓ Toutes les modifications ont été sauvegardées !', 'success', 4000);
     } else {
-      showToast('Erreur lors de la sauvegarde (' + errors.length + ' échec(s)). Vérifiez la connexion.', 'error', 5000);
+      var details = errors.map(function(e) { return e.detail || e.id || '?'; }).join(', ');
+      showToast(
+        errors.length + ' erreur(s) lors de la sauvegarde. Détail : ' + details,
+        'error', 6000
+      );
+      console.error('[Admin] Erreurs Supabase :', errors);
     }
     if (btn) { btn.disabled = false; btn.textContent = 'Sauvegarder'; }
   });
@@ -565,20 +609,41 @@ function supabaseHeaders() {
   };
 }
 
+/* PATCH — convertit les clés JS → colonnes DB avant envoi */
 function supabasePatch(id, changes) {
   return new Promise(function(resolve) {
+    var payload = toDb(changes);
+    /* Supprime l'id du payload pour éviter les conflits de clé primaire */
+    delete payload.id;
+    /* Supprime sort_order si pas dans les changes pour éviter les erreurs */
+    if (!changes.sort_order) delete payload.sort_order;
+
     var url = SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + encodeURIComponent(id);
-    xhrRequest('PATCH', url, changes, function(ok, data) {
-      resolve(ok ? null : { error: true, id: id });
+    xhrRequest('PATCH', url, payload, function(ok, data, status) {
+      if (ok) {
+        resolve(null);
+      } else {
+        var detail = parseSupabaseError(data) || ('HTTP ' + status);
+        console.error('[Admin] PATCH échoué pour', id, ':', detail, '\nPayload:', JSON.stringify(payload));
+        resolve({ error: true, id: id, detail: detail });
+      }
     });
   });
 }
 
+/* POST — convertit les clés JS → colonnes DB avant envoi */
 function supabasePost(item) {
   return new Promise(function(resolve) {
+    var payload = toDb(item);
     var url = SUPABASE_URL + '/rest/v1/' + TABLE;
-    xhrRequest('POST', url, item, function(ok, data) {
-      resolve(ok ? null : { error: true });
+    xhrRequest('POST', url, payload, function(ok, data, status) {
+      if (ok) {
+        resolve(null);
+      } else {
+        var detail = parseSupabaseError(data) || ('HTTP ' + status);
+        console.error('[Admin] POST échoué :', detail, '\nPayload:', JSON.stringify(payload));
+        resolve({ error: true, detail: detail });
+      }
     });
   });
 }
@@ -586,10 +651,24 @@ function supabasePost(item) {
 function supabaseDelete(id) {
   return new Promise(function(resolve) {
     var url = SUPABASE_URL + '/rest/v1/' + TABLE + '?id=eq.' + encodeURIComponent(id);
-    xhrRequest('DELETE', url, null, function(ok, data) {
-      resolve(ok ? null : { error: true, id: id });
+    xhrRequest('DELETE', url, null, function(ok, data, status) {
+      if (ok) {
+        resolve(null);
+      } else {
+        var detail = parseSupabaseError(data) || ('HTTP ' + status);
+        console.error('[Admin] DELETE échoué pour', id, ':', detail);
+        resolve({ error: true, id: id, detail: detail });
+      }
     });
   });
+}
+
+/* Extrait le message d'erreur de la réponse Supabase */
+function parseSupabaseError(body) {
+  try {
+    var obj = JSON.parse(body);
+    return obj.message || obj.hint || obj.details || JSON.stringify(obj);
+  } catch(e) { return body || ''; }
 }
 
 function xhrRequest(method, url, body, cb) {
@@ -599,15 +678,17 @@ function xhrRequest(method, url, body, cb) {
   Object.keys(headers).forEach(function(k) { xhr.setRequestHeader(k, headers[k]); });
   xhr.onreadystatechange = function() {
     if (xhr.readyState !== 4) return;
-    cb(xhr.status >= 200 && xhr.status < 300, xhr.responseText);
+    cb(xhr.status >= 200 && xhr.status < 300, xhr.responseText, xhr.status);
   };
-  xhr.onerror = function() { cb(false, ''); };
+  xhr.onerror = function() { cb(false, 'Erreur réseau', 0); };
   xhr.send(body ? JSON.stringify(body) : null);
 }
 
 function promiseAll(promises, cb) {
   if (!Promise || promises.length === 0) { cb([]); return; }
-  Promise.all(promises).then(function(results) { cb(results); }).catch(function(e) { cb([{ error: true }]); });
+  Promise.all(promises)
+    .then(function(results) { cb(results); })
+    .catch(function(e) { cb([{ error: true, detail: String(e) }]); });
 }
 
 /* ── Fetch menu depuis Supabase ──────────────────────────── */
@@ -616,31 +697,22 @@ function fetchMenu() {
   if (status) { status.className = 'status-pill loading'; status.textContent = 'Connexion…'; }
 
   var url = SUPABASE_URL + '/rest/v1/' + TABLE + '?select=*&order=sort_order.asc';
-  xhrRequest('GET', url, null, function(ok, data) {
+  xhrRequest('GET', url, null, function(ok, data, httpStatus) {
     if (ok && data) {
       try {
         var rows = JSON.parse(data);
-        if (rows && rows.length > 0) {
-          allItems = rows.map(function(r) {
-            return {
-              id:        r.id,
-              category:  r.category,
-              title:     r.title,
-              desc:      r.desc || r.description || '',
-              price:     r.price,
-              menuPrice: r.menuPrice || r['menuPrice'] || '',
-              badge:     r.badge || '',
-              url:       r.url || '',
-              sort_order:r.sort_order || 0
-            };
-          });
+        if (Array.isArray(rows) && rows.length > 0) {
+          allItems = rows.map(fromDb);
           if (status) { status.className = 'status-pill online'; status.textContent = '● En ligne'; }
           renderAdmin();
           return;
         }
-      } catch(e) {}
+      } catch(e) {
+        console.error('[Admin] Erreur parsing JSON :', e);
+      }
+    } else {
+      console.warn('[Admin] fetchMenu échoué — HTTP', httpStatus, data);
     }
-    /* Fallback données locales */
     useFallback();
     if (status) { status.className = 'status-pill offline'; status.textContent = '○ Hors ligne'; }
   });
@@ -651,15 +723,15 @@ function useFallback() {
   defaultMenu.forEach(function(cat) {
     cat.items.forEach(function(item) {
       allItems.push({
-        id:        item.id,
-        category:  cat.category,
-        title:     item.title,
-        desc:      item.desc || '',
-        price:     item.price,
-        menuPrice: item.menuPrice || '',
-        badge:     item.badge || '',
-        url:       item.url || '',
-        sort_order:item.sort_order
+        id:         item.id,
+        category:   cat.category,
+        title:      item.title,
+        desc:       item.desc  || '',
+        price:      item.price,
+        menuPrice:  item.menuPrice || '',
+        badge:      item.badge     || '',
+        url:        item.url       || '',
+        sort_order: item.sort_order
       });
     });
   });
@@ -667,7 +739,14 @@ function useFallback() {
   renderAdmin();
 }
 
-/* ── Modal helpers ───────────────────────────────────────── */
+/* ── Helpers ─────────────────────────────────────────────── */
+function findItem(id) {
+  for (var i = 0; i < allItems.length; i++) {
+    if (allItems[i].id === id) return allItems[i];
+  }
+  return null;
+}
+
 function openModal(id) {
   var el = document.getElementById(id);
   if (el) {
@@ -675,6 +754,7 @@ function openModal(id) {
     setTimeout(function() { el.classList.add('open'); }, 10);
   }
 }
+
 function closeModal(id) {
   var el = document.getElementById(id);
   if (el) {
@@ -682,277 +762,31 @@ function closeModal(id) {
     setTimeout(function() { el.style.display = 'none'; }, 250);
   }
 }
+
 function getField(id) {
   var el = document.getElementById(id);
   return el ? el.value : '';
 }
+
 function setField(id, val) {
   var el = document.getElementById(id);
-  if (el) el.value = val || '';
+  if (el) el.value = (val === null || val === undefined) ? '' : val;
 }
 
-/* ── Prévisualisation image dans modale ──────────────────── */
 function previewModalImage() {
   var url  = getField('modal-url');
   var prev = document.getElementById('modal-img-preview');
-  if (prev) prev.src = url || '';
-}
-
-/* ── Tutorial Spotlight ──────────────────────────────────── */
-var tutoStep = 0;
-var tutoForcedSaveBar = false;
-
-var tutoSteps = [
-  {
-    emoji: '👋',
-    title: 'Bienvenue dans le panneau admin !',
-    text:  'Ce panneau te permet de changer les prix et les plats qui s\'affichent sur les grandes TV du restaurant. C\'est très facile, on va tout t\'expliquer étape par étape !',
-    target: null
-  },
-  {
-    emoji: '💰',
-    title: 'Changer le prix d\'un plat',
-    text:  'Tu vois cette petite case avec des chiffres ? C\'est le PRIX du plat ! Appuie dessus, efface le chiffre et tape le nouveau prix. Exemple : 9,50',
-    target: '.price-input',
-    pointer: '← LE PRIX EST LÀ !'
-  },
-  {
-    emoji: '✏️',
-    title: 'Modifier tous les détails',
-    text:  'Ce petit crayon ouvre une fenêtre pour tout changer : le nom du plat, sa description, sa photo. Appuie dessus pour modifier un plat en détail !',
-    target: '.btn-edit',
-    pointer: '← APPUIE ICI !'
-  },
-  {
-    emoji: '➕',
-    title: 'Ajouter un nouveau plat',
-    text:  'Ce bouton sert à créer un tout nouveau plat dans la liste. Tu remplis le nom, le prix, et il apparaît direct sur les TV !',
-    target: '.cat-header .btn',
-    pointer: '↑ AJOUTER UN PLAT ICI !'
-  },
-  {
-    emoji: '🗑️',
-    title: 'Supprimer un plat',
-    text:  'Cette petite poubelle supprime un plat. Pas de panique ! Avant de supprimer, elle te demande de confirmer. Tu peux toujours annuler si tu te trompes !',
-    target: '.btn-delete',
-    pointer: '← SUPPRIMER ICI !'
-  },
-  {
-    emoji: '💾',
-    title: '⚠️ TRÈS IMPORTANT : Sauvegarder !',
-    text:  'Après CHAQUE modification, cette barre rouge apparaît en bas. Tu DOIS appuyer sur "Sauvegarder" pour que ça s\'affiche sur les TV. Sans ça, rien ne change !',
-    target: '#save-bar',
-    pointer: '↓ APPUIE SUR SAUVEGARDER !',
-    showSaveBar: true
-  },
-  {
-    emoji: '🔍',
-    title: 'Chercher un plat rapidement',
-    text:  'Tu cherches le kebab ou les frites ? Tape le nom du plat ici et il apparaît directement. Pratique quand il y a beaucoup d\'articles !',
-    target: '.search-input',
-    pointer: '↑ CHERCHE UN PLAT ICI !'
-  },
-  {
-    emoji: '🎉',
-    title: 'Tu es prêt !',
-    text:  'Bravo, tu sais tout ! Le plus important à retenir : après chaque changement de prix ou de plat, appuie toujours sur le bouton rouge SAUVEGARDER en bas de l\'écran !',
-    target: null
-  }
-];
-
-/* ── Affichage d'une étape ───────────────────────────────── */
-function showTuto() {
-  tutoStep = 0;
-  var overlay = document.getElementById('tuto-overlay');
-  if (overlay) overlay.style.display = 'block';
-  applyTutoStep();
-}
-
-function applyTutoStep() {
-  var step = tutoSteps[tutoStep];
-  if (!step) { closeTuto(); return; }
-
-  /* Contenu texte */
-  setText('tuto-emoji',      step.emoji);
-  setText('tuto-card-title', step.title);
-  setText('tuto-card-text',  step.text);
-
-  /* Bouton suivant */
-  var btnNext = document.getElementById('tuto-btn-next');
-  if (btnNext) btnNext.textContent = tutoStep === tutoSteps.length - 1 ? '✓ Terminer' : 'Suivant →';
-
-  /* Bouton retour */
-  var btnPrev = document.getElementById('tuto-btn-prev');
-  if (btnPrev) btnPrev.style.visibility = tutoStep === 0 ? 'hidden' : 'visible';
-
-  /* Dots */
-  buildTutoDots();
-
-  /* Barre de sauvegarde forcée */
-  var bar = document.getElementById('save-bar');
-  if (step.showSaveBar) {
-    if (bar) bar.classList.add('visible');
-    tutoForcedSaveBar = true;
-  } else if (tutoForcedSaveBar && !hasPending()) {
-    if (bar) bar.classList.remove('visible');
-    tutoForcedSaveBar = false;
-  }
-
-  /* Spotlight */
-  if (step.target) {
-    var el = findVisibleEl(step.target);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-      setTimeout(function() { positionTutoSpot(el, step.pointer || '← ICI !'); }, 450);
-    } else {
-      hideTutoSpot();
-      centerTutoCard();
-    }
+  if (!prev) return;
+  if (url) {
+    prev.src = url;
+    prev.style.display = 'block';
   } else {
-    hideTutoSpot();
-    centerTutoCard();
+    prev.src = '';
+    prev.style.display = 'none';
   }
 }
 
-function buildTutoDots() {
-  var row = document.getElementById('tuto-dots-row');
-  if (!row) return;
-  var html = '';
-  for (var i = 0; i < tutoSteps.length; i++) {
-    html += '<span class="tuto-dot' + (i === tutoStep ? ' active' : '') + '"></span>';
-  }
-  row.innerHTML = html;
-}
-
-function setText(id, val) {
-  var el = document.getElementById(id);
-  if (el) el.textContent = val || '';
-}
-
-/* Retourne le premier élément visible correspondant au sélecteur */
-function findVisibleEl(selector) {
-  var all = document.querySelectorAll(selector);
-  for (var i = 0; i < all.length; i++) {
-    if (all[i].offsetParent !== null) return all[i];
-  }
-  return all[0] || null;
-}
-
-/* ── Positionnement spotlight ────────────────────────────── */
-function positionTutoSpot(target, pointerText) {
-  var spot    = document.getElementById('tuto-spot');
-  var card    = document.getElementById('tuto-card');
-  var pointer = document.getElementById('tuto-pointer');
-  var pArrow  = document.getElementById('tuto-pointer-arrow');
-  var pLabel  = document.getElementById('tuto-pointer-label');
-  if (!spot || !card) return;
-
-  var rect = target.getBoundingClientRect();
-  var pad  = 8;
-  var vw   = window.innerWidth;
-  var vh   = window.innerHeight;
-
-  /* Spot */
-  spot.style.display = 'block';
-  spot.style.left   = (rect.left - pad) + 'px';
-  spot.style.top    = (rect.top  - pad) + 'px';
-  spot.style.width  = (rect.width  + pad * 2) + 'px';
-  spot.style.height = (rect.height + pad * 2) + 'px';
-
-  /* Pointer label */
-  if (pointer && pLabel) {
-    pointer.style.display = 'flex';
-    pLabel.textContent    = pointerText;
-    /* Flèche emoji selon direction */
-    var arrowEmoji = '👆';
-    if (pointerText.indexOf('↑') !== -1) arrowEmoji = '👆';
-    else if (pointerText.indexOf('↓') !== -1) arrowEmoji = '👇';
-    else if (pointerText.indexOf('←') !== -1) arrowEmoji = '👈';
-    else if (pointerText.indexOf('→') !== -1) arrowEmoji = '👉';
-    if (pArrow) pArrow.textContent = arrowEmoji;
-
-    /* Position du label : juste à côté/au-dessus du spot */
-    var pTop  = rect.top  - pad - 44;
-    var pLeft = rect.left - pad;
-    if (pTop < 60) pTop = rect.bottom + pad + 4;
-    pointer.style.top  = pTop  + 'px';
-    pointer.style.left = Math.max(8, Math.min(pLeft, vw - 200)) + 'px';
-  }
-
-  /* Carte tooltip : en dessous si espace, sinon en haut, sinon en bas fixe */
-  var cardW = Math.min(340, vw - 32);
-  var cardH = 260; /* hauteur estimée */
-  var margin = 16;
-  var cardLeft = Math.max(margin, Math.min(
-    rect.left + rect.width / 2 - cardW / 2,
-    vw - cardW - margin
-  ));
-  var cardTop;
-
-  if (rect.bottom + margin + cardH < vh) {
-    /* Sous le spot */
-    cardTop = rect.bottom + margin;
-  } else if (rect.top - margin - cardH > 0) {
-    /* Au-dessus du spot */
-    cardTop = rect.top - margin - cardH;
-  } else {
-    /* Fenêtre trop petite → colle en bas */
-    cardTop = vh - cardH - margin;
-    cardLeft = margin;
-    cardW = Math.min(340, vw - margin * 2);
-  }
-
-  card.style.left  = cardLeft + 'px';
-  card.style.top   = cardTop  + 'px';
-  card.style.width = cardW    + 'px';
-  card.style.transform = 'none';
-}
-
-function hideTutoSpot() {
-  var spot    = document.getElementById('tuto-spot');
-  var pointer = document.getElementById('tuto-pointer');
-  if (spot)    spot.style.display    = 'none';
-  if (pointer) pointer.style.display = 'none';
-}
-
-function centerTutoCard() {
-  var card = document.getElementById('tuto-card');
-  if (!card) return;
-  var vw = window.innerWidth;
-  var vh = window.innerHeight;
-  var cardW = Math.min(340, vw - 32);
-  card.style.width     = cardW + 'px';
-  card.style.left      = ((vw - cardW) / 2) + 'px';
-  card.style.top       = '50%';
-  card.style.transform = 'translateY(-50%)';
-}
-
-/* ── Navigation ──────────────────────────────────────────── */
-function tutoNext() {
-  if (tutoStep < tutoSteps.length - 1) {
-    tutoStep++;
-    applyTutoStep();
-  } else {
-    closeTuto();
-  }
-}
-function tutoPrev() {
-  if (tutoStep > 0) { tutoStep--; applyTutoStep(); }
-}
-function closeTuto() {
-  var overlay = document.getElementById('tuto-overlay');
-  if (overlay) overlay.style.display = 'none';
-  hideTutoSpot();
-  /* Cacher la save bar si on l'avait forcée */
-  if (tutoForcedSaveBar && !hasPending()) {
-    var bar = document.getElementById('save-bar');
-    if (bar) bar.classList.remove('visible');
-    tutoForcedSaveBar = false;
-  }
-  try { localStorage.setItem('tuto_seen', '1'); } catch(e) {}
-}
-
-/* ── Sidebar toggle (mobile) ─────────────────────────────── */
+/* ── Sidebar toggle ─────────────────────────────────────── */
 function toggleSidebar() {
   var sidebar = document.getElementById('sidebar');
   var overlay = document.getElementById('sidebar-overlay');
@@ -979,8 +813,7 @@ function doLogin() {
     isLoggedIn = true;
     fetchMenu();
     try {
-      var seen = localStorage.getItem('tuto_seen');
-      if (!seen) setTimeout(showTuto, 800);
+      if (!localStorage.getItem('tuto_seen')) setTimeout(showTuto, 800);
     } catch(e) { setTimeout(showTuto, 800); }
   } else {
     showToast('Mot de passe incorrect', 'error');
@@ -989,6 +822,202 @@ function doLogin() {
     pw.value = '';
     pw.focus();
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TUTORIAL SPOTLIGHT
+═══════════════════════════════════════════════════════════ */
+var tutoStep = 0;
+var tutoForcedSaveBar = false;
+var tutoSteps = [
+  {
+    target: null,
+    emoji: '👋',
+    title: 'Bienvenue dans l\'admin !',
+    text:  'Ce tutoriel rapide vous guide à travers les fonctionnalités principales. Cliquez "Suivant" pour continuer.'
+  },
+  {
+    target: '.items-list .item-card',
+    emoji: '✏️',
+    title: 'Modifier un article',
+    text:  'Cliquez sur l\'icône crayon pour ouvrir la fiche complète d\'un article et modifier tous ses champs.'
+  },
+  {
+    target: '.price-input',
+    emoji: '💶',
+    title: 'Modifier les prix rapide',
+    text:  'Modifiez directement les prix ici sans ouvrir la modale. La carte sera marquée en orange.'
+  },
+  {
+    target: '#save-bar',
+    emoji: '💾',
+    title: 'Sauvegarder vos modifications',
+    text:  'Cette barre apparaît dès qu\'il y a des modifications en attente. Cliquez "Sauvegarder" pour envoyer tout vers le serveur.'
+  },
+  {
+    target: '.cat-header .btn-outline',
+    emoji: '➕',
+    title: 'Ajouter un article',
+    text:  'Chaque catégorie a un bouton pour ajouter un nouvel article directement dans cette section.'
+  },
+  {
+    target: '#search-input, .search-input',
+    emoji: '🔍',
+    title: 'Recherche rapide',
+    text:  'Filtrez les articles par nom ou catégorie en temps réel grâce à la barre de recherche.'
+  },
+  {
+    target: null,
+    emoji: '🎉',
+    title: 'Vous êtes prêt !',
+    text:  'Tout est clair ? N\'hésitez pas à rouvrir ce tutoriel via le bouton "Aide" dans la barre du haut.'
+  }
+];
+
+function showTuto() {
+  tutoStep = 0;
+  var overlay = document.getElementById('tuto-overlay');
+  if (overlay) overlay.style.display = 'block';
+  applyTutoStep();
+}
+
+function applyTutoStep() {
+  var step = tutoSteps[tutoStep];
+  if (!step) { closeTuto(); return; }
+
+  /* Dots */
+  var dotsRow = document.getElementById('tuto-dots-row');
+  if (dotsRow) {
+    var html = '';
+    tutoSteps.forEach(function(_, i) {
+      html += '<div class="tuto-dot' + (i === tutoStep ? ' active' : '') + '"></div>';
+    });
+    dotsRow.innerHTML = html;
+  }
+
+  /* Contenu */
+  var emoji = document.getElementById('tuto-emoji');
+  var title = document.getElementById('tuto-card-title');
+  var text  = document.getElementById('tuto-card-text');
+  if (emoji) emoji.textContent = step.emoji || '';
+  if (title) title.textContent = step.title || '';
+  if (text)  text.textContent  = step.text  || '';
+
+  /* Boutons nav */
+  var btnPrev = document.getElementById('tuto-btn-prev');
+  var btnNext = document.getElementById('tuto-btn-next');
+  if (btnPrev) btnPrev.style.visibility = tutoStep === 0 ? 'hidden' : 'visible';
+  if (btnNext) btnNext.textContent = tutoStep === tutoSteps.length - 1 ? 'Terminer ✓' : 'Suivant →';
+
+  /* Save bar — forcer visible pour la démo */
+  if (step.target === '#save-bar') {
+    var bar = document.getElementById('save-bar');
+    if (bar && !bar.classList.contains('visible')) {
+      bar.classList.add('visible');
+      tutoForcedSaveBar = true;
+    }
+  }
+
+  /* Spotlight */
+  if (step.target) {
+    var el = document.querySelector(step.target);
+    if (el) {
+      positionTutoSpot(el);
+    } else {
+      hideTutoSpot();
+      centerTutoCard();
+    }
+  } else {
+    hideTutoSpot();
+    centerTutoCard();
+  }
+}
+
+function positionTutoSpot(el) {
+  var rect    = el.getBoundingClientRect();
+  var pad     = 8;
+  var spot    = document.getElementById('tuto-spot');
+  var pointer = document.getElementById('tuto-pointer');
+
+  if (spot) {
+    spot.style.display = 'block';
+    spot.style.top     = (rect.top    - pad) + 'px';
+    spot.style.left    = (rect.left   - pad) + 'px';
+    spot.style.width   = (rect.width  + pad * 2) + 'px';
+    spot.style.height  = (rect.height + pad * 2) + 'px';
+  }
+  if (pointer) {
+    pointer.style.display = 'flex';
+    pointer.style.top  = (rect.top  - pad - 36) + 'px';
+    pointer.style.left = (rect.left + rect.width / 2 - 60) + 'px';
+    var arrow = document.getElementById('tuto-pointer-arrow');
+    if (arrow) arrow.textContent = '👇';
+  }
+
+  /* Positionne la carte info */
+  var card   = document.getElementById('tuto-card');
+  if (!card) return;
+  var vw     = window.innerWidth;
+  var vh     = window.innerHeight;
+  var cardW  = Math.min(340, vw - 32);
+  var cardH  = 220;
+  var margin = 16;
+  var cardLeft = Math.max(margin, Math.min(rect.left + rect.width / 2 - cardW / 2, vw - cardW - margin));
+  var cardTop;
+
+  if (rect.bottom + margin + cardH < vh) {
+    cardTop = rect.bottom + margin + pad;
+  } else if (rect.top - margin - cardH > 0) {
+    cardTop = rect.top - margin - cardH - pad;
+  } else {
+    cardTop  = vh - cardH - margin;
+    cardLeft = margin;
+    cardW    = Math.min(340, vw - margin * 2);
+  }
+
+  card.style.left      = cardLeft + 'px';
+  card.style.top       = cardTop  + 'px';
+  card.style.width     = cardW    + 'px';
+  card.style.transform = 'none';
+}
+
+function hideTutoSpot() {
+  var spot    = document.getElementById('tuto-spot');
+  var pointer = document.getElementById('tuto-pointer');
+  if (spot)    spot.style.display    = 'none';
+  if (pointer) pointer.style.display = 'none';
+}
+
+function centerTutoCard() {
+  var card = document.getElementById('tuto-card');
+  if (!card) return;
+  var vw   = window.innerWidth;
+  var cardW = Math.min(340, vw - 32);
+  card.style.width     = cardW + 'px';
+  card.style.left      = ((vw - cardW) / 2) + 'px';
+  card.style.top       = '50%';
+  card.style.transform = 'translateY(-50%)';
+}
+
+function tutoNext() {
+  if (tutoStep < tutoSteps.length - 1) { tutoStep++; applyTutoStep(); }
+  else closeTuto();
+}
+
+function tutoPrev() {
+  if (tutoStep > 0) { tutoStep--; applyTutoStep(); }
+}
+
+function closeTuto() {
+  var overlay = document.getElementById('tuto-overlay');
+  if (overlay) overlay.style.display = 'none';
+  hideTutoSpot();
+  if (tutoForcedSaveBar && !hasPending()) {
+    var bar = document.getElementById('save-bar');
+    if (bar) bar.classList.remove('visible');
+    tutoForcedSaveBar = false;
+  }
+  try { localStorage.setItem('tuto_seen', '1'); } catch(e) {}
 }
 
 /* ── Init ────────────────────────────────────────────────── */
@@ -1000,9 +1029,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (e.key === 'Enter' || e.keyCode === 13) doLogin();
   });
 
-  /* Recherche */
-  var searchInput = document.getElementById('search-input');
-  if (searchInput) searchInput.addEventListener('input', function() {
+  /* Recherche desktop */
+  var searchDesktop = document.getElementById('search-input');
+  if (searchDesktop) searchDesktop.addEventListener('input', function() {
     searchQuery = this.value;
     applySearch();
   });
@@ -1015,7 +1044,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  /* Echap pour fermer les modales et le tutoriel */
+  /* Echap pour fermer */
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' || e.keyCode === 27) {
       closeModal('edit-modal');
@@ -1026,8 +1055,7 @@ document.addEventListener('DOMContentLoaded', function() {
   /* Recalcul position tuto si fenêtre redimensionnée */
   window.addEventListener('resize', function() {
     var overlay = document.getElementById('tuto-overlay');
-    if (!overlay || overlay.style.display === 'none') return;
-    applyTutoStep();
+    if (overlay && overlay.style.display !== 'none') applyTutoStep();
   });
 
   /* URL image en temps réel */
