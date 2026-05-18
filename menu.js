@@ -1,5 +1,6 @@
 /* ═══════════════════════════════════════════════
    CHEZ RAMO — Logique menu TV  |  menu.js
+   Offline-first · WebP · Adaptatif réseau
    ═══════════════════════════════════════════════ */
 
 /* ── Polyfills TV ───────────────────────────── */
@@ -22,8 +23,127 @@ var SUPABASE_KEY   = 'sb_publishable_NmIfxaQb5ncapzCtzI5uNQ_tHdCwAyc';
 var SLIDE_DURATION = 10000;
 var loadedSlides   = {};
 
-/* ── WebP : essaie .webp, retombe sur l'original ── */
-var webpSupported  = null;
+/* ════════════════════════════════════════════════
+   DÉTECTION RÉSEAU & ADAPTATION
+   ════════════════════════════════════════════════ */
+var netQuality  = 'unknown'; /* 'fast' | 'medium' | 'slow' | 'offline' */
+var statusEl    = null;
+var hideTimer   = null;
+var perfStyle   = null;
+
+function getNetQuality() {
+  if (!navigator.onLine) return 'offline';
+  var nc = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (nc) {
+    var ect = nc.effectiveType || '';
+    if (ect === 'slow-2g' || ect === '2g') return 'slow';
+    if (ect === '3g')                       return 'medium';
+    if (ect === '4g')                       return 'fast';
+    if (nc.downlink !== undefined) {
+      if (nc.downlink < 0.5) return 'slow';
+      if (nc.downlink < 2)   return 'medium';
+      return 'fast';
+    }
+  }
+  return 'unknown';
+}
+
+/* Applique les adaptations visuelles selon la qualité réseau */
+function applyNetQuality(q) {
+  netQuality = q;
+  if (!perfStyle) {
+    perfStyle = document.createElement('style');
+    perfStyle.id = '_perf';
+    document.head.appendChild(perfStyle);
+  }
+  if (q === 'slow' || q === 'offline') {
+    /* Connexion faible : coupe Ken Burns, transitions légères */
+    perfStyle.textContent =
+      '.slide.active .card-img img.loaded{' +
+        '-webkit-transform:scale(1) translateZ(0)!important;' +
+        'transform:scale(1) translateZ(0)!important;' +
+      '}' +
+      '.card-img img{' +
+        '-webkit-transition:opacity 0.3s ease!important;' +
+        'transition:opacity 0.3s ease!important;' +
+      '}';
+    SLIDE_DURATION = 13000; /* Plus de temps pour charger */
+  } else {
+    perfStyle.textContent = '';
+    SLIDE_DURATION = 10000;
+  }
+}
+
+/* Indicateur réseau : pill discret en bas de l'écran */
+function showNetStatus(msg, color, autohideMs) {
+  if (!statusEl) {
+    statusEl = document.createElement('div');
+    statusEl.style.cssText = [
+      'position:fixed;bottom:14px;left:50%;',
+      '-webkit-transform:translateX(-50%);',
+      'transform:translateX(-50%);',
+      'padding:5px 16px;border-radius:99px;',
+      'font-family:Arial,Helvetica,sans-serif;',
+      'font-size:1vw;font-weight:700;',
+      'letter-spacing:0.1vw;text-transform:uppercase;',
+      'color:#fff;z-index:9999;pointer-events:none;',
+      'box-shadow:0 2px 12px rgba(0,0,0,0.5);',
+      'opacity:0;',
+      '-webkit-transition:opacity 0.4s ease;',
+      'transition:opacity 0.4s ease;'
+    ].join('');
+    document.body.appendChild(statusEl);
+  }
+  clearTimeout(hideTimer);
+  statusEl.textContent = msg;
+  statusEl.style.background = color;
+  /* Micro-délai pour que la transition CSS joue */
+  setTimeout(function() { statusEl.style.opacity = '1'; }, 10);
+  if (autohideMs) {
+    hideTimer = setTimeout(function() { statusEl.style.opacity = '0'; }, autohideMs);
+  }
+}
+
+function hideNetStatus() {
+  if (statusEl) statusEl.style.opacity = '0';
+  clearTimeout(hideTimer);
+}
+
+/* Événements réseau */
+window.addEventListener('offline', function() {
+  applyNetQuality('offline');
+  showNetStatus('HORS LIGNE — Menu en cache', '#333333', 0);
+});
+
+window.addEventListener('online', function() {
+  var q = getNetQuality();
+  applyNetQuality(q);
+  showNetStatus('CONNEXION RÉTABLIE', '#1c7c3e', 3500);
+  /* Resynchronise le menu dès que le réseau revient */
+  setTimeout(fetchMenu, 1500);
+  setTimeout(checkVersion, 3000);
+});
+
+/* Change de qualité réseau en direct (ex: TV qui s'éloigne du routeur) */
+(function() {
+  var nc = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (nc && nc.addEventListener) {
+    nc.addEventListener('change', function() {
+      var q = getNetQuality();
+      if (q !== netQuality) {
+        applyNetQuality(q);
+        if (q === 'slow') {
+          showNetStatus('CONNEXION FAIBLE — Mode économique', '#b05000', 5000);
+        }
+      }
+    });
+  }
+})();
+
+/* ════════════════════════════════════════════════
+   WEBP & CHARGEMENT IMAGE
+   ════════════════════════════════════════════════ */
+var webpSupported = null;
 
 function detectWebp(cb) {
   if (webpSupported !== null) { cb(webpSupported); return; }
@@ -40,29 +160,62 @@ function toWebp(url) {
   return url.replace(/\.(png|jpg|jpeg)(\?.*)?$/i, '.webp$2');
 }
 
-/* ── Chargement d'image avec fallback WebP ───── */
+/* Charge une image : WebP en priorité, fallback sur original */
 function loadImg(img, src) {
   if (!src) { img.style.display = 'none'; return; }
   detectWebp(function(ok) {
     var primary  = ok ? toWebp(src) : src;
     var fallback = src;
-    var tmp = new Image();
-    tmp.onload = function() { img.src = primary; img.className = 'loaded'; };
-    tmp.onerror = function() {
+    var probe = new Image();
+    probe.onload = function() { img.src = primary; img.className = 'loaded'; };
+    probe.onerror = function() {
       if (primary !== fallback) {
-        var tmp2 = new Image();
-        tmp2.onload  = function() { img.src = fallback; img.className = 'loaded'; };
-        tmp2.onerror = function() { img.style.display = 'none'; };
-        tmp2.src = fallback;
+        var probe2 = new Image();
+        probe2.onload  = function() { img.src = fallback; img.className = 'loaded'; };
+        probe2.onerror = function() { img.style.display = 'none'; };
+        probe2.src = fallback;
       } else {
         img.style.display = 'none';
       }
     };
-    tmp.src = primary;
+    probe.src = primary;
   });
 }
 
-/* ── Menu par défaut ────────────────────────── */
+/* ════════════════════════════════════════════════
+   PRE-CACHE TOTAL : toutes les images en arrière-plan
+   Le SW télécharge séquentiellement chaque image
+   pour les rendre disponibles offline.
+   ════════════════════════════════════════════════ */
+function precacheAllImages(data) {
+  if (!navigator.serviceWorker) return;
+  var swc = navigator.serviceWorker.controller;
+  if (!swc) {
+    /* SW pas encore actif, on réessaie dans 4s */
+    setTimeout(function() { precacheAllImages(data); }, 4000);
+    return;
+  }
+  var urls = [];
+  var seen = {};
+  (data || menuData).forEach(function(slide) {
+    (slide.items || []).forEach(function(item) {
+      if (!item.url || seen[item.url]) return;
+      seen[item.url] = true;
+      urls.push(item.url);
+      var wp = toWebp(item.url);
+      if (wp !== item.url && !seen[wp]) { seen[wp] = true; urls.push(wp); }
+    });
+  });
+  swc.postMessage({
+    type: 'PRECACHE',
+    urls: urls,
+    slow: (netQuality === 'slow' || netQuality === 'medium')
+  });
+}
+
+/* ════════════════════════════════════════════════
+   DONNÉES MENU PAR DÉFAUT (fallback offline)
+   ════════════════════════════════════════════════ */
 var defaultMenu = [
   { category: "Sandwichs Vedettes", info: "Veau 100% Maison | Pain Artisanal", items: [
     { title: "Kebab",       description: "Pain rond, veau maison, crudités",        price: "9,00",  menuPrice: "12,00", url: "uploads/Kebab.png" },
@@ -185,17 +338,14 @@ function makePrice(price, menuPrice) {
 function render() {
   var vp   = document.getElementById('viewport');
   var html = '';
-
   for (var sIdx = 0; sIdx < menuData.length; sIdx++) {
     var slide     = menuData[sIdx];
     var cols      = slide.items.length <= 2 ? 'cols-2' : '';
     var cardsHtml = '';
-
     for (var i = 0; i < slide.items.length; i++) {
-      var item     = slide.items[i];
-      var safeUrl  = (item.url || '').replace(/'/g, '%27');
+      var item      = slide.items[i];
+      var safeUrl   = (item.url || '').replace(/'/g, '%27');
       var badgeHtml = item.badge ? '<div class="badge">' + item.badge + '</div>' : '';
-
       cardsHtml +=
         '<div class="card">' +
           '<div class="card-img">' +
@@ -209,7 +359,6 @@ function render() {
           '</div>' +
         '</div>';
     }
-
     html +=
       '<div class="slide" id="s' + sIdx + '">' +
         '<div class="cat-header">' +
@@ -220,12 +369,11 @@ function render() {
         '<div class="grid ' + cols + '">' + cardsHtml + '</div>' +
       '</div>';
   }
-
   vp.innerHTML = html;
-  loadedSlides = {};
+  loadedSlides  = {};
 }
 
-/* ── Chargement lazy des images ─────────────── */
+/* ── Chargement lazy des images du slide ──────── */
 function loadSlideImages(idx) {
   if (loadedSlides[idx]) return;
   loadedSlides[idx] = true;
@@ -250,11 +398,9 @@ function showSlide(idx) {
   if (el) el.className = 'slide active';
 
   loadSlideImages(idx);
-  /* Précharge le slide suivant après 1,5s */
   var nextIdx = (idx + 1) % menuData.length;
-  setTimeout(function() { loadSlideImages(nextIdx); }, 1500);
+  setTimeout(function() { loadSlideImages(nextIdx); }, 1200);
 
-  /* Barre de progression */
   progressBar.style.cssText =
     'width:0%;height:100%;background:#e01010;-webkit-transition:none;transition:none;';
   void progressBar.offsetWidth;
@@ -281,7 +427,7 @@ function navigate(dir) {
 
 /* ── Télécommande + clic ────────────────────── */
 document.addEventListener('keydown', function(e) {
-  var key    = e.key || e.keyCode;
+  var key = e.key || e.keyCode;
   var isNext = (key === 'ArrowRight' || key === 39 || key === 'Enter' || key === 13 ||
                 key === 'Return'     || key === 'MediaFastForward' || key === 'XF86FastForward');
   var isPrev = (key === 'ArrowLeft'  || key === 37 ||
@@ -291,11 +437,12 @@ document.addEventListener('keydown', function(e) {
 });
 document.addEventListener('click', function() { navigate(1); });
 
-/* ── Chargement depuis Supabase (avec retry) ── */
+/* ── Chargement depuis Supabase ─────────────── */
 var fetchRetryTimer = null;
 
 function fetchMenu() {
   if (typeof fetch === 'undefined') return;
+  if (netQuality === 'offline') return; /* Inutile si hors ligne */
   clearTimeout(fetchRetryTimer);
   fetch(SUPABASE_URL + '/rest/v1/menu_items?order=sort_order', {
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
@@ -323,36 +470,31 @@ function fetchMenu() {
       render();
       showSlide(current);
       startAuto();
+      /* Pre-cache les nouvelles images Supabase aussi */
+      setTimeout(function() { precacheAllImages(fresh); }, 2000);
     }
   }).catch(function() {
-    /* Retry dans 30s si réseau indisponible */
     fetchRetryTimer = setTimeout(fetchMenu, 30000);
   });
 }
 
-/* ── Détection de mise à jour (auto-refresh TV) ─
-   Interroge version.json toutes les 60s.
-   Si la version change → rechargement automatique. */
+/* ── Détection de mise à jour (auto-refresh TV) ─ */
 var deployVersion = null;
 
 function checkVersion() {
   if (typeof fetch === 'undefined') return;
+  if (netQuality === 'offline') return;
   fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
     .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(data) {
       if (!data || !data.v) return;
       if (deployVersion === null) { deployVersion = data.v; return; }
-      if (data.v !== deployVersion) {
-        /* Nouvelle version déployée → rechargement propre */
-        location.reload(true);
-      }
+      if (data.v !== deployVersion) { location.reload(true); }
     })
     .catch(function() {});
 }
 
-/* ── Récupération d'urgence : reload après 4h ─
-   Évite que le navigateur TV reste bloqué sur une
-   session corrompue sans jamais se récupérer.     */
+/* ── Reload d'urgence toutes les 4h (TV browser) ─ */
 setTimeout(function() { location.reload(true); }, 4 * 60 * 60 * 1000);
 
 /* ── Horloge ────────────────────────────────── */
@@ -368,13 +510,28 @@ function tick() {
 setInterval(tick, 1000);
 tick();
 
-/* ── Démarrage ──────────────────────────────── */
+/* ══════════════════════════════════════════════
+   DÉMARRAGE
+   ══════════════════════════════════════════════ */
+
+/* 1. Adaptation immédiate selon la qualité réseau actuelle */
+applyNetQuality(getNetQuality());
+if (!navigator.onLine) {
+  showNetStatus('HORS LIGNE — Menu en cache', '#333333', 0);
+}
+
+/* 2. Affiche le menu immédiatement depuis les données locales */
 render();
 showSlide(0);
 startAuto();
+
+/* 3. Après 2s : charge depuis Supabase + vérifie la version */
 setTimeout(function() {
   fetchMenu();
   setInterval(fetchMenu, 30000);
   checkVersion();
   setInterval(checkVersion, 60000);
 }, 2000);
+
+/* 4. Après 6s : pre-cache TOUTES les images en arrière-plan */
+setTimeout(function() { precacheAllImages(menuData); }, 6000);
