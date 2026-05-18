@@ -22,21 +22,22 @@ html, body {
 }
 
 /* ── KEYFRAMES ──────────────────────────────── */
+/* opacity uniquement = compositable GPU, pas de repaint */
 @-webkit-keyframes ramoPulse {
-  0%, 100% { text-shadow: 0 0 1.5vw rgba(224,16,16,0.5), 0 0 3vw rgba(224,16,16,0.2); }
-  50%       { text-shadow: 0 0 2.5vw rgba(224,16,16,0.9), 0 0 5vw rgba(224,16,16,0.4); }
+  0%, 100% { opacity: 0.85; }
+  50%       { opacity: 1; }
 }
 @keyframes ramoPulse {
-  0%, 100% { text-shadow: 0 0 1.5vw rgba(224,16,16,0.5), 0 0 3vw rgba(224,16,16,0.2); }
-  50%       { text-shadow: 0 0 2.5vw rgba(224,16,16,0.9), 0 0 5vw rgba(224,16,16,0.4); }
+  0%, 100% { opacity: 0.85; }
+  50%       { opacity: 1; }
 }
 @-webkit-keyframes barGlow {
-  0%, 100% { -webkit-box-shadow: 0 0 6px rgba(224,16,16,0.6); box-shadow: 0 0 6px rgba(224,16,16,0.6); }
-  50%       { -webkit-box-shadow: 0 0 14px rgba(224,16,16,1); box-shadow: 0 0 14px rgba(224,16,16,1); }
+  0%, 100% { opacity: 0.8; }
+  50%       { opacity: 1; }
 }
 @keyframes barGlow {
-  0%, 100% { box-shadow: 0 0 6px rgba(224,16,16,0.6); }
-  50%       { box-shadow: 0 0 14px rgba(224,16,16,1); }
+  0%, 100% { opacity: 0.8; }
+  50%       { opacity: 1; }
 }
 
 /* ── APP WRAPPER ────────────────────────────── */
@@ -86,8 +87,10 @@ html, body {
 }
 #brand span {
   color: #e01010;
+  text-shadow: 0 0 2vw rgba(224,16,16,0.6);
   -webkit-animation: ramoPulse 4s ease-in-out infinite;
   animation: ramoPulse 4s ease-in-out infinite;
+  will-change: opacity;
 }
 #clock {
   font-family: Impact, 'Arial Black', 'Franklin Gothic Heavy', Arial, sans-serif;
@@ -121,6 +124,7 @@ html, body {
   -webkit-transition: opacity 0.55s ease;
   transition: opacity 0.55s ease;
   pointer-events: none;
+  will-change: opacity;
 }
 .slide.active { opacity: 1; pointer-events: auto; }
 
@@ -237,14 +241,15 @@ html, body {
   overflow: hidden;
   min-height: 0;
   opacity: 0;
-  -webkit-transform: translateY(3vw);
-  transform: translateY(3vw);
-  -webkit-transition: opacity 0.5s cubic-bezier(0.25,0.46,0.45,0.94),
-                      -webkit-transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
-  transition: opacity 0.5s cubic-bezier(0.25,0.46,0.45,0.94),
-              transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
+  -webkit-transform: translateY(2vw) translateZ(0);
+  transform: translateY(2vw) translateZ(0);
+  -webkit-transition: opacity 0.4s cubic-bezier(0.25,0.46,0.45,0.94),
+                      -webkit-transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+  transition: opacity 0.4s cubic-bezier(0.25,0.46,0.45,0.94),
+              transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+  will-change: transform, opacity;
 }
-.slide.active .card { opacity: 1; -webkit-transform: translateY(0); transform: translateY(0); }
+.slide.active .card { opacity: 1; -webkit-transform: translateY(0) translateZ(0); transform: translateY(0) translateZ(0); }
 .slide.active .card:nth-child(1) { -webkit-transition-delay: 0.08s; transition-delay: 0.08s; }
 .slide.active .card:nth-child(2) { -webkit-transition-delay: 0.18s; transition-delay: 0.18s; }
 .slide.active .card:nth-child(3) { -webkit-transition-delay: 0.28s; transition-delay: 0.28s; }
@@ -267,16 +272,18 @@ html, body {
   transform: scale(1) translateZ(0);
   -webkit-transition: -webkit-transform 10s ease-out;
   transition: transform 10s ease-out;
+  will-change: transform;
 }
 .card-img img:not(.loaded) { opacity: 0; }
 .card-img img.loaded {
   opacity: 1;
-  -webkit-transition: opacity 0.5s ease, -webkit-transform 10s ease-out;
-  transition: opacity 0.5s ease, transform 10s ease-out;
+  -webkit-transition: opacity 0.4s ease, -webkit-transform 10s ease-out;
+  transition: opacity 0.4s ease, transform 10s ease-out;
 }
 .slide.active .card-img img.loaded {
-  -webkit-transform: scale(1.09) translateZ(0);
-  transform: scale(1.09) translateZ(0);
+  /* 1.06 au lieu de 1.09 : moins de charge GPU sur TV */
+  -webkit-transform: scale(1.06) translateZ(0);
+  transform: scale(1.06) translateZ(0);
 }
 /* Dégradé bas sur l'image */
 .card-img::after {

@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- Cache contrôlé par le service worker, pas par le navigateur -->
+  <meta http-equiv="Cache-Control" content="no-cache">
   <title>Chez Ramo — Menu</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -19,5 +21,30 @@
     </div>
   </div>
   <script src="menu.js"></script>
+  <script>
+    /* Enregistrement du Service Worker */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js').then(function(reg) {
+          /* Vérifie si une mise à jour du SW est disponible */
+          reg.addEventListener('updatefound', function() {
+            var newSW = reg.installing;
+            newSW.addEventListener('statechange', function() {
+              if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                /* Nouveau SW prêt → activation immédiate */
+                newSW.postMessage('SKIP_WAITING');
+              }
+            });
+          });
+        }).catch(function() {});
+
+        /* Rechargement quand le nouveau SW prend le contrôle */
+        var refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+          if (!refreshing) { refreshing = true; location.reload(true); }
+        });
+      });
+    }
+  </script>
 </body>
 </html>

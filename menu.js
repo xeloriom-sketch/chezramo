@@ -17,10 +17,50 @@ if (!Object.values) {
 }
 
 /* ── Config ─────────────────────────────────── */
-var SUPABASE_URL  = 'https://hqfewokpvjmxezhnurbm.supabase.co';
-var SUPABASE_KEY  = 'sb_publishable_NmIfxaQb5ncapzCtzI5uNQ_tHdCwAyc';
+var SUPABASE_URL   = 'https://hqfewokpvjmxezhnurbm.supabase.co';
+var SUPABASE_KEY   = 'sb_publishable_NmIfxaQb5ncapzCtzI5uNQ_tHdCwAyc';
 var SLIDE_DURATION = 10000;
 var loadedSlides   = {};
+
+/* ── WebP : essaie .webp, retombe sur l'original ── */
+var webpSupported  = null;
+
+function detectWebp(cb) {
+  if (webpSupported !== null) { cb(webpSupported); return; }
+  var img = new Image();
+  img.onload = img.onerror = function() {
+    webpSupported = (img.width === 1);
+    cb(webpSupported);
+  };
+  img.src = 'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAQAcJZQCdAEO/gHOAAA=';
+}
+
+function toWebp(url) {
+  if (!url) return url;
+  return url.replace(/\.(png|jpg|jpeg)(\?.*)?$/i, '.webp$2');
+}
+
+/* ── Chargement d'image avec fallback WebP ───── */
+function loadImg(img, src) {
+  if (!src) { img.style.display = 'none'; return; }
+  detectWebp(function(ok) {
+    var primary  = ok ? toWebp(src) : src;
+    var fallback = src;
+    var tmp = new Image();
+    tmp.onload = function() { img.src = primary; img.className = 'loaded'; };
+    tmp.onerror = function() {
+      if (primary !== fallback) {
+        var tmp2 = new Image();
+        tmp2.onload  = function() { img.src = fallback; img.className = 'loaded'; };
+        tmp2.onerror = function() { img.style.display = 'none'; };
+        tmp2.src = fallback;
+      } else {
+        img.style.display = 'none';
+      }
+    };
+    tmp.src = primary;
+  });
+}
 
 /* ── Menu par défaut ────────────────────────── */
 var defaultMenu = [
@@ -98,7 +138,6 @@ var defaultMenu = [
     { title: "Qofte x7",  description: "7 boulettes grillées maison",  price: "11,00", url: "uploads/Qofte_x7.png" },
     { title: "Qofte x10", description: "10 boulettes grillées maison", price: "13,00", url: "uploads/Qofte_x10.png" }
   ]},
-  /* ── Grillades : 2, 4, 6 personnes ── */
   { category: "Grillades", info: "Plateau : agneau, escalope, entrecôte, suxhuk, salade grecque, frites", items: [
     { title: "Grillade 2 pers.", description: "Plateau complet pour 2 personnes", price: "39,00", badge: "2 PERS", url: "uploads/Menu_Grillade.png" },
     { title: "Grillade 4 pers.", description: "Plateau complet pour 4 personnes", price: "79,00", badge: "4 PERS", url: "uploads/Menu_Grillade.png" },
@@ -111,19 +150,15 @@ var defaultMenu = [
 ];
 
 /* ── État global ────────────────────────────── */
-var menuData   = JSON.parse(JSON.stringify(defaultMenu));
-var current    = 0;
-var autoTimer  = null;
+var menuData    = JSON.parse(JSON.stringify(defaultMenu));
+var current     = 0;
+var autoTimer   = null;
 var progressBar = document.getElementById('progress-bar');
 
 /* ── Formatage des prix ─────────────────────── */
 function makePrice(price, menuPrice) {
   var noMain = !price || price === 'INCLUSE' || price === 'OFFERT' || price === '';
-
-  /* Pas de prix du tout */
   if (noMain && !menuPrice) return '';
-
-  /* Pas de prix principal mais un supplément (ex: sauces) */
   if (noMain && menuPrice) {
     var sp = menuPrice.indexOf(',') >= 0 ? menuPrice.split(',') : [menuPrice, '00'];
     return '<div class="price-row supp">' +
@@ -131,8 +166,6 @@ function makePrice(price, menuPrice) {
       '<span class="pval">+' + sp[0] + '<sup>,' + sp[1] + '&euro;</sup></span>' +
       '</div>';
   }
-
-  /* Prix normal seul + optionnel menu */
   var parts = price.indexOf(',') >= 0 ? price.split(',') : [price, '00'];
   var html = '<div class="price-row">' +
     '<span class="plabel">SEUL</span>' +
@@ -148,14 +181,14 @@ function makePrice(price, menuPrice) {
   return html;
 }
 
-/* ── Construction HTML (images en lazy via data-src) */
+/* ── Construction HTML ──────────────────────── */
 function render() {
   var vp   = document.getElementById('viewport');
   var html = '';
 
   for (var sIdx = 0; sIdx < menuData.length; sIdx++) {
-    var slide    = menuData[sIdx];
-    var cols     = slide.items.length <= 2 ? 'cols-2' : '';
+    var slide     = menuData[sIdx];
+    var cols      = slide.items.length <= 2 ? 'cols-2' : '';
     var cardsHtml = '';
 
     for (var i = 0; i < slide.items.length; i++) {
@@ -189,7 +222,7 @@ function render() {
   }
 
   vp.innerHTML = html;
-  loadedSlides  = {};
+  loadedSlides = {};
 }
 
 /* ── Chargement lazy des images ─────────────── */
@@ -204,10 +237,7 @@ function loadSlideImages(idx) {
       var src = img.getAttribute('data-src');
       if (!src) return;
       img.removeAttribute('data-src');
-      var tmp     = new Image();
-      tmp.onload  = function() { img.src = src; img.className = 'loaded'; };
-      tmp.onerror = function() { img.style.display = 'none'; };
-      tmp.src     = src;
+      loadImg(img, src);
     })(imgs[i]);
   }
 }
@@ -220,13 +250,14 @@ function showSlide(idx) {
   if (el) el.className = 'slide active';
 
   loadSlideImages(idx);
+  /* Précharge le slide suivant après 1,5s */
   var nextIdx = (idx + 1) % menuData.length;
   setTimeout(function() { loadSlideImages(nextIdx); }, 1500);
 
   /* Barre de progression */
   progressBar.style.cssText =
     'width:0%;height:100%;background:#e01010;-webkit-transition:none;transition:none;';
-  void progressBar.offsetWidth; /* force reflow */
+  void progressBar.offsetWidth;
   progressBar.style.cssText =
     'width:100%;height:100%;background:#e01010;' +
     '-webkit-transition:width ' + SLIDE_DURATION + 'ms linear;' +
@@ -260,9 +291,12 @@ document.addEventListener('keydown', function(e) {
 });
 document.addEventListener('click', function() { navigate(1); });
 
-/* ── Chargement depuis Supabase ─────────────── */
+/* ── Chargement depuis Supabase (avec retry) ── */
+var fetchRetryTimer = null;
+
 function fetchMenu() {
   if (typeof fetch === 'undefined') return;
+  clearTimeout(fetchRetryTimer);
   fetch(SUPABASE_URL + '/rest/v1/menu_items?order=sort_order', {
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
   }).then(function(res) {
@@ -280,7 +314,6 @@ function fetchMenu() {
       if (!cats[row.category]) {
         cats[row.category] = { category: row.category, info: catInfo[row.category] || '', items: [] };
       }
-      /* Supabase renvoie 'desc' mais le JS utilise 'description' */
       if (row.desc !== undefined && row.description === undefined) row.description = row.desc;
       cats[row.category].items.push(row);
     }
@@ -291,8 +324,36 @@ function fetchMenu() {
       showSlide(current);
       startAuto();
     }
-  }).catch(function() {});
+  }).catch(function() {
+    /* Retry dans 30s si réseau indisponible */
+    fetchRetryTimer = setTimeout(fetchMenu, 30000);
+  });
 }
+
+/* ── Détection de mise à jour (auto-refresh TV) ─
+   Interroge version.json toutes les 60s.
+   Si la version change → rechargement automatique. */
+var deployVersion = null;
+
+function checkVersion() {
+  if (typeof fetch === 'undefined') return;
+  fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (!data || !data.v) return;
+      if (deployVersion === null) { deployVersion = data.v; return; }
+      if (data.v !== deployVersion) {
+        /* Nouvelle version déployée → rechargement propre */
+        location.reload(true);
+      }
+    })
+    .catch(function() {});
+}
+
+/* ── Récupération d'urgence : reload après 4h ─
+   Évite que le navigateur TV reste bloqué sur une
+   session corrompue sans jamais se récupérer.     */
+setTimeout(function() { location.reload(true); }, 4 * 60 * 60 * 1000);
 
 /* ── Horloge ────────────────────────────────── */
 function tick() {
@@ -311,8 +372,9 @@ tick();
 render();
 showSlide(0);
 startAuto();
-/* 2s de délai : l'UI s'affiche avant la requête réseau */
 setTimeout(function() {
   fetchMenu();
   setInterval(fetchMenu, 30000);
+  checkVersion();
+  setInterval(checkVersion, 60000);
 }, 2000);

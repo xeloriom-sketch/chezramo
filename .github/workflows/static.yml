@@ -1,28 +1,20 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: Deploy Chez Ramo to GitHub Pages
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
   deploy:
     environment:
       name: github-pages
@@ -31,13 +23,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Générer version.json
+        run: |
+          echo '{"v":"'"$(date -u +%Y%m%d%H%M%S)"'","t":'"$(date -u +%s)"'}' > version.json
+          echo "Version générée : $(cat version.json)"
+
+      - name: Convertir images en WebP (nouvelles uniquement)
+        run: |
+          sudo apt-get install -y webp 2>/dev/null | tail -1
+          find uploads/ -maxdepth 1 \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) | while IFS= read -r f; do
+            base="${f%.*}"
+            if [ ! -f "${base}.webp" ]; then
+              echo "Conversion: $f"
+              cwebp -q 82 -m 4 "$f" -o "${base}.webp" 2>/dev/null
+            fi
+          done
+          echo "WebP prêts : $(find uploads/ -name '*.webp' | wc -l) fichiers"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
           path: '.'
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
