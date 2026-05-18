@@ -20,7 +20,7 @@ if (!Object.values) {
 /* ── Config ─────────────────────────────────── */
 var SUPABASE_URL   = 'https://hqfewokpvjmxezhnurbm.supabase.co';
 var SUPABASE_KEY   = 'sb_publishable_NmIfxaQb5ncapzCtzI5uNQ_tHdCwAyc';
-var SLIDE_DURATION = 10000;
+var SLIDE_DURATION = 6000;
 var loadedSlides   = {};
 
 /* ════════════════════════════════════════════════
@@ -67,7 +67,7 @@ function applyNetQuality(q) {
         '-webkit-transition:opacity 0.3s ease!important;' +
         'transition:opacity 0.3s ease!important;' +
       '}';
-    SLIDE_DURATION = 13000; /* Plus de temps pour charger */
+    SLIDE_DURATION = 9000; /* Plus de temps pour charger sur connexion faible */
   } else {
     perfStyle.textContent = '';
     SLIDE_DURATION = 10000;
