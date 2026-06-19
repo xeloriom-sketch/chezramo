@@ -22,9 +22,8 @@ function toDb(obj) {
     var v = obj[k];
     // Normalise les chaînes vides → null pour éviter les erreurs de contrainte
     var val = (v === '' || v === undefined) ? null : v;
-    if      (k === 'desc')      out['description'] = val;
-    else if (k === 'menuPrice') out['menu_price']   = val;
-    else                        out[k]              = val;
+    if  (k === 'desc') out['description'] = val;
+    else               out[k]            = val;
   });
   return out;
 }
@@ -36,7 +35,7 @@ function fromDb(r) {
     title:      r.title      || '',
     desc:       r.description || r.desc || '',
     price:      r.price       || '',
-    menuPrice:  r.menu_price  || r.menuPrice || '',
+    menuPrice:  r.menuPrice || '',
     badge:      r.badge       || '',
     url:        r.url         || '',
     sort_order: r.sort_order  || 0
