@@ -808,6 +808,7 @@ function doLogin() {
   var pw = document.getElementById('login-pw');
   if (!pw) return;
   if (pw.value === ADMIN_PASS) {
+    try { localStorage.setItem('admin_auth', 'ramo_ok'); } catch(e) {}
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     isLoggedIn = true;
@@ -1022,6 +1023,16 @@ function closeTuto() {
 
 /* ── Init ────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function() {
+
+  /* Reconnexion automatique si déjà authentifié */
+  try {
+    if (localStorage.getItem('admin_auth') === 'ramo_ok') {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      isLoggedIn = true;
+      fetchMenu();
+    }
+  } catch(e) {}
 
   /* Enter sur le champ mot de passe */
   var pw = document.getElementById('login-pw');

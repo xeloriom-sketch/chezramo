@@ -125,7 +125,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Menu Enfants (nouvelle section)
 INSERT INTO menu_items (id, category, title, description, price, "menuPrice", badge, url, sort_order) VALUES
-('menu-enfant-assiette', 'Menu Enfants', 'Assiette Enfant', 'Frites, viande et sauce au choix',  '12,00', NULL, NULL, 'uploads/Assiette Enfant.png',   170),
-('menu-enfant-burger',   'Menu Enfants', 'Mini Burger',     'Pain, steak haché, fromage, sauce', '6,00',  NULL, NULL, 'uploads/Chicken Burger.png',    171),
-('menu-enfant-nuggets',  'Menu Enfants', 'Nuggets (x5)',    '5 filets de poulet frits et dorés', '6,00',  NULL, NULL, 'uploads/Nuggets (x7).png',      172)
+('menu-enfant-combo',    'Menu Enfants', 'Menu Enfant',     '4 Nuggets ou viande au choix',      '10,00', NULL,    'AU CHOIX', 'uploads/Assiette Enfant.png', 169),
+('menu-enfant-assiette', 'Menu Enfants', 'Assiette Enfant', 'Frites, viande et sauce au choix',  '12,00', NULL,    NULL,       'uploads/Assiette Enfant.png', 170),
+('menu-enfant-burger',   'Menu Enfants', 'Mini Burger',     'Pain, steak haché, fromage, sauce', '6,00',  NULL,    NULL,       'uploads/Chicken Burger.png',  171)
 ON CONFLICT (id) DO NOTHING;
