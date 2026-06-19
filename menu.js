@@ -479,7 +479,7 @@ function fetchMenu() {
       setTimeout(function() { precacheAllImages(fresh); }, 2000);
     }
   }).catch(function() {
-    fetchRetryTimer = setTimeout(fetchMenu, 30000);
+    fetchRetryTimer = setTimeout(fetchMenu, 10000);
   });
 }
 
@@ -533,9 +533,9 @@ startAuto();
 /* 3. Après 2s : charge depuis Supabase + vérifie la version */
 setTimeout(function() {
   fetchMenu();
-  setInterval(fetchMenu, 30000);
+  setInterval(fetchMenu, 10000);
   checkVersion();
-  setInterval(checkVersion, 60000);
+  setInterval(checkVersion, 30000);
 }, 2000);
 
 /* 4. Après 6s : pre-cache TOUTES les images en arrière-plan */
