@@ -470,12 +470,11 @@ function fetchMenu() {
       cats[row.category].items.push(row);
     }
     var fresh = Object.values(cats);
-    if (fresh.length) {
+    if (fresh.length && JSON.stringify(fresh) !== JSON.stringify(menuData)) {
       menuData = fresh;
       render();
       showSlide(current);
       startAuto();
-      /* Pre-cache les nouvelles images Supabase aussi */
       setTimeout(function() { precacheAllImages(fresh); }, 2000);
     }
   }).catch(function() {
