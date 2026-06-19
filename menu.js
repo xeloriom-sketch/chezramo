@@ -470,15 +470,16 @@ function fetchMenu() {
       cats[row.category].items.push(row);
     }
     var fresh = Object.values(cats);
-    if (fresh.length && JSON.stringify(fresh) !== JSON.stringify(menuData)) {
+    if (fresh.length) {
       menuData = fresh;
       render();
       showSlide(current);
       startAuto();
+      /* Pre-cache les nouvelles images Supabase aussi */
       setTimeout(function() { precacheAllImages(fresh); }, 2000);
     }
   }).catch(function() {
-    fetchRetryTimer = setTimeout(fetchMenu, 10000);
+    fetchRetryTimer = setTimeout(fetchMenu, 30000);
   });
 }
 
@@ -532,9 +533,9 @@ startAuto();
 /* 3. Après 2s : charge depuis Supabase + vérifie la version */
 setTimeout(function() {
   fetchMenu();
-  setInterval(fetchMenu, 10000);
+  setInterval(fetchMenu, 30000);
   checkVersion();
-  setInterval(checkVersion, 30000);
+  setInterval(checkVersion, 60000);
 }, 2000);
 
 /* 4. Après 6s : pre-cache TOUTES les images en arrière-plan */
