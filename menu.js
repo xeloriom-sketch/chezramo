@@ -299,6 +299,11 @@ var defaultMenu = [
   { category: "Desserts", info: "Douceurs maison", items: [
     { title: "Trilece",  description: "Dessert traditionnel au lait", price: "3,50", url: "uploads/Trilece.png" },
     { title: "Tiramisu", description: "Tiramisu maison",              price: "3,50", url: "uploads/Tiramisu.png" }
+  ]},
+  { category: "Menu Enfants", info: "Petits plats pour nos petits clients", items: [
+    { title: "Assiette Enfant", description: "Frites, viande et sauce au choix",  price: "12,00", url: "uploads/Assiette Enfant.png" },
+    { title: "Mini Burger",     description: "Pain, steak haché, fromage, sauce", price: "6,00",  url: "uploads/Chicken Burger.png" },
+    { title: "Nuggets (x5)",   description: "5 filets de poulet frits et dorés", price: "6,00",  url: "uploads/Nuggets (x7).png" }
   ]}
 ];
 
