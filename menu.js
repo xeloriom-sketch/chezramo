@@ -1332,13 +1332,17 @@ function showToast(msg) {
 /* Mise à jour silencieuse : données + SW, reload au prochain changement de slide */
 function silentUpdate(newVersion) {
   deployVersion = newVersion;
-  fetchMenu(); /* re-fetch données Supabase immédiatement */
-  /* Demande au Service Worker d'activer la nouvelle version en cache */
+  fetchMenu();
   if (navigator.serviceWorker && navigator.serviceWorker.controller) {
     navigator.serviceWorker.controller.postMessage('SKIP_WAITING');
   }
   pendingCodeReload = true;
   showToast('MISE À JOUR ✓');
+  /* En mode panneau statique (1 seule page), le timer de slide ne tourne pas :
+     le pendingCodeReload ne serait jamais vérifié → forcer le reload directement */
+  if (slideTotal < 2) {
+    setTimeout(function() { location.reload(true); }, 3000);
+  }
 }
 
 /* Overlay test uniquement (touche 9 / U) */
