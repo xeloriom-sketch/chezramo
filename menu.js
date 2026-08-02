@@ -88,7 +88,9 @@ var _tv2Cats = null;
 function _initTvCats() {
   if (_tv1Cats) return;
   _tv1Cats = {}; _tv2Cats = {};
-  var half = Math.ceil(defaultMenu.length / 2);
+  /* TV1 : 9 premières catégories (Sandwichs → Finger Food)
+     TV2 : le reste, dont Accompagnements & Sauces en premier */
+  var half = 9;
   for (var _i = 0; _i < defaultMenu.length; _i++) {
     var _key = normCat(defaultMenu[_i].category);
     if (_i < half) _tv1Cats[_key] = true;
@@ -126,8 +128,8 @@ var MODE = 'board';
     if (m === 'diapo' || m === 'board') MODE = m;
   } catch (e) {}
 })();
-var BOARD_DURATION = 20000; /* rotation entre pages du panneau (si >1 page) */
-var BOARD_MAX_COL  = 15;    /* budget "lignes" par colonne du panneau */
+var BOARD_DURATION = 22000; /* rotation entre pages du panneau */
+var BOARD_MAX_COL  = 14;    /* budget "lignes" par colonne — ~2 catégories max */
 
 /* ════════════════════════════════════════════════
    DÉTECTION RÉSEAU & ADAPTATION
