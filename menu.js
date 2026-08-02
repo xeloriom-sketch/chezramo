@@ -491,11 +491,6 @@ var defaultMenu = [
     { title: "Qofte x7",  description: "7 boulettes grillées maison",  price: "11,00", url: "uploads/Qofte_x7.png" },
     { title: "Qofte x10", description: "10 boulettes grillées maison", price: "13,00", url: "uploads/Qofte_x10.png" }
   ]},
-  { category: "Grillades", info: "Plateau : agneau, escalope, entrecôte, suxhuk, salade grecque, frites", items: [
-    { title: "Grillade 2 pers.", description: "Plateau complet pour 2 personnes", price: "39,00", badge: "2 PERS", url: "uploads/Menu_Grillade.png" },
-    { title: "Grillade 4 pers.", description: "Plateau complet pour 4 personnes", price: "79,00", badge: "4 PERS", url: "uploads/Menu_Grillade.png" },
-    { title: "Grillade 6 pers.", description: "Plateau complet pour 6 personnes", price: "99,00", badge: "6 PERS", url: "uploads/Menu_Grillade.png" }
-  ]},
   { category: "Menu Enfants", info: "Pour les petits appétits", items: [
     { title: "Menu Nuggets",  description: "Nuggets x4, frites et boisson", price: "6,00", url: "uploads/Nuggets (x7).png" },
     { title: "Menu Escalope", description: "Escalope, frites et boisson",   price: "6,00", url: "uploads/Escalope.png" },
