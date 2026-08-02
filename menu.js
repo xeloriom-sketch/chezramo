@@ -20,8 +20,115 @@ if (!Object.values) {
 /* ── Config ─────────────────────────────────── */
 var SUPABASE_URL   = 'https://hqfewokpvjmxezhnurbm.supabase.co';
 var SUPABASE_KEY   = 'sb_publishable_NmIfxaQb5ncapzCtzI5uNQ_tHdCwAyc';
-var SLIDE_DURATION = 6000;
+var BASE_DURATION  = 6000;  /* durée normale d'un slide (demande client) */
+var SLOW_DURATION  = 9000;  /* durée en connexion faible (temps de charger) */
+var SLIDE_DURATION = BASE_DURATION;
 var loadedSlides   = {};
+
+/* ════════════════════════════════════════════════
+   MODE 2 TV : chaque écran affiche la moitié du menu
+   ────────────────────────────────────────────────
+   TV_ID = 0 → toutes les catégories (TV unique)
+   TV_ID = 1 → première moitié   |   TV_ID = 2 → seconde moitié
+
+   DÉTECTION AUTO (défaut) : chaque TV s'enregistre dans
+   la table Supabase `tv_roles` et prend le premier rôle
+   libre (1 puis 2). Heartbeat toutes les 45 s ; un rôle
+   sans nouvelle depuis 2 min est considéré libre.
+   Manuel : touche 1 / 2 (0 = menu complet, 5 = retour auto)
+   ou URL index.html?tv=1 — mémorisé (localStorage).
+   ════════════════════════════════════════════════ */
+var TV_ID     = 0;      /* rôle effectif de CETTE TV */
+var TV_MANUAL = null;   /* choix manuel mémorisé — null = mode auto */
+var DEVICE_ID = '';     /* identité stable de cette TV */
+(function() {
+  try {
+    DEVICE_ID = localStorage.getItem('ramo_device') || '';
+    if (!DEVICE_ID) {
+      DEVICE_ID = 'tv-' + Math.random().toString(36).slice(2, 10) + '-' + Date.now().toString(36);
+      localStorage.setItem('ramo_device', DEVICE_ID);
+    }
+  } catch (e) {
+    DEVICE_ID = 'tv-' + Math.random().toString(36).slice(2, 10);
+  }
+  var m = location.search.match(/[?&]tv=(\d)/);
+  if (m) {
+    TV_MANUAL = parseInt(m[1], 10) || 0;
+    try { localStorage.setItem('ramo_tv', String(TV_MANUAL)); } catch (e) {}
+  } else {
+    try {
+      var s = localStorage.getItem('ramo_tv');
+      if (s !== null && s !== '') TV_MANUAL = parseInt(s, 10) || 0;
+    } catch (e) {}
+  }
+  if (TV_MANUAL !== null) {
+    if (TV_MANUAL !== 1 && TV_MANUAL !== 2 && TV_MANUAL !== 3 && TV_MANUAL !== 4) TV_MANUAL = 0;
+    TV_ID = TV_MANUAL;
+  }
+})();
+
+/* Mode développeur : localhost uniquement (pas de claim de rôle)
+   Depuis n'importe quel autre appareil, la TV se détecte normalement
+   et prend le rôle 4 si les rôles 1 et 2 sont déjà occupés. */
+var IS_DEV = !!(
+  location.hostname === 'localhost' ||
+  location.hostname === '127.0.0.1'
+);
+
+/* Normalise un nom de catégorie pour comparaison sans accent ni casse */
+function normCat(s) {
+  return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+/* Split TV1/TV2 fixé par noms de catégories (accent-insensible)
+   pour que Grillades reste toujours TV2 même si Supabase utilise
+   des noms légèrement différents (accents, casse). */
+var _tv1Cats = null;
+var _tv2Cats = null;
+function _initTvCats() {
+  if (_tv1Cats) return;
+  _tv1Cats = {};
+  _tv2Cats = {};
+  var half = Math.ceil(defaultMenu.length / 2);
+  for (var _i = 0; _i < defaultMenu.length; _i++) {
+    var _key = normCat(defaultMenu[_i].category);
+    if (_i < half) _tv1Cats[_key] = true;
+    else           _tv2Cats[_key] = true;
+  }
+}
+function slidesForTv(data) {
+  if (TV_ID === 3) return [];
+  if (TV_ID !== 1 && TV_ID !== 2) return data;
+  _initTvCats();
+  var out1 = [], out2 = [], unk = [];
+  for (var _j = 0; _j < data.length; _j++) {
+    var _key = normCat(data[_j].category);
+    if (_tv1Cats[_key])      out1.push(data[_j]);
+    else if (_tv2Cats[_key]) out2.push(data[_j]);
+    else                     unk.push(data[_j]);
+  }
+  var uh = Math.ceil(unk.length / 2);
+  if (TV_ID === 1) return out1.concat(unk.slice(0, uh));
+  return out2.concat(unk.slice(uh));
+}
+
+/* ════════════════════════════════════════════════
+   MODE D'AFFICHAGE
+   ────────────────────────────────────────────────
+   'board' → panneau type fast-food : tout le menu
+             visible d'un coup (défaut)
+   'diapo' → ancien diaporama photo (3 plats/slide)
+   Touche 3 de la télécommande pour basculer.
+   ════════════════════════════════════════════════ */
+var MODE = 'board';
+(function() {
+  try {
+    var m = localStorage.getItem('ramo_mode');
+    if (m === 'diapo' || m === 'board') MODE = m;
+  } catch (e) {}
+})();
+var BOARD_DURATION = 20000; /* rotation entre pages du panneau (si >1 page) */
+var BOARD_MAX_COL  = 15;    /* budget "lignes" par colonne du panneau */
 
 /* ════════════════════════════════════════════════
    DÉTECTION RÉSEAU & ADAPTATION
@@ -67,11 +174,13 @@ function applyNetQuality(q) {
         '-webkit-transition:opacity 0.3s ease!important;' +
         'transition:opacity 0.3s ease!important;' +
       '}';
-    SLIDE_DURATION = 9000; /* Plus de temps pour charger sur connexion faible */
+    SLIDE_DURATION = SLOW_DURATION;
   } else {
     perfStyle.textContent = '';
-    SLIDE_DURATION = 10000;
+    SLIDE_DURATION = BASE_DURATION;
   }
+  /* Si le défilement tourne déjà, applique la nouvelle durée */
+  if (autoTimer) startAuto();
 }
 
 /* Indicateur réseau : pill discret en bas de l'écran */
@@ -122,6 +231,7 @@ window.addEventListener('online', function() {
   /* Resynchronise le menu dès que le réseau revient */
   setTimeout(fetchMenu, 1500);
   setTimeout(checkVersion, 3000);
+  setTimeout(tvClaim, 4000);
 });
 
 /* Change de qualité réseau en direct (ex: TV qui s'éloigne du routeur) */
@@ -158,6 +268,91 @@ function detectWebp(cb) {
 function toWebp(url) {
   if (!url) return url;
   return url.replace(/\.(png|jpg|jpeg)(\?.*)?$/i, '.webp$2');
+}
+
+/* Version détourée (fond transparent) d'une image :
+   uploads/X.png → uploads/cut/X.png (générées par IA, dans le repo) */
+function cutUrl(url) {
+  if (!url || url.indexOf('uploads/') === -1) return null;
+  return url.replace('uploads/', 'uploads/cut/')
+            .replace(/\.(jpg|jpeg|webp)(\?.*)?$/i, '.png$2');
+}
+
+/* Vignette panneau : détourée en priorité, fallback photo originale */
+/* Normalise la taille visuelle du plat dans une image détourée.
+   Scanne les pixels non-transparents, calcule la boîte englobante,
+   applique un scale individuel pour homogénéiser tous les plats. */
+function normalizeThumb(img) {
+  var par = img.parentElement;
+  if (!par) return;
+  var isHero  = par.className.indexOf('bhero-photo') !== -1;
+  var isThumb = par.className.indexOf('biph') !== -1;
+  if (!isHero && !isThumb) return;
+  /* TV3 pub : image originale avec fond, object-fit:cover gère l'affichage */
+  if (isHero && TV_ID === 3) return;
+  try {
+    var c = document.createElement('canvas');
+    c.width  = img.naturalWidth;
+    c.height = img.naturalHeight;
+    var ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    var d = ctx.getImageData(0, 0, c.width, c.height).data;
+    var minX = c.width, maxX = 0, minY = c.height, maxY = 0;
+    for (var i = 0; i < d.length; i += 4) {
+      if (d[i + 3] > 15) {
+        var px = (i >> 2) % c.width;
+        var py = (i >> 2) / c.width | 0;
+        if (px < minX) minX = px;
+        if (px > maxX) maxX = px;
+        if (py < minY) minY = py;
+        if (py > maxY) maxY = py;
+      }
+    }
+    if (maxX <= minX || maxY <= minY) return;
+    var foodSize   = Math.max(maxX - minX + 1, maxY - minY + 1);
+    var canvasSize = Math.max(c.width, c.height);
+    if (isHero) {
+      /* Héros : normalise sur la plus grande dimension du plat → taille uniforme */
+      var scale = Math.min((canvasSize * 0.88) / foodSize, 2.8);
+      var foodCenterRatio = (minY + maxY) / 2 / c.height;
+      var offsetY = (0.5 - foodCenterRatio) * 100;
+      img.style.transformOrigin = 'center center';
+      img.style.transform = 'scale(' + scale.toFixed(2) + ') translateY(' + offsetY.toFixed(1) + '%)';
+    } else {
+      var scale = Math.min((canvasSize * 1.35) / foodSize, 5.4);
+      img.style.transform = 'scale(' + scale.toFixed(2) + ')';
+    }
+  } catch (e) {}
+}
+
+function loadThumb(img, src) {
+  if (!src) { img.style.display = 'none'; return; }
+  var cut = cutUrl(src);
+  if (!cut || cut === src) { loadImg(img, src); return; }
+  var cutWp = cut.replace(/\.png(\?.*)?$/i, '.webp');
+
+  function tryPng() {
+    var p = new Image();
+    p.onload = function() {
+      img.onload = function() { normalizeThumb(img); };
+      img.src = cut;
+      img.className = 'loaded';
+    };
+    p.onerror = function() { loadImg(img, src); };
+    p.src = cut;
+  }
+
+  detectWebp(function(ok) {
+    if (!ok || cutWp === cut) { tryPng(); return; }
+    var p = new Image();
+    p.onload = function() {
+      img.onload = function() { normalizeThumb(img); };
+      img.src = cutWp;
+      img.className = 'loaded';
+    };
+    p.onerror = tryPng;
+    p.src = cutWp;
+  });
 }
 
 /* Charge une image : WebP en priorité, fallback sur original */
@@ -204,6 +399,11 @@ function precacheAllImages(data) {
       urls.push(item.url);
       var wp = toWebp(item.url);
       if (wp !== item.url && !seen[wp]) { seen[wp] = true; urls.push(wp); }
+      var ct = cutUrl(item.url);
+      if (ct && !seen[ct]) { seen[ct] = true; urls.push(ct); }
+      /* WebP cut (RGBA transparent, plus léger) */
+      var ctWp = ct ? ct.replace(/\.png(\?.*)?$/i, '.webp') : null;
+      if (ctWp && ctWp !== ct && !seen[ctWp]) { seen[ctWp] = true; urls.push(ctWp); }
     });
   });
   swc.postMessage({
@@ -217,7 +417,7 @@ function precacheAllImages(data) {
    DONNÉES MENU PAR DÉFAUT (fallback offline)
    ════════════════════════════════════════════════ */
 var defaultMenu = [
-  { category: "Sandwichs Vedettes", info: "Veau 100% Maison | Pain Artisanal", items: [
+  { category: "Sandwichs Vedettes", info: "Viande de veau 100% Maison", items: [
     { title: "Kebab",       description: "Pain rond, veau maison, crudités",        price: "9,00",  menuPrice: "12,00", url: "uploads/Kebab.png" },
     { title: "Kebab Frites",description: "Viande et frites servis dans le pain",    price: "9,50",                      url: "uploads/Kebab Frites.png" },
     { title: "Kebab Geant", description: "Double portion de viande de veau",        price: "15,00", menuPrice: "17,00", badge: "XXL", url: "uploads/Kebab Geant.png" }
@@ -296,6 +496,11 @@ var defaultMenu = [
     { title: "Grillade 4 pers.", description: "Plateau complet pour 4 personnes", price: "79,00", badge: "4 PERS", url: "uploads/Menu_Grillade.png" },
     { title: "Grillade 6 pers.", description: "Plateau complet pour 6 personnes", price: "99,00", badge: "6 PERS", url: "uploads/Menu_Grillade.png" }
   ]},
+  { category: "Menu Enfants", info: "Pour les petits appétits", items: [
+    { title: "Menu Nuggets",  description: "Nuggets x4, frites et boisson", price: "6,00", url: "uploads/Nuggets (x7).png" },
+    { title: "Menu Escalope", description: "Escalope, frites et boisson",   price: "6,00", url: "uploads/Escalope.png" },
+    { title: "Menu Cheese",   description: "Cheese burger, frites, boisson",price: "6,00", url: "uploads/Cheese Burger.png" }
+  ]},
   { category: "Desserts", info: "Douceurs maison", items: [
     { title: "Trilece",  description: "Dessert traditionnel au lait", price: "3,50", url: "uploads/Trilece.png" },
     { title: "Tiramisu", description: "Tiramisu maison",              price: "3,50", url: "uploads/Tiramisu.png" }
@@ -303,10 +508,12 @@ var defaultMenu = [
 ];
 
 /* ── État global ────────────────────────────── */
-var menuData    = JSON.parse(JSON.stringify(defaultMenu));
+var menuData    = JSON.parse(JSON.stringify(defaultMenu)); /* menu complet */
+var viewData    = slidesForTv(menuData);                   /* slides de CETTE TV */
 var current     = 0;
 var autoTimer   = null;
 var progressBar = document.getElementById('progress-bar');
+var lastMenuJson = '';
 
 /* ── Formatage des prix ─────────────────────── */
 function makePrice(price, menuPrice) {
@@ -335,11 +542,27 @@ function makePrice(price, menuPrice) {
 }
 
 /* ── Construction HTML ──────────────────────── */
+var slideTotal = 0; /* nombre de slides/pages réellement affichés */
+
 function render() {
-  var vp   = document.getElementById('viewport');
+  var vp = document.getElementById('viewport');
+  vp.innerHTML = (MODE === 'board') ? buildBoardHtml() : buildSlidesHtml();
+  loadedSlides = {};
+  /* Habillage spécifique panneau (bandeau d'en-tête rouge) */
+  document.body.className = (MODE === 'board') ? 'mode-board' : '';
+  if (MODE === 'board') { heroRender(); heroStart(); }
+  else { heroStop(); }
+  /* Barre de progression inutile si une seule page (panneau statique) */
+  var pw = document.getElementById('progress-wrap');
+  if (pw) pw.style.display = (slideTotal > 1) ? '' : 'none';
+}
+
+/* ── Diaporama photo (mode 'diapo') ─────────── */
+function buildSlidesHtml() {
+  slideTotal = viewData.length;
   var html = '';
-  for (var sIdx = 0; sIdx < menuData.length; sIdx++) {
-    var slide     = menuData[sIdx];
+  for (var sIdx = 0; sIdx < viewData.length; sIdx++) {
+    var slide     = viewData[sIdx];
     var cols      = slide.items.length <= 2 ? 'cols-2' : '';
     var cardsHtml = '';
     for (var i = 0; i < slide.items.length; i++) {
@@ -369,8 +592,495 @@ function render() {
         '<div class="grid ' + cols + '">' + cardsHtml + '</div>' +
       '</div>';
   }
-  vp.innerHTML = html;
-  loadedSlides  = {};
+  return html;
+}
+
+/* ── Panneau fast-food (mode 'board') ─────────
+   Répartit les catégories dans des colonnes de
+   BOARD_MAX_COL "lignes" max, 3 colonnes par page.
+   1 page = tout visible d'un coup, sans attendre. */
+function boardPages(data) {
+  /* TV2 : tout en 1 page statique, 3 colonnes réparties équitablement */
+  if (TV_ID === 2) {
+    var t = Math.ceil(data.length / 3);
+    return [[ data.slice(0, t), data.slice(t, 2 * t), data.slice(2 * t) ]];
+  }
+  var cols = [], cur = [], used = 0;
+  for (var i = 0; i < data.length; i++) {
+    var c    = data[i];
+    var cost = (c.items || []).length + (c.info ? 2 : 1.5);
+    if (used > 0 && used + cost > BOARD_MAX_COL) { cols.push(cur); cur = []; used = 0; }
+    cur.push(c); used += cost;
+  }
+  if (cur.length) cols.push(cur);
+  var pages = [];
+  for (var p = 0; p < cols.length; p += 3) pages.push(cols.slice(p, p + 3));
+  return pages;
+}
+
+/* Item circulaire : photo ronde + nom + prix */
+function boardItemHtml(item, showImg) {
+  var safeUrl = (item.url || '').replace(/'/g, '%27');
+  var badge   = item.badge ? '<span class="bibadge">' + item.badge + '</span>' : '';
+  var p       = item.price || '';
+  var mp      = item.menuPrice || item.menu_price || '';
+  var thumb   = showImg
+    ? '<span class="biph"><img data-src="' + safeUrl + '" data-thumb="1" src="" alt="" decoding="async"></span>'
+    : '<span class="biph biph-empty"></span>';
+  var priceHtml = '<span class="bitem-price">';
+  if (p) priceHtml += '<span class="bip">' + p + (/\d/.test(p) ? '<sup>€</sup>' : '') + '</span>';
+  if (mp) priceHtml += '<span class="bipm">MENU ' + mp + '€</span>';
+  priceHtml += '</span>';
+  return (
+    '<div class="bitem">' + thumb +
+      '<span class="bitem-name">' + (item.title || '') + badge + '</span>' +
+      priceHtml +
+    '</div>'
+  );
+}
+
+function boardCatHtml(cat) {
+  var items = cat.items || [];
+  var duo   = items.length <= 2 ? ' bcat--duo' : '';
+  var html  =
+    '<div class="bcat' + duo + '">' +
+      '<div class="bcat-head">' +
+        '<span class="bcat-title">' + (cat.category || '') + '</span>' +
+        '<span class="bcat-line"></span>' +
+      '</div>' +
+      (cat.info ? '<div class="bcat-info">' + cat.info + '</div>' : '');
+  html += '<div class="bcat-items">';
+  for (var k = 0; k < items.length; k++) {
+    var it      = items[k];
+    var showImg = !!it.url;
+    html += boardItemHtml(it, showImg);
+  }
+  return html + '</div></div>';
+}
+
+var HERO_EXTRA_HTML =
+  '<div class="bhero-extra">' +
+    '<div class="bhero-extra-cols">' +
+      '<div class="bhero-extra-col">' +
+        '<div class="bhero-extra-title">Sauces</div>' +
+        '<div class="bhero-extra-sauce">' +
+          '<span>Algérienne</span>' +
+          '<span>Blanche</span>' +
+          '<span>Samouraï</span>' +
+          '<span>Harissa</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bhero-extra-col">' +
+        '<div class="bhero-extra-title">Boissons</div>' +
+        '<div class="bhero-extra-sauce">' +
+          '<div class="bhero-drink"><span class="bhero-drink-name">33CL</span><span class="bhero-drink-price">2,00€</span></div>' +
+          '<div class="bhero-drink"><span class="bhero-drink-name">CAFÉ</span><span class="bhero-drink-price">1,50€</span></div>' +
+          '<div class="bhero-drink"><span class="bhero-drink-name">THÉ</span><span class="bhero-drink-price">1,50€</span></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+
+function buildBoardHtml() {
+  /* ── TV 3 : pub-mode plein écran (bannière géante) ── */
+  if (TV_ID === 3) {
+    slideTotal = 1;
+    return '<div class="slide board pub active" id="s0">' +
+      '<div class="pub-cols" id="pub-cols"></div>' +
+      '<div class="pub-prog" id="pub-prog"></div>' +
+    '</div>';
+  }
+
+  var pages  = boardPages(viewData);
+  slideTotal = pages.length;
+  var html = '';
+  for (var p = 0; p < pages.length; p++) {
+    var colsHtml = '';
+    for (var c = 0; c < 3; c++) {
+      var cats    = pages[p][c] || [];
+      var catHtml = '';
+      for (var k = 0; k < cats.length; k++) catHtml += boardCatHtml(cats[k]);
+      colsHtml += '<div class="bcol">' + catHtml + '</div>';
+    }
+    html +=
+      '<div class="slide board" id="s' + p + '">' +
+        '<div class="bhero-band">' +
+          '<div class="bhero-brand-corner">CHEZ RAMO</div>' +
+          '<div class="bhero-inner"></div>' +
+          HERO_EXTRA_HTML +
+        '</div>' +
+        '<div class="bmenu">' + colsHtml + '</div>' +
+      '</div>';
+  }
+  return html;
+}
+
+/* ── Plat vedette « À LA UNE » : rotation 7 s ──
+   Fait tourner tous les plats (avec photo) de la
+   moitié de menu de CETTE TV, en très grand.     ── */
+var HERO_DURATION = 7000;
+var heroIdx   = 0;
+var heroTimer = null;
+var pubTimer  = null;
+var pubColIdx = 0;
+var PUB_COL_DUR = 5000; /* ms par slide */
+
+/* Plats mis en avant dans la bannière — uniquement ceux avec une belle image */
+var HERO_FEATURED = [
+  'kebab', 'kebab geant', 'kebab-geant',
+  'tacos', 'maxi tacos', 'maxi-tacos',
+  'burger', 'chicken burger', 'cheese burger', 'fish burger'
+];
+var PUB_EXCLUDE = ['miche', 'assiette', 'assiete'];
+
+function heroItems() {
+  /* TV 3 pub-mode : utilise tout le menu, pas juste la moitié */
+  var source = (TV_ID === 3) ? menuData : viewData;
+  /* Collecte tous les plats avec photo */
+  var all = [], seen = {};
+  for (var s = 0; s < source.length; s++) {
+    var items = source[s].items || [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      if (it.url && !seen[it.url]) {
+        seen[it.url] = true;
+        all.push(it);
+      }
+    }
+  }
+  /* Filtre sur les best-sellers */
+  var featured = all.filter(function(it) {
+    var key = (it.title || it.id || '').toLowerCase().trim();
+    for (var e = 0; e < PUB_EXCLUDE.length; e++) {
+      if (key.indexOf(PUB_EXCLUDE[e]) !== -1) return false;
+    }
+    for (var k = 0; k < HERO_FEATURED.length; k++) {
+      if (key === HERO_FEATURED[k] || key.indexOf(HERO_FEATURED[k]) !== -1) return true;
+    }
+    return false;
+  });
+  /* Fallback : si rien ne matche (Supabase avec noms différents), on prend tout */
+  return featured.length ? featured : all;
+}
+
+function heroRender() {
+  if (TV_ID === 3) { pubRender(); return; }
+  var inners = document.querySelectorAll('.bhero-inner');
+  if (!inners.length) return;
+  var items = heroItems();
+  if (!items.length) return;
+  heroIdx = heroIdx % items.length;
+  var it         = items[heroIdx];
+  var safeUrl    = (it.url || '').replace(/'/g, '%27');
+  var mp         = it.menuPrice || it.menu_price || '';
+  var pricesHtml = '';
+  if (it.price) {
+    pricesHtml +=
+      '<div class="bhero-pcard">' +
+        '<div class="bhero-pnum">' + it.price + (/\d/.test(it.price) ? '<sup>€</sup>' : '') + '</div>' +
+        '<div class="bhero-plbl">SEUL</div>' +
+      '</div>';
+  }
+  if (mp) {
+    pricesHtml +=
+      '<div class="bhero-pcard bhero-pcard-menu">' +
+        '<div class="bhero-pnum">' + mp + '<sup>€</sup></div>' +
+        '<div class="bhero-plbl">MENU</div>' +
+      '</div>';
+  }
+  var html;
+  if (TV_ID === 3) {
+    /* ── Mode pub TV 3 : layout enrichi avec branding + badge ── */
+    var catLabel = (it.category || '').replace(/&amp;/g,'&');
+    html =
+      '<div class="bhero-photo">' +
+        '<img data-src="' + safeUrl + '" data-thumb="1" src="" alt="" decoding="async">' +
+      '</div>' +
+      '<div class="bhero-right">' +
+        '<div class="pub-brand">CHEZ RAMO</div>' +
+        (catLabel ? '<div class="pub-cat">' + catLabel + '</div>' : '') +
+        '<div class="bhero-name">' + (it.title || '') + '</div>' +
+        '<div class="pub-sep"></div>' +
+        (it.description ? '<div class="bhero-desc">' + it.description + '</div>' : '') +
+        '<div class="bhero-prices">' + pricesHtml + '</div>' +
+      '</div>';
+  } else {
+    html =
+      '<div class="bhero-photo">' +
+        '<img data-src="' + safeUrl + '" data-thumb="1" src="" alt="" decoding="async">' +
+      '</div>' +
+      '<div class="bhero-right">' +
+        '<div class="bhero-name">' + (it.title || '') + '</div>' +
+        (it.description ? '<div class="bhero-desc">' + it.description + '</div>' : '') +
+        '<div class="bhero-prices">' + pricesHtml + '</div>' +
+      '</div>';
+  }
+  for (var c = 0; c < inners.length; c++) {
+    var inner = inners[c];
+    inner.innerHTML = html;
+    var img = inner.querySelector('img[data-src]');
+    if (img) {
+      var src = img.getAttribute('data-src');
+      img.removeAttribute('data-src');
+      /* TV3 pub : image originale haute qualité (pas la vignette 420px) */
+      if (TV_ID === 3) { loadImg(img, src); } else { loadThumb(img, src); }
+    }
+    inner.style.opacity = '1';
+    inner.style.transform = 'translateX(0)';
+  }
+}
+
+function pubStop() {
+  if (pubTimer) { clearInterval(pubTimer); pubTimer = null; }
+}
+
+/* ── Images "dessin" pour TV3 pub ──────────────
+   Clé = mot-clé dans le titre (lowercase).
+   Ajoute ici les fichiers que tu télécharges dans uploads/.
+   Ex: 'kebab': 'uploads/draw_kebab.png'              */
+/* Ordre important : clés les plus longues/spécifiques en premier */
+var PUB_DRAW_MAP = {
+  'kebab frites':   'uploads/draw_kebab_frites.png',
+  'kebab geant':    'uploads/draw_kebab_geant.png',
+  'kebab-geant':    'uploads/draw_kebab_geant.png',
+  'miche kebab':    'uploads/draw_miche_kebab.png',
+  'miche-kebab':    'uploads/draw_miche_kebab.png',
+  'miche':          'uploads/draw_miche_kebab.png',
+  'maxi tacos':     'uploads/draw_maxi_tacos.png',
+  'maxi-tacos':     'uploads/draw_maxi_tacos.png',
+  'chicken burger': 'uploads/draw_chicken_burger.png',
+  'cheese burger':  'uploads/draw_cheese_burger.png',
+  'fish burger':    'uploads/draw_fish_burger.png',
+  'tacos':          'uploads/draw_tacos.png',
+  'kebab':          'uploads/draw_kebab.png',
+  'burger':         'uploads/draw_cheese_burger.png'
+};
+function pubDrawUrl(title) {
+  var t = (title || '').toLowerCase();
+  var keys = Object.keys(PUB_DRAW_MAP);
+  for (var i = 0; i < keys.length; i++) {
+    if (t.indexOf(keys[i]) !== -1) return PUB_DRAW_MAP[keys[i]];
+  }
+  return null;
+}
+
+/* Unsplash HD backgrounds — licence Unsplash (gratuit, usage commercial autorisé) */
+var PUB_BG_IDS = {
+  kebab:     'UC0HZdUitWY',
+  tacos:     '50KffXbjIOg',
+  burger:    'jh5XyK4Rr3Y',
+  americain: 'I7A_pHLcQK8',
+  miche:     'sPmF7MNzdnU',
+  sandwich:  'sPmF7MNzdnU',
+  frites:    'ChXHveqrb28',
+  galette:   'wYwbs_bsmaM',
+  assiette:  'jhTzMj5aJQk',
+  _default:  'Fo80DfhsJUk'
+};
+function pubBgUrl(title) {
+  var t = (title || '').toLowerCase();
+  var keys = ['kebab','tacos','burger','americain','miche','sandwich','frites','galette','assiette'];
+  for (var i = 0; i < keys.length; i++) {
+    if (t.indexOf(keys[i]) >= 0) {
+      return 'https://images.unsplash.com/photo-' + PUB_BG_IDS[keys[i]] + '?w=1920&h=1080&fit=crop&q=82&fm=webp';
+    }
+  }
+  return 'https://images.unsplash.com/photo-' + PUB_BG_IDS._default + '?w=1920&h=1080&fit=crop&q=82&fm=webp';
+}
+
+/* Génère le collage typographique en fond (style editorial) */
+var PUB_EXTRAS = ['MAISON','ROYAL','SAVEUR','FRAIS','DORÉ','GRILLÉ','ÉPICÉ','GÉANT'];
+function pubGhostHtml(title, idx) {
+  var words = (title || '').replace(/[^A-Za-zÀ-ÿ0-9\s]/g,'').toUpperCase().split(/\s+/).filter(Boolean);
+  var w0 = words[0] || 'CHEZ';
+  var w1 = words.length > 1 ? words[1] : PUB_EXTRAS[idx % PUB_EXTRAS.length];
+  var w2 = words.length > 2 ? words[2] : PUB_EXTRAS[(idx + 3) % PUB_EXTRAS.length];
+  return (
+    '<div class="pub-collage">' +
+      '<span class="pub-ghost" style="font-size:20vw;top:-1%;left:-2%;-webkit-transform:rotate(-7deg);transform:rotate(-7deg)">' + w0 + '</span>' +
+      '<span class="pub-ghost" style="font-size:6.5vw;top:35%;right:-0.5%;letter-spacing:0.45em;-webkit-transform:rotate(90deg);transform:rotate(90deg)">CHEZ RAMO</span>' +
+      '<span class="pub-ghost pub-ghost-sm" style="font-size:9vw;top:70%;left:1%;-webkit-transform:rotate(5deg);transform:rotate(5deg)">' + w1 + '</span>' +
+      '<span class="pub-ghost pub-ghost-sm" style="font-size:5.5vw;top:12%;left:5%;-webkit-transform:rotate(-3deg);transform:rotate(-3deg)">' + w2 + '</span>' +
+      '<span class="pub-ghost-dots" style="top:51%;left:4%;-webkit-transform:rotate(-1deg);transform:rotate(-1deg)">· · · · · · · · · · · · · · ·</span>' +
+    '</div>'
+  );
+}
+
+/* Scanne les pixels non-transparents, positionne et taille dest
+   pour que le food remplisse ~75 % de l'écran en un seul scale
+   (width/height = meilleure interpolation que transform:scale). */
+function normalizePubImg(src, dest) {
+  try {
+    var c = document.createElement('canvas');
+    c.width = src.naturalWidth; c.height = src.naturalHeight;
+    var ctx = c.getContext('2d');
+    ctx.drawImage(src, 0, 0);
+    var d = ctx.getImageData(0, 0, c.width, c.height).data;
+    var minX = c.width, maxX = 0, minY = c.height, maxY = 0;
+    for (var i = 0; i < d.length; i += 4) {
+      if (d[i + 3] > 15) {
+        var px = (i >> 2) % c.width;
+        var py = (i >> 2) / c.width | 0;
+        if (px < minX) minX = px; if (px > maxX) maxX = px;
+        if (py < minY) minY = py; if (py > maxY) maxY = py;
+      }
+    }
+    if (maxX <= minX || maxY <= minY) {
+      minX = 0; maxX = c.width - 1; minY = 0; maxY = c.height - 1;
+    }
+    var foodW  = maxX - minX + 1;
+    var foodH  = maxY - minY + 1;
+    var foodCX = (minX + maxX) / 2;
+    var foodCY = (minY + maxY) / 2;
+    var vw = window.innerWidth  || 1920;
+    var vh = window.innerHeight || 1080;
+    /* Scale unique : food ≈ 50 % de l'écran, capé à ×2 pour limiter la pixelisation */
+    var target = Math.min(vh * 0.50, vw * 0.38);
+    var scale  = Math.min(target / Math.max(foodW, foodH), 2);
+    scale = Math.max(scale, 0.8);
+    dest.style.width     = (c.width  * scale).toFixed(0) + 'px';
+    dest.style.height    = (c.height * scale).toFixed(0) + 'px';
+    dest.style.left      = (vw * 0.50 - foodCX * scale).toFixed(0) + 'px';
+    dest.style.top       = (vh * 0.44 - foodCY * scale).toFixed(0) + 'px';
+    dest.style.transform = 'none';
+  } catch(e) {
+    dest.style.width = 'auto'; dest.style.height = '75vh';
+    dest.style.left = '50%';   dest.style.top    = '44%';
+    dest.style.transform = 'translate(-50%,-50%)';
+  }
+}
+
+function pubCycle() {
+  var container = document.getElementById('pub-cols');
+  if (!container) return;
+  var slides = container.querySelectorAll('.pub-slide');
+  var n = slides.length;
+  if (!n) return;
+  var idx = pubColIdx % n;
+  for (var i = 0; i < n; i++) {
+    slides[i].className = 'pub-slide' + (i === idx ? ' active' : '');
+  }
+  pubColIdx++;
+}
+
+function pubStart() {
+  pubStop();
+  pubColIdx = 0;
+  pubCycle();
+  pubTimer = setInterval(pubCycle, PUB_COL_DUR);
+}
+
+function pubRender() {
+  var container = document.getElementById('pub-cols');
+  if (!container) return;
+  var items = heroItems();
+  if (!items.length) return;
+
+  /* Palette old B&W : encre noire + sépia foncé */
+  var COLORS = ['#1C1308', '#2E1F0A', '#1C1308', '#2E1F0A', '#1C1308'];
+  var n = Math.min(items.length, 8);
+
+  /* expose la durée comme variable CSS pour la barre de progression */
+  document.documentElement.style.setProperty('--pub-slide-dur', PUB_COL_DUR + 'ms');
+
+  var html = '<div class="pub-slider">';
+  for (var i = 0; i < n; i++) {
+    var it       = items[i];
+    var color    = COLORS[i % COLORS.length];
+    var priceStr = it.price ? it.price + '€' : (it.menuPrice ? it.menuPrice + '€' : '');
+    var descStr  = it.description || 'Savourez chaque bouchée — une explosion de saveurs authentiques !';
+    var safeUrl  = (it.url || '').replace(/'/g, '%27');
+
+    var dotsHtml = '';
+    for (var j = 0; j < n; j++) {
+      dotsHtml += '<span class="pub-dot' + (j === i ? ' active' : '') + '"></span>';
+    }
+
+    var bgUrl     = pubBgUrl(it.title);
+    var ghostHtml = pubGhostHtml(it.title, i);
+    var drawUrl   = pubDrawUrl(it.title);
+    var imgSrc    = drawUrl ? drawUrl : safeUrl;
+    var imgClass  = drawUrl ? 'pub-slide-img pub-slide-img--draw' : 'pub-slide-img pub-slide-img--photo';
+
+    html +=
+      '<div class="pub-slide' + (i === 0 ? ' active' : '') + '" style="--pub-accent:' + color + '">' +
+        ghostHtml +
+        '<div class="pub-accent-bar"></div>' +
+        '<div class="pub-left">' +
+          '<div class="pub-slide-tag">CHEZ RAMO</div>' +
+          '<div class="pub-eyebrow">· NOTRE SPÉCIALITÉ ·</div>' +
+          '<div class="pub-rule"><span class="pub-rule-inner"></span></div>' +
+          '<div class="pub-title-clip"><div class="pub-slide-title">' + (it.title || '') + '</div></div>' +
+          (priceStr ? '<div class="pub-slide-row"><div class="pub-slide-price"><span class="pub-price-val">' + priceStr + '</span></div></div>' : '') +
+          (descStr ? '<div class="pub-slide-desc">' + descStr + '</div>' : '') +
+          '<div class="pub-slide-dots">' + dotsHtml + '</div>' +
+        '</div>' +
+        '<div class="pub-right">' +
+          '<img class="' + imgClass + '" src="" data-src="' + imgSrc + '" alt="" decoding="async">' +
+        '</div>' +
+        '<div class="pub-prog-wrap"><div class="pub-prog-bar"></div></div>' +
+      '</div>';
+  }
+  html += '</div>';
+
+  container.innerHTML = html;
+
+  var imgs = container.querySelectorAll('img[data-src]');
+  for (var k = 0; k < imgs.length; k++) {
+    (function(imgEl) {
+      var src = imgEl.getAttribute('data-src');
+      imgEl.removeAttribute('data-src');
+      if (!src) { imgEl.style.display = 'none'; return; }
+
+      var cut  = cutUrl(src);
+      detectWebp(function(webpOk) {
+        var list = [];
+        if (cut) {
+          var wp = cut.replace(/\.png(\?.*)?$/i, '.webp');
+          if (webpOk && wp !== cut) list.push(wp);
+          list.push(cut);
+        }
+        list.push(src);
+
+        function tryNext(idx) {
+          if (idx >= list.length) return;
+          var tmp = new Image();
+          tmp.onload = function() {
+            imgEl.src = tmp.src;
+            var base = imgEl.className.replace(/\bloaded\b/g, '').trim();
+            imgEl.className = base + ' loaded';
+          };
+          tmp.onerror = function() { tryNext(idx + 1); };
+          tmp.src = list[idx];
+        }
+        tryNext(0);
+      });
+    })(imgs[k]);
+  }
+}
+
+function heroStop() {
+  if (heroTimer) { clearInterval(heroTimer); heroTimer = null; }
+  pubStop();
+}
+
+function heroStart() {
+  heroStop();
+  if (MODE !== 'board') return;
+  if (TV_ID === 3) { pubStart(); return; }
+  heroTimer = setInterval(function() {
+    heroIdx++;
+    var inners = document.querySelectorAll('.bhero-inner');
+    for (var c = 0; c < inners.length; c++) {
+      inners[c].style.opacity = '0';
+      inners[c].style.transform = 'translateX(-3vw)';
+    }
+    setTimeout(function() {
+      var ins = document.querySelectorAll('.bhero-inner');
+      for (var c2 = 0; c2 < ins.length; c2++) ins[c2].style.transform = 'translateX(3vw)';
+      heroRender();
+    }, 500);
+  }, HERO_DURATION);
 }
 
 /* ── Chargement lazy des images du slide ──────── */
@@ -383,46 +1093,169 @@ function loadSlideImages(idx) {
   for (var i = 0; i < imgs.length; i++) {
     (function(img) {
       var src = img.getAttribute('data-src');
-      if (!src) return;
+      if (!src) { img.style.display = 'none'; return; }
       img.removeAttribute('data-src');
-      loadImg(img, src);
+      if (img.getAttribute('data-thumb')) loadThumb(img, src);
+      else loadImg(img, src);
     })(imgs[i]);
   }
 }
 
-/* ── Affichage d'un slide ───────────────────── */
+/* ── Affichage d'un slide / d'une page ──────── */
+function activeDuration() {
+  return (MODE === 'board') ? BOARD_DURATION : SLIDE_DURATION;
+}
+
 function showSlide(idx) {
+  if (idx >= slideTotal) idx = current = 0;
   var slides = document.querySelectorAll('.slide');
-  for (var i = 0; i < slides.length; i++) slides[i].className = 'slide';
+  var isBoard = (MODE === 'board');
+  var isPub   = isBoard && TV_ID === 3;
+  for (var i = 0; i < slides.length; i++) {
+    slides[i].className = isBoard ? (isPub ? 'slide board pub' : 'slide board') : 'slide';
+  }
   var el = document.getElementById('s' + idx);
-  if (el) el.className = 'slide active';
+  if (el) el.className = isBoard ? (isPub ? 'slide board pub active' : 'slide board active') : 'slide active';
 
   loadSlideImages(idx);
-  var nextIdx = (idx + 1) % menuData.length;
+  var nextIdx = (idx + 1) % slideTotal;
   setTimeout(function() { loadSlideImages(nextIdx); }, 1200);
 
+  if (slideTotal < 2) return; /* page unique : pas de barre de progression */
   progressBar.style.cssText =
     'width:0%;height:100%;background:#e01010;-webkit-transition:none;transition:none;';
   void progressBar.offsetWidth;
   progressBar.style.cssText =
     'width:100%;height:100%;background:#e01010;' +
-    '-webkit-transition:width ' + SLIDE_DURATION + 'ms linear;' +
-    'transition:width ' + SLIDE_DURATION + 'ms linear;';
+    '-webkit-transition:width ' + activeDuration() + 'ms linear;' +
+    'transition:width ' + activeDuration() + 'ms linear;';
 }
 
 /* ── Défilement automatique ─────────────────── */
 function startAuto() {
-  if (autoTimer) clearInterval(autoTimer);
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+  if (slideTotal < 2) return; /* panneau statique : rien à faire tourner */
   autoTimer = setInterval(function() {
-    current = (current + 1) % menuData.length;
+    /* Reload code en attente : profite de la transition de slide (invisible) */
+    if (pendingCodeReload) {
+      pendingCodeReload = false;
+      setTimeout(function() { location.reload(true); }, 300);
+      return;
+    }
+    current = (current + 1) % slideTotal;
     showSlide(current);
-  }, SLIDE_DURATION);
+  }, activeDuration());
 }
 
 function navigate(dir) {
-  current = (current + dir + menuData.length) % menuData.length;
+  if (slideTotal < 2) return;
+  current = (current + dir + slideTotal) % slideTotal;
   showSlide(current);
   startAuto();
+}
+
+/* ── Application d'un rôle TV ───────────────── */
+function applyRole(n, label) {
+  TV_ID    = n;
+  viewData = slidesForTv(menuData);
+  current  = 0;
+  render();
+  showSlide(0);
+  startAuto();
+  if (label) showNetStatus(label, '#1c3e7c', 5000);
+}
+
+/* Choix manuel : touches 1 / 2 / 0 */
+function setTv(n) {
+  TV_MANUAL = n;
+  try { localStorage.setItem('ramo_tv', String(n)); } catch (e) {}
+  applyRole(n,
+    n === 0 ? 'TV UNIQUE — MENU COMPLET'
+            : 'TV ' + n + ' — MANUEL — ' + slidesForTv(menuData).length + ' CATÉGORIES');
+}
+
+/* Retour au mode auto : touche 5 */
+function setTvAuto() {
+  TV_MANUAL = null;
+  try { localStorage.removeItem('ramo_tv'); } catch (e) {}
+  applyRole(0, 'MODE AUTO — DÉTECTION DES TV…');
+  tvClaim();
+}
+
+/* ── Détection auto via Supabase (table tv_roles) ──
+   refresh : je garde le rôle que je possède déjà
+   take    : je prends un rôle libre (heartbeat > 2 min)
+   Filtres SQL dans l'URL = opérations atomiques,
+   pas de conflit possible entre les deux TV.       ── */
+var CLAIM_STALE = 120000;
+
+function tvPatch(filter, body, cb) {
+  fetch(SUPABASE_URL + '/rest/v1/tv_roles?' + filter, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(body)
+  }).then(function(r) { return r.ok ? r.json() : []; })
+    .then(function(rows) { cb(rows && rows.length > 0); })
+    .catch(function() { cb(false); });
+}
+
+function tvClaim() {
+  if (TV_MANUAL !== null) return;               /* choix manuel prioritaire */
+  if (IS_DEV) return;                           /* dev chez soi → pas de claim */
+  if (typeof fetch === 'undefined' || netQuality === 'offline') return;
+  var now = Date.now();
+  var me  = encodeURIComponent(DEVICE_ID);
+
+  function got(role) {
+    if (TV_ID !== role) applyRole(role, 'TV ' + role + ' — DÉTECTION AUTO');
+  }
+  function take(role, next) {
+    tvPatch('role=eq.' + role + '&last_seen=lt.' + (now - CLAIM_STALE),
+      { device_id: DEVICE_ID, last_seen: now },
+      function(ok) { if (ok) got(role); else next(); });
+  }
+  function refresh(role, next) {
+    tvPatch('role=eq.' + role + '&device_id=eq.' + me,
+      { last_seen: now },
+      function(ok) { if (ok) got(role); else next(); });
+  }
+  refresh(1, function() {
+    refresh(2, function() {
+      refresh(3, function() {
+        refresh(4, function() {
+          take(1, function() {
+            take(2, function() {
+              take(3, function() {
+                take(4, function() {
+                  /* Tous les rôles pris : menu complet (fallback) */
+                  if (TV_ID !== 0) applyRole(0, 'TV UNIQUE — MENU COMPLET');
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+}
+
+/* ── Bascule panneau / diaporama (touche 3) ──── */
+function setMode(m) {
+  MODE = m;
+  try { localStorage.setItem('ramo_mode', m); } catch (e) {}
+  current = 0;
+  render();
+  showSlide(0);
+  startAuto();
+  showNetStatus(
+    m === 'board' ? 'MODE PANNEAU — TOUT LE MENU' : 'MODE DIAPORAMA PHOTO',
+    '#1c3e7c', 5000
+  );
 }
 
 /* ── Télécommande + clic ────────────────────── */
@@ -434,6 +1267,16 @@ document.addEventListener('keydown', function(e) {
                 key === 'MediaRewind' || key === 'XF86Rewind');
   if (isNext) { if (e.preventDefault) e.preventDefault(); navigate(1); }
   else if (isPrev) { if (e.preventDefault) e.preventDefault(); navigate(-1); }
+  /* Touches chiffres : assigne le rôle de la TV (mémorisé) */
+  else if (key === '1' || key === 49) { setTv(1); }
+  else if (key === '2' || key === 50) { setTv(2); }
+  else if (key === '0' || key === 48) { setTv(0); }
+  /* Touche 3 : bascule panneau ↔ diaporama (mémorisé) */
+  else if (key === '3' || key === 51) { setMode(MODE === 'board' ? 'diapo' : 'board'); }
+  /* Touche 5 : retour à la détection auto des rôles TV */
+  else if (key === '5' || key === 53) { setTvAuto(); }
+  /* Touche 9 / U : prévisualiser l'animation de mise à jour (test local) */
+  else if (key === '9' || key === 57 || (e.code && e.code === 'Digit9') || key === 'u' || key === 'U') { showUpdateOverlay('TEST'); }
 });
 document.addEventListener('click', function() { navigate(1); });
 
@@ -456,30 +1299,103 @@ function fetchMenu() {
     for (var k = 0; k < defaultMenu.length; k++) {
       catInfo[defaultMenu[k].category] = defaultMenu[k].info || '';
     }
+    /* Catégories à masquer du board (affichées ailleurs : bannière, etc.) */
+    var HIDDEN_CATS = ['Boissons & Boissons Chaudes', 'Boissons'];
     for (var r = 0; r < rows.length; r++) {
       var row = rows[r];
+      if (HIDDEN_CATS.indexOf(row.category) !== -1) continue;
       if (!cats[row.category]) {
         cats[row.category] = { category: row.category, info: catInfo[row.category] || '', items: [] };
       }
       if (row.desc !== undefined && row.description === undefined) row.description = row.desc;
+      if (row.menu_price !== undefined && row.menuPrice === undefined) row.menuPrice = row.menu_price;
       cats[row.category].items.push(row);
     }
     var fresh = Object.values(cats);
-    if (fresh.length) {
-      menuData = fresh;
-      render();
-      showSlide(current);
-      startAuto();
-      /* Pre-cache les nouvelles images Supabase aussi */
-      setTimeout(function() { precacheAllImages(fresh); }, 2000);
+    if (!fresh.length) return;
+    /* Réordonne selon defaultMenu (comparaison sans accents) */
+    var catOrder = {};
+    for (var oi = 0; oi < defaultMenu.length; oi++) catOrder[normCat(defaultMenu[oi].category)] = oi;
+    /* Fallback : catégories dans defaultMenu mais absentes de Supabase (ex: Grillades)
+       → injectées depuis les données locales pour ne jamais disparaître */
+    var freshNorm = {};
+    for (var fi = 0; fi < fresh.length; fi++) freshNorm[normCat(fresh[fi].category)] = true;
+    for (var di = 0; di < defaultMenu.length; di++) {
+      if (!freshNorm[normCat(defaultMenu[di].category)]) {
+        fresh.push(JSON.parse(JSON.stringify(defaultMenu[di])));
+      }
     }
+    fresh.sort(function(a, b) {
+      var ai = catOrder[normCat(a.category)]; if (ai === undefined) ai = 999;
+      var bi = catOrder[normCat(b.category)]; if (bi === undefined) bi = 999;
+      return ai - bi;
+    });
+    /* Ne re-render que si les données ont vraiment changé */
+    var freshJson = JSON.stringify(fresh);
+    if (freshJson === lastMenuJson) return;
+    lastMenuJson = freshJson;
+    menuData = fresh;
+    viewData = slidesForTv(menuData);
+    if (current >= viewData.length) current = 0;
+    /* Mise à jour silencieuse : aucun flash visible */
+    render();
+    showSlide(current);
+    startAuto();
+    setTimeout(function() { precacheAllImages(fresh); }, 2500);
   }).catch(function() {
     fetchRetryTimer = setTimeout(fetchMenu, 30000);
   });
 }
 
-/* ── Détection de mise à jour (auto-refresh TV) ─ */
-var deployVersion = null;
+/* ── Détection de mise à jour (silencieuse) ─── */
+var deployVersion    = null;
+var pendingCodeReload = false;
+
+/* Petit toast discret coin haut-droite (non-bloquant) */
+function showToast(msg) {
+  var t = document.createElement('div');
+  t.style.cssText = 'position:fixed;top:1vw;right:1.2vw;background:rgba(0,0,0,0.78);color:#fff;' +
+    'font-family:\'Bebas Neue\',Impact,sans-serif;font-size:1.1vw;letter-spacing:0.12vw;' +
+    'padding:0.5vw 1.1vw;border-radius:0.4vw;border-left:3px solid #e01010;' +
+    'z-index:9999;opacity:0;-webkit-transition:opacity 0.35s;transition:opacity 0.35s;pointer-events:none;';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { t.style.opacity = '1'; }, 60);
+  setTimeout(function() {
+    t.style.opacity = '0';
+    setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 500);
+  }, 4000);
+}
+
+/* Mise à jour silencieuse : données + SW, reload au prochain changement de slide */
+function silentUpdate(newVersion) {
+  deployVersion = newVersion;
+  fetchMenu(); /* re-fetch données Supabase immédiatement */
+  /* Demande au Service Worker d'activer la nouvelle version en cache */
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage('SKIP_WAITING');
+  }
+  pendingCodeReload = true;
+  showToast('MISE À JOUR ✓');
+}
+
+/* Overlay test uniquement (touche 9 / U) */
+function showUpdateOverlay(version) {
+  var o = document.createElement('div');
+  o.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:99999;' +
+    'display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;' +
+    '-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;' +
+    'opacity:0;-webkit-transition:opacity 0.5s ease;transition:opacity 0.5s ease;';
+  o.innerHTML =
+    '<div style="font-family:\'Bebas Neue\',Impact,sans-serif;font-size:3vw;color:#fff;letter-spacing:0.3vw;">TEST MISE À JOUR</div>' +
+    '<div style="font-family:\'Bebas Neue\',Impact,sans-serif;font-size:1.5vw;color:#e01010;margin-top:0.5vw;">VERSION ' + version + '</div>';
+  document.body.appendChild(o);
+  setTimeout(function() { o.style.opacity = '1'; }, 60);
+  setTimeout(function() {
+    o.style.opacity = '0';
+    setTimeout(function() { if (o.parentNode) o.parentNode.removeChild(o); }, 600);
+  }, 3000);
+}
 
 function checkVersion() {
   if (typeof fetch === 'undefined') return;
@@ -489,7 +1405,7 @@ function checkVersion() {
     .then(function(data) {
       if (!data || !data.v) return;
       if (deployVersion === null) { deployVersion = data.v; return; }
-      if (data.v !== deployVersion) { location.reload(true); }
+      if (data.v !== deployVersion) { silentUpdate(data.v); }
     })
     .catch(function() {});
 }
@@ -525,12 +1441,34 @@ render();
 showSlide(0);
 startAuto();
 
-/* 3. Après 2s : charge depuis Supabase + vérifie la version */
+/* Rappel du rôle TV au démarrage */
+if (TV_ID === 3) {
+  showNetStatus('TV 3 — MODE PUB — DÉTECTION AUTO', '#8b0000', 5000);
+} else if (TV_ID === 4) {
+  showNetStatus('TV 4 — MODE TEST — MENU COMPLET', '#5a3e9c', 5000);
+} else if (TV_ID === 1 || TV_ID === 2) {
+  showNetStatus('TV ' + TV_ID + ' — MANUEL — ' + viewData.length + ' CATÉGORIES', '#1c3e7c', 5000);
+} else if (TV_MANUAL === null) {
+  showNetStatus('DÉTECTION AUTO DES TV…', '#1c3e7c', 4000);
+}
+
+/* 3. Après 2s : charge menu + détection TV
+   Les vérifications de version sont décalées par TV_ID
+   pour éviter que toutes les TV rechargent simultanément. */
 setTimeout(function() {
   fetchMenu();
   setInterval(fetchMenu, 30000);
-  checkVersion();
-  setInterval(checkVersion, 60000);
+  /* Décalage version : TV1=0s, TV2=20s, TV3=40s, TV0=aléatoire 0-15s */
+  var vOff = TV_ID > 0 ? (TV_ID - 1) * 20000 : Math.floor(Math.random() * 15000);
+  setTimeout(function() {
+    checkVersion();
+    /* Intervalle légèrement aléatoire → les TV ne se synchronisent pas */
+    setInterval(checkVersion, 55000 + Math.floor(Math.random() * 10000));
+  }, vOff);
+  if (!IS_DEV) {
+    tvClaim();
+    setInterval(tvClaim, 45000);
+  }
 }, 2000);
 
 /* 4. Après 6s : pre-cache TOUTES les images en arrière-plan */

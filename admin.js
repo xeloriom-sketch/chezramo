@@ -776,13 +776,16 @@ function setField(id, val) {
 function previewModalImage() {
   var url  = getField('modal-url');
   var prev = document.getElementById('modal-img-preview');
+  var ph   = document.getElementById('modal-photo-placeholder');
   if (!prev) return;
   if (url) {
     prev.src = url;
     prev.style.display = 'block';
+    if (ph) ph.style.display = 'none';
   } else {
     prev.src = '';
     prev.style.display = 'none';
+    if (ph) ph.style.display = '';
   }
 }
 
@@ -1062,3 +1065,259 @@ document.addEventListener('DOMContentLoaded', function() {
   var urlInput = document.getElementById('modal-url');
   if (urlInput) urlInput.addEventListener('input', previewModalImage);
 });
+
+/* ══════════════════════════════════════════════════════════
+   NAVIGATION ONGLETS
+══════════════════════════════════════════════════════════ */
+var currentTab = 'menu';
+
+function showTab(tab) {
+  currentTab = tab;
+
+  /* Panels contenu */
+  var panelMenu     = document.getElementById('content');
+  var panelTvs      = document.getElementById('content-tvs');
+  var panelSettings = document.getElementById('content-settings');
+  if (panelMenu)     panelMenu.style.display     = (tab === 'menu')     ? '' : 'none';
+  if (panelTvs)      panelTvs.style.display      = (tab === 'tvs')      ? '' : 'none';
+  if (panelSettings) panelSettings.style.display = (tab === 'settings') ? '' : 'none';
+
+  /* Bottom tab bar */
+  var tabs = ['menu', 'tvs', 'settings'];
+  tabs.forEach(function(t) {
+    var el = document.getElementById('btab-' + t);
+    if (el) el.classList.toggle('active', t === tab);
+  });
+
+  /* Sidebar tabs desktop */
+  tabs.forEach(function(t) {
+    var el = document.getElementById('stab-' + t);
+    if (el) el.classList.toggle('active', t === tab);
+  });
+
+  /* Afficher/masquer section catégories dans sidebar */
+  var catLabel = document.getElementById('sidebar-cat-label');
+  var sidebarLinks = document.getElementById('sidebar-links');
+  var showCats = (tab === 'menu');
+  if (catLabel)    catLabel.style.display    = showCats ? '' : 'none';
+  if (sidebarLinks) sidebarLinks.style.display = showCats ? '' : 'none';
+
+  /* Charger le panel TVs à la première ouverture */
+  if (tab === 'tvs') {
+    loadTvPanel();
+  }
+
+  /* Fermer sidebar mobile */
+  closeSidebar();
+}
+
+/* ══════════════════════════════════════════════════════════
+   PANEL TV
+══════════════════════════════════════════════════════════ */
+
+/* URL de base de cette app (pour générer les liens TV) */
+var TV_BASE_URL = (function() {
+  var loc = window.location.href;
+  /* Enlève admin.html et tout ce qui suit */
+  return loc.replace(/admin\.html.*$/, '').replace(/\/$/, '');
+})();
+
+function loadTvPanel() {
+  var grid = document.getElementById('tv-cards-grid');
+  if (!grid) return;
+  grid.innerHTML = '<div class="tv-loading">Chargement des TVs…</div>';
+
+  /* Interroger la table tv_roles */
+  var url = SUPABASE_URL + '/rest/v1/tv_roles?select=*';
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  var headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json'
+  };
+  Object.keys(headers).forEach(function(k) { xhr.setRequestHeader(k, headers[k]); });
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    var rows = [];
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try { rows = JSON.parse(xhr.responseText) || []; } catch(e) { rows = []; }
+    }
+    renderTvCards(rows);
+  };
+  xhr.onerror = function() { renderTvCards([]); };
+  xhr.send(null);
+}
+
+function renderTvCards(rows) {
+  var grid = document.getElementById('tv-cards-grid');
+  if (!grid) return;
+
+  var now = Date.now();
+  var OFFLINE_MS = 2 * 60 * 1000; /* 2 minutes */
+
+  /* Indexer par rôle */
+  var byRole = {};
+  rows.forEach(function(r) { byRole[r.role] = r; });
+
+  /* Définition des 4 TVs */
+  var tvDefs = [
+    { n: 1, role: 1, label: 'TV 1', sublabel: 'Première moitié du menu' },
+    { n: 2, role: 2, label: 'TV 2', sublabel: 'Deuxième moitié du menu' },
+    { n: 3, role: 3, label: 'TV 3', sublabel: 'Mode publicité / diaporama' },
+    { n: 4, role: 4, label: 'TV 4 — TEST', sublabel: 'Menu complet · TV de test / développeur', isTest: true }
+  ];
+
+  var html = '';
+  tvDefs.forEach(function(tv) {
+    var row = tv.role !== null ? byRole[tv.role] : null;
+    var deviceId  = row ? (row.device_id || '') : '';
+    var lastSeen  = row ? (row.last_seen  || '') : '';
+    var isOnline  = false;
+    var isTest    = !!tv.isTest; /* TV4 test */
+    var isPub     = (tv.role === 3); /* TV3 pub */
+
+    if (lastSeen) {
+      var lastMs = new Date(lastSeen).getTime();
+      if (!isNaN(lastMs)) isOnline = (now - lastMs) < OFFLINE_MS;
+    }
+
+    /* Badge statut */
+    var badgeHtml;
+    if (isTest && !deviceId) {
+      badgeHtml = '<span class="tv-badge tv-badge-info">Test — non connectée</span>';
+    } else if (isTest && isOnline) {
+      badgeHtml = '<span class="tv-badge tv-badge-live">Test — en ligne</span>';
+    } else if (isTest) {
+      badgeHtml = '<span class="tv-badge tv-badge-offline">Test — hors ligne</span>';
+    } else if (isPub && isOnline) {
+      badgeHtml = '<span class="tv-badge tv-badge-live">Pub — en ligne</span>';
+    } else if (isPub && !deviceId) {
+      badgeHtml = '<span class="tv-badge tv-badge-offline">Pub — non connectée</span>';
+    } else if (isPub) {
+      badgeHtml = '<span class="tv-badge tv-badge-offline">Pub — hors ligne</span>';
+    } else if (!deviceId) {
+      badgeHtml = '<span class="tv-badge tv-badge-offline">Non configurée</span>';
+    } else if (isOnline) {
+      badgeHtml = '<span class="tv-badge tv-badge-live">En ligne</span>';
+    } else {
+      badgeHtml = '<span class="tv-badge tv-badge-offline">Hors ligne</span>';
+    }
+
+    /* Infos device */
+    var deviceHtml;
+    if (!deviceId) {
+      deviceHtml = '<div class="tv-device empty">Aucun appareil enregistré</div>';
+    } else {
+      deviceHtml = '<div class="tv-device">' + esc(deviceId) + '</div>';
+    }
+
+    /* Dernier vu */
+    var lastSeenHtml = '';
+    if (lastSeen) {
+      var d = new Date(lastSeen);
+      var h = d.getHours().toString().padStart(2,'0');
+      var m = d.getMinutes().toString().padStart(2,'0');
+      var seenStr = h + ':' + m;
+      lastSeenHtml = '<span class="tv-badge tv-badge-info" style="font-size:0.6rem">Vu à ' + seenStr + '</span>';
+    }
+
+    /* Boutons */
+    var actionsHtml =
+        '<button class="btn btn-ghost" onclick="resetTvRole(' + tv.role + ')" title="Réinitialiser TV' + tv.n + '">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<polyline points="1 4 1 10 7 10"/>' +
+            '<path d="M3.51 15a9 9 0 1 0 .49-4.87"/>' +
+          '</svg>' +
+          ' Réinitialiser' +
+        '</button>' +
+        '<button class="btn btn-outline" onclick="copyTvUrl(' + tv.n + ')" title="Copier lien TV' + tv.n + '">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<rect x="9" y="9" width="13" height="13" rx="2"/>' +
+            '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>' +
+          '</svg>' +
+          ' Copier' +
+        '</button>';
+
+    html +=
+      '<div class="tv-card">' +
+        '<div class="tv-card-top">' +
+          '<div class="tv-icon">' +
+            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">' +
+              '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>' +
+            '</svg>' +
+          '</div>' +
+          '<div class="tv-status-badges">' +
+            badgeHtml +
+            lastSeenHtml +
+          '</div>' +
+        '</div>' +
+        '<div>' +
+          '<div class="tv-label">' + esc(tv.label) + '</div>' +
+          '<div class="tv-sublabel">' + esc(tv.sublabel) + '</div>' +
+        '</div>' +
+        deviceHtml +
+        '<div class="tv-actions">' + actionsHtml + '</div>' +
+      '</div>';
+  });
+
+  grid.innerHTML = html;
+}
+
+function resetTvRole(role) {
+  if (!role) return;
+  var url = SUPABASE_URL + '/rest/v1/tv_roles?role=eq.' + encodeURIComponent(role);
+  var xhr = new XMLHttpRequest();
+  xhr.open('PATCH', url, true);
+  var headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=minimal'
+  };
+  Object.keys(headers).forEach(function(k) { xhr.setRequestHeader(k, headers[k]); });
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    if (xhr.status >= 200 && xhr.status < 300) {
+      showToast('TV ' + role + ' réinitialisée', 'success');
+      loadTvPanel();
+    } else {
+      showToast('Erreur lors de la réinitialisation', 'error');
+    }
+  };
+  xhr.onerror = function() { showToast('Erreur réseau', 'error'); };
+  xhr.send(JSON.stringify({ device_id: null, last_seen: null }));
+}
+
+function copyTvUrl(n) {
+  var url = TV_BASE_URL + '/index.html?tv=' + n;
+  /* Fallback si l'URL de base détection échoue */
+  if (!TV_BASE_URL || TV_BASE_URL === '') {
+    url = window.location.origin + window.location.pathname.replace(/admin\.html.*$/, '') + 'index.html?tv=' + n;
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      showToast('Lien copié : ' + url, 'success', 4000);
+    }).catch(function() {
+      fallbackCopy(url);
+    });
+  } else {
+    fallbackCopy(url);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('Lien copié !', 'success', 3000);
+  } catch(e) {
+    showToast('Impossible de copier : ' + text, 'info', 6000);
+  }
+  document.body.removeChild(ta);
+}

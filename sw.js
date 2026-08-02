@@ -3,7 +3,7 @@
    Offline-first · Cache agressif · Pre-cache total
    ═══════════════════════════════════════════════ */
 
-var CACHE = 'ramo-v2';
+var CACHE = 'ramo-v3';
 var STATIC = [
   '/',
   '/index.html',

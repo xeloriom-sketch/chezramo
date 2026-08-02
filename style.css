@@ -39,6 +39,22 @@ html, body {
   0%, 100% { opacity: 0.8; }
   50%       { opacity: 1; }
 }
+@-webkit-keyframes burgerFloat {
+  0%, 100% { -webkit-transform: translateY(0); transform: translateY(0); }
+  50%       { -webkit-transform: translateY(-12px); transform: translateY(-12px); }
+}
+@keyframes burgerFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-12px); }
+}
+@-webkit-keyframes priceBeat {
+  0%, 100% { -webkit-transform: scale(1); transform: scale(1); }
+  50%       { -webkit-transform: scale(1.08); transform: scale(1.08); }
+}
+@keyframes priceBeat {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.08); }
+}
 
 /* ── APP WRAPPER ────────────────────────────── */
 #app {
@@ -412,6 +428,558 @@ html, body {
 .price-row.supp .plabel { color: rgba(255,255,255,0.45); font-size: 1.05vw; }
 .price-row.supp .pval   { color: rgba(255,255,255,0.75); font-size: 3.0vw; }
 
+/* ═══════════════════════════════════════════════
+   MODE PANNEAU — 3 bandes horizontales type fast-food
+   Bande 1 : top bar noir  (logo + callouts)
+   Bande 2 : héros rouge   (plat vedette rotatif)
+   Bande 3 : grille menu   (catégories × items circulaires)
+   ═══════════════════════════════════════════════ */
+.slide.board {
+  padding: 0;
+  -webkit-box-orient: vertical;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+}
+
+/* Panneau : 100% écran, pas d'en-tête ni barre */
+.mode-board #header { display: none; }
+.mode-board #viewport { top: 0; }
+.mode-board #progress-wrap { display: none; }
+
+/* ── Bande 1 : top bar noir ── */
+.btop {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  background: #0a0a0a;
+  padding: 0.5vw 2.2vw;
+  gap: 1.2vw;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  border-bottom: 2px solid #1c1c1c;
+}
+.btop-brand {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 3.8vw;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: -0.05vw;
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+  color: #ffffff;
+}
+.btop-brand span { color: #e01010; }
+.btop-box {
+  border: 2px solid #ffffff;
+  border-radius: 0.4vw;
+  padding: 0.3vw 1vw;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  gap: 0.05vw;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+.btop-box-title {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 1.1vw;
+  letter-spacing: 0.1vw;
+  line-height: 1;
+  color: #ffffff;
+}
+.btop-box-sub {
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  font-size: 0.72vw;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.25;
+  color: rgba(255,255,255,0.55);
+}
+
+/* ── Bande 2 : héros rouge (plat vedette + panneau sauces) ── */
+.bhero-band {
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  height: 12vw;
+  background: #c40000;
+  padding: 0;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  position: relative;
+  z-index: 5;
+  overflow: visible;
+}
+/* ← zone rotative (photo + infos plat) — 75% */
+.bhero-inner {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+  min-width: 0;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  padding: 1vw 1.5vw 1vw 2.2vw;
+  gap: 2vw;
+  opacity: 1;
+  overflow: visible;
+  -webkit-transform: translateX(0);
+  transform: translateX(0);
+  -webkit-transition: opacity 0.5s ease, -webkit-transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.bhero-photo { margin-right: 2vw; }
+/* → panneau statique sauces (droite) */
+.bhero-extra {
+  width: 22vw;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  border-left: 2px solid rgba(255,255,255,0.22);
+  padding: 1.2vw 1.5vw;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  gap: 0.7vw;
+}
+.bhero-extra-title {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 1.2vw;
+  letter-spacing: 0.18vw;
+  color: rgba(255,255,255,0.9);
+  border-bottom: 2px solid rgba(255,255,255,0.3);
+  padding-bottom: 0.4vw;
+  text-transform: uppercase;
+}
+.bhero-extra-title--sm {
+  font-size: 0.95vw;
+  letter-spacing: 0.12vw;
+  color: rgba(255,255,255,0.6);
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  margin-top: 0.3vw;
+}
+/* 2 colonnes : Sauces | Boissons */
+.bhero-extra-cols {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+  gap: 1vw;
+  min-height: 0;
+}
+.bhero-extra-col {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+  min-width: 0;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  gap: 0.4vw;
+}
+.bhero-extra-col:first-child {
+  border-right: 1px solid rgba(255,255,255,0.15);
+  padding-right: 0.8vw;
+  margin-right: 1vw;
+}
+.bhero-extra-sauce {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  gap: 0.3vw;
+}
+.bhero-extra-sauce span { margin-bottom: 0.3vw; }
+.bhero-extra-sauce span:last-child { margin-bottom: 0; }
+.bhero-extra-sauce span {
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  font-size: 0.88vw;
+  font-weight: 600;
+  color: rgba(255,255,255,0.82);
+  letter-spacing: 0.04vw;
+  padding-bottom: 0.3vw;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+/* Ligne boisson : nom à gauche, prix à droite */
+.bhero-drink {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  padding-bottom: 0.28vw;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.bhero-drink-name {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 0.92vw;
+  letter-spacing: 0.06vw;
+  color: rgba(255,255,255,0.85);
+}
+.bhero-drink-price {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 0.95vw;
+  color: #ffffff;
+  letter-spacing: 0.04vw;
+}
+.bhero-photo {
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+  -webkit-align-self: flex-start;
+  align-self: flex-start;
+  width: 22vw;
+  height: 13vw;
+  margin: 0;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  position: relative;
+  z-index: 10;
+  overflow: visible;
+}
+.bhero-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -webkit-transform-origin: center center;
+  transform-origin: center center;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: high-quality;
+  -webkit-filter: none;
+  filter: none;
+  -webkit-transition: opacity 0.5s ease, -webkit-transform 0.65s cubic-bezier(0.34, 1.3, 0.64, 1);
+  transition: opacity 0.5s ease, transform 0.65s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+.bhero-photo img:not(.loaded) { opacity: 0; transform: scale(1.1); }
+.bhero-photo img.loaded { opacity: 1; transform: scale(1.05); }
+.bhero-photo img:not(.loaded) { opacity: 0; }
+.bhero-right {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+  min-width: 0;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  gap: 0.4vw;
+}
+.bhero-brand-corner {
+  position: absolute;
+  top: 0.7vw;
+  left: 0;
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 1.5vw;
+  font-style: italic;
+  letter-spacing: 0.12vw;
+  color: #ffffff;
+  text-transform: uppercase;
+  z-index: 15;
+  pointer-events: none;
+  line-height: 1;
+  padding-left: 1vw;
+  border-left: 0.35vw solid #e01010;
+}
+.bhero-label, .bhero-name, .bhero-desc { margin-bottom: 0.4vw; }
+.bhero-label {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 1vw;
+  letter-spacing: 0.5vw;
+  color: rgba(255,255,255,0.65);
+  text-transform: uppercase;
+}
+.bhero-name {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 3.2vw;
+  font-style: italic;
+  line-height: 0.93;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: -0.03vw;
+}
+.bhero-desc {
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  font-size: 1.05vw;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.4;
+}
+.bhero-prices {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  gap: 1vw;
+  margin-top: 0.3vw;
+}
+.bhero-pcard { margin-right: 1vw; }
+.bhero-pcard:last-child { margin-right: 0; }
+.bhero-pcard {
+  background: #ffffff;
+  border-radius: 0.5vw;
+  padding: 0.35vw 1.2vw;
+  text-align: center;
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+}
+.bhero-pcard-menu { background: rgba(255,255,255,0.88); }
+.bhero-pnum {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 2.2vw;
+  line-height: 1;
+  color: #c40000;
+}
+.bhero-pnum sup { font-size: 55%; vertical-align: super; }
+.bhero-plbl {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 0.75vw;
+  letter-spacing: 0.12vw;
+  color: #c40000;
+  margin-top: 0.05vw;
+}
+
+
+/* ── Bande 3 : grille menu (3 colonnes, items circulaires) ── */
+.bmenu {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  background: #0a0a0a;
+  padding: 1.3vw 1.2vw 1.1vw;
+  gap: 0;
+  min-height: 0;
+  overflow: visible;
+}
+.bcol {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+  min-width: 0;
+  padding: 0 1.2vw;
+  border-right: 1px solid #2a2a2a;
+  overflow: visible;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  opacity: 0;
+  -webkit-transform: translateY(1vw) translateZ(0);
+  transform: translateY(1vw) translateZ(0);
+  -webkit-transition: opacity 0.45s cubic-bezier(0.25,0.46,0.45,0.94),
+                      -webkit-transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94);
+  transition: opacity 0.45s cubic-bezier(0.25,0.46,0.45,0.94),
+              transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.bcol:last-child { border-right: none; }
+.slide.board.active .bcol { opacity: 1; -webkit-transform: translateY(0) translateZ(0); transform: translateY(0) translateZ(0); }
+.slide.board.active .bcol:nth-child(1) { -webkit-transition-delay: 0.05s; transition-delay: 0.05s; }
+.slide.board.active .bcol:nth-child(2) { -webkit-transition-delay: 0.15s; transition-delay: 0.15s; }
+.slide.board.active .bcol:nth-child(3) { -webkit-transition-delay: 0.25s; transition-delay: 0.25s; }
+
+/* ── Catégorie : titre italique + trait rouge ── */
+.bcat {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+  min-height: 0;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: start;
+  -webkit-justify-content: flex-start;
+  justify-content: flex-start;
+  padding: 0.6vw 0 0;
+}
+.bcat-head {
+  display: block;
+  margin-bottom: 0.35vw;
+}
+.bcat-title {
+  display: block;
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 1.75vw;
+  font-style: italic;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.06vw;
+  line-height: 1.1;
+  word-wrap: break-word;
+}
+.bcat-line { display: none; }
+.bcat-info {
+  display: block;
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  font-size: 0.8vw;
+  color: rgba(255,255,255,0.5);
+  font-weight: 500;
+  margin-bottom: 0.25vw;
+  word-wrap: break-word;
+}
+
+/* ── Items : photos circulaires côte à côte, 1 rangée par catégorie ── */
+.bcat-items {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  gap: 0.4vw;
+}
+.bcat-items .bitem { margin-right: 0.4vw; }
+.bcat-items .bitem:last-child { margin-right: 0; }
+.bitem {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+  min-width: 0;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 0.3vw;
+  text-align: center;
+}
+.biph { margin-bottom: 0.3vw; }
+.bcat-items .bitem:last-child .biph,
+.bcat--duo .biph { margin-bottom: 0; }
+.biph {
+  width: 4.6vw;
+  height: 4.6vw;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: transparent;
+  position: relative;
+  overflow: visible;
+}
+.biph img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.biph img:not(.loaded) { opacity: 0; }
+.biph-empty { background: transparent; }
+
+/* Catégories avec ≤ 2 items : layout horizontal image + texte, réparti verticalement */
+.bcat--duo .bcat-items {
+  -webkit-flex: 1;
+  flex: 1;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-justify-content: space-around;
+  justify-content: space-around;
+  gap: 0;
+}
+.bcat--duo .bcat-items .bitem { margin-right: 0; margin-bottom: 0; }
+.bcat--duo .bitem {
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  -webkit-align-items: center;
+  align-items: center;
+  text-align: left;
+  gap: 0;
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+}
+.bcat--duo .biph {
+  width: 6.5vw;
+  height: 6.5vw;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  margin-right: 1.1vw;
+  margin-bottom: 0;
+}
+.bcat--duo .bitem-name { font-size: 1.35vw; -webkit-box-flex: 1; -webkit-flex: 1 1 0%; flex: 1 1 0%; min-width: 0; }
+.bcat--duo .bitem-price { -webkit-align-items: flex-start; align-items: flex-start; }
+.bcat--duo .bip { font-size: 1.7vw; }
+.bcat--duo .biph img { -webkit-transform: scale(1); transform: scale(1); }
+.bitem-name {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 1.05vw;
+  color: #ffffff;
+  text-transform: uppercase;
+  line-height: 1.1;
+  letter-spacing: 0.02vw;
+}
+.bitem-price {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 0.06vw;
+}
+.bip { margin-bottom: 0.06vw; }
+.bipm { margin-bottom: 0; }
+.bip {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 1.35vw;
+  color: #ffffff;
+  line-height: 1;
+}
+.bip sup { font-size: 55%; color: #e01010; vertical-align: super; }
+.bipm {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 0.8vw;
+  color: #e01010;
+  letter-spacing: 0.08vw;
+}
+.bibadge {
+  display: inline-block;
+  color: #e01010;
+  font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
+  font-size: 0.75vw;
+  letter-spacing: 0.1vw;
+  margin-left: 0.3vw;
+}
 /* ── BARRE DE PROGRESSION ───────────────────── */
 #progress-wrap {
   position: absolute;
@@ -426,4 +994,516 @@ html, body {
   background: #e01010;
   -webkit-animation: barGlow 2s ease-in-out infinite;
   animation: barGlow 2s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TV 3 — MODE PUB : STYLE ÉDITORIAL / NEWSPAPER
+   Fond crème · typo géante en collage · split gauche/droite
+   Tout en transform + opacity → GPU, compatible Tizen / webOS.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Keyframes ── */
+
+/* Tag CHEZ RAMO : punch depuis la gauche avec rebond */
+@-webkit-keyframes pubSlideLeft {
+  0%   { -webkit-transform: translateX(-120%); opacity: 0; }
+  68%  { -webkit-transform: translateX(6px);  opacity: 1; }
+  85%  { -webkit-transform: translateX(-3px); opacity: 1; }
+  100% { -webkit-transform: translateX(0);    opacity: 1; }
+}
+@keyframes pubSlideLeft {
+  0%   { transform: translateX(-120%); opacity: 0; }
+  68%  { transform: translateX(6px);  opacity: 1; }
+  85%  { transform: translateX(-3px); opacity: 1; }
+  100% { transform: translateX(0);    opacity: 1; }
+}
+
+/* Barre accent verticale */
+@-webkit-keyframes pubBarDrop { from { -webkit-transform: scaleY(0); } to { -webkit-transform: scaleY(1); } }
+@keyframes pubBarDrop         { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+/* Image droite : glisse depuis la droite, scale légère + rebond */
+@-webkit-keyframes pubRightIn {
+  0%   { -webkit-transform: translateX(90px) scale(0.96); opacity: 0; }
+  60%  { -webkit-transform: translateX(-12px) scale(1.02); opacity: 1; }
+  80%  { -webkit-transform: translateX(4px)  scale(0.99); opacity: 1; }
+  100% { -webkit-transform: translateX(0)    scale(1);    opacity: 1; }
+}
+@keyframes pubRightIn {
+  0%   { transform: translateX(90px) scale(0.96); opacity: 0; }
+  60%  { transform: translateX(-12px) scale(1.02); opacity: 1; }
+  80%  { transform: translateX(4px)  scale(0.99); opacity: 1; }
+  100% { transform: translateX(0)    scale(1);    opacity: 1; }
+}
+
+/* Titre : monte avec rebond, pas de clip nécessaire */
+@-webkit-keyframes pubTitleIn {
+  0%   { -webkit-transform: translateY(38px) scale(0.96); opacity: 0; }
+  55%  { -webkit-transform: translateY(-5px) scale(1.01); opacity: 1; }
+  75%  { -webkit-transform: translateY(2px)  scale(1);    opacity: 1; }
+  100% { -webkit-transform: translateY(0)    scale(1);    opacity: 1; }
+}
+@keyframes pubTitleIn {
+  0%   { transform: translateY(38px) scale(0.96); opacity: 0; }
+  55%  { transform: translateY(-5px) scale(1.01); opacity: 1; }
+  75%  { transform: translateY(2px)  scale(1);    opacity: 1; }
+  100% { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+
+/* Prix : pop élastique prononcé */
+@-webkit-keyframes pubPopIn {
+  0%   { -webkit-transform: scale(0) rotate(-10deg); opacity: 0; }
+  50%  { -webkit-transform: scale(1.38) rotate(3deg); opacity: 1; }
+  70%  { -webkit-transform: scale(0.88) rotate(-1deg); opacity: 1; }
+  88%  { -webkit-transform: scale(1.06) rotate(0); opacity: 1; }
+  100% { -webkit-transform: scale(1) rotate(0);    opacity: 1; }
+}
+@keyframes pubPopIn {
+  0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
+  50%  { transform: scale(1.38) rotate(3deg); opacity: 1; }
+  70%  { transform: scale(0.88) rotate(-1deg); opacity: 1; }
+  88%  { transform: scale(1.06) rotate(0); opacity: 1; }
+  100% { transform: scale(1) rotate(0);    opacity: 1; }
+}
+
+/* FadeUp générique */
+@-webkit-keyframes pubFadeUp {
+  from { -webkit-transform: translateY(22px); opacity: 0; }
+  to   { -webkit-transform: translateY(0);    opacity: 1; }
+}
+@keyframes pubFadeUp {
+  from { transform: translateY(22px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Description : glisse + déblur */
+@-webkit-keyframes pubDescIn {
+  from { -webkit-transform: translateY(26px); opacity: 0; -webkit-filter: blur(5px); }
+  to   { -webkit-transform: translateY(0);    opacity: 1; -webkit-filter: blur(0); }
+}
+@keyframes pubDescIn {
+  from { transform: translateY(26px); opacity: 0; filter: blur(5px); }
+  to   { transform: translateY(0);    opacity: 1; filter: blur(0); }
+}
+
+/* Règle : extend depuis la gauche avec légère overshooot */
+@-webkit-keyframes pubRuleIn {
+  0%   { -webkit-transform: scaleX(0); }
+  72%  { -webkit-transform: scaleX(1.06); }
+  100% { -webkit-transform: scaleX(1); }
+}
+@keyframes pubRuleIn {
+  0%   { transform: scaleX(0); }
+  72%  { transform: scaleX(1.06); }
+  100% { transform: scaleX(1); }
+}
+
+@-webkit-keyframes pubGhostIn   { from { opacity: 0; } to { opacity: 0.09; } }
+@keyframes pubGhostIn           { from { opacity: 0; } to { opacity: 0.09; } }
+@-webkit-keyframes pubGhostInSm { from { opacity: 0; } to { opacity: 0.055; } }
+@keyframes pubGhostInSm         { from { opacity: 0; } to { opacity: 0.055; } }
+@-webkit-keyframes pubGhostDots { from { opacity: 0; } to { opacity: 0.18; } }
+@keyframes pubGhostDots         { from { opacity: 0; } to { opacity: 0.18; } }
+
+@-webkit-keyframes pubProgress { from { width: 0%; } to { width: 100%; } }
+@keyframes pubProgress         { from { width: 0%; } to { width: 100%; } }
+
+/* ── Fond crème + wrappers ── */
+.slide.board.pub {
+  background: #F0E8D3 !important;
+  display: block !important;
+  position: absolute !important;
+  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+.pub-cols   { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.pub-slider { position: relative; width: 100%; height: 100%; }
+
+/* ── Slide : row flex + fade global ── */
+.pub-slide {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  -webkit-box-align: stretch;
+  -webkit-align-items: stretch;
+  align-items: stretch;
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+  -webkit-transition: opacity 0.85s ease;
+  transition: opacity 0.85s ease;
+  will-change: opacity;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.pub-slide.active { opacity: 1; z-index: 2; pointer-events: auto; }
+
+/* ── Collage typographique en fond ── */
+.pub-collage {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+.pub-ghost {
+  position: absolute;
+  font-family: 'Anton', Impact, 'Arial Black', sans-serif;
+  color: #1C1308;
+  line-height: 0.82;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  opacity: 0;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.pg-1 { font-size: 20vw; top: -2%; left: -2%; -webkit-transform: rotate(-7deg); transform: rotate(-7deg); }
+.pg-2 { font-size: 6.5vw; top: 30%; right: -0.5%; letter-spacing: 0.44em; -webkit-transform: rotate(90deg); transform: rotate(90deg); }
+.pg-3 { font-size: 9vw;  top: 70%; left: 1%;  -webkit-transform: rotate(5deg);  transform: rotate(5deg); }
+.pg-4 { font-size: 5vw;  top: 10%; left: 47%; -webkit-transform: rotate(-2deg); transform: rotate(-2deg); }
+.pub-ghost-dots {
+  position: absolute;
+  font-family: 'Bebas Neue', Arial, sans-serif;
+  color: #1C1308;
+  font-size: 2vw;
+  letter-spacing: 0.5em;
+  top: 51%; left: 3%;
+  -webkit-transform: rotate(-1deg);
+  transform: rotate(-1deg);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+}
+.pub-slide.active .pg-1        { -webkit-animation: pubGhostIn   0.7s 0.00s ease forwards; animation: pubGhostIn   0.7s 0.00s ease forwards; }
+.pub-slide.active .pg-2        { -webkit-animation: pubGhostIn   0.6s 0.08s ease forwards; animation: pubGhostIn   0.6s 0.08s ease forwards; }
+.pub-slide.active .pg-3        { -webkit-animation: pubGhostInSm 0.6s 0.16s ease forwards; animation: pubGhostInSm 0.6s 0.16s ease forwards; }
+.pub-slide.active .pg-4        { -webkit-animation: pubGhostInSm 0.5s 0.06s ease forwards; animation: pubGhostInSm 0.5s 0.06s ease forwards; }
+.pub-slide.active .pub-ghost-dots { -webkit-animation: pubGhostDots 0.5s 0.1s ease forwards; animation: pubGhostDots 0.5s 0.1s ease forwards; }
+
+/* ── Barre accent verticale gauche ── */
+.pub-accent-bar {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 8px;
+  background: var(--pub-accent, #1C1308);
+  z-index: 9;
+  -webkit-transform-origin: top center;
+  transform-origin: top center;
+  -webkit-transform: scaleY(0);
+  transform: scaleY(0);
+}
+.pub-slide.active .pub-accent-bar {
+  -webkit-animation: pubBarDrop 0.5s 0.1s ease-out forwards;
+  animation: pubBarDrop 0.5s 0.1s ease-out forwards;
+}
+
+/* ── Colonne gauche : texte ── */
+.pub-left {
+  position: relative;
+  width: 42%;
+  padding: 8vh 4vw 7vh 6vw;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  z-index: 5;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* ── Fond blanc cassé anti-reflet — légèrement densifié ── */
+.pub-slide {
+  background: #F0EDE3;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Bandeau "CHEZ RAMO" — bande horizontale noir pur */
+.pub-slide-tag {
+  display: block;
+  font-family: 'Bebas Neue', Impact, 'Arial Black', sans-serif;
+  font-size: clamp(1.1rem, 1.9vw, 2.8rem);
+  letter-spacing: 0.5em;
+  color: #F0EDE3;
+  background: #0E0B06;
+  padding: 0.28em 1.4em;
+  border-radius: 0;
+  margin-bottom: 3.5vh;
+  margin-left: -6vw;           /* déborde à gauche jusqu'au bord */
+  padding-left: 6vw;
+  width: calc(100% + 6vw);
+  box-sizing: border-box;
+  -webkit-transform: translateX(-115%);
+  transform: translateX(-115%);
+  opacity: 0;
+}
+.pub-slide.active .pub-slide-tag {
+  -webkit-animation: pubSlideLeft 0.58s 0.12s cubic-bezier(.22,.61,.36,1) forwards;
+  animation: pubSlideLeft 0.58s 0.12s cubic-bezier(.22,.61,.36,1) forwards;
+}
+
+/* Eyebrow — italic serif ornementé */
+.pub-eyebrow {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(0.85rem, 1.05vw, 1.5rem);
+  letter-spacing: 0.12em;
+  color: var(--pub-accent, #3A5C28);
+  text-transform: none;
+  margin-bottom: 1.4vh;
+  opacity: 0;
+  -webkit-transform: translateY(14px);
+  transform: translateY(14px);
+}
+.pub-slide.active .pub-eyebrow {
+  -webkit-animation: pubFadeUp 0.48s 0.32s cubic-bezier(.22,.61,.36,1) forwards;
+  animation: pubFadeUp 0.48s 0.32s cubic-bezier(.22,.61,.36,1) forwards;
+}
+
+/* Règle double ornementale */
+.pub-rule {
+  width: 7vw;
+  height: 8px;
+  background: transparent;
+  border-top: 2px solid var(--pub-accent, #3A5C28);
+  border-bottom: 2px solid var(--pub-accent, #3A5C28);
+  margin-bottom: 2.5vh;
+  -webkit-transform-origin: left center;
+  transform-origin: left center;
+  -webkit-transform: scaleX(0);
+  transform: scaleX(0);
+  overflow: visible;
+}
+.pub-rule-inner {
+  display: block;
+  height: 2px;
+  background: var(--pub-accent, #3A5C28);
+  margin-top: 1px;
+  opacity: 0.3;
+}
+.pub-slide.active .pub-rule {
+  -webkit-animation: pubRuleIn 0.5s 0.44s cubic-bezier(.22,.61,.36,1) forwards;
+  animation: pubRuleIn 0.5s 0.44s cubic-bezier(.22,.61,.36,1) forwards;
+}
+
+/* Titre pub — serif display */
+.pub-title-clip { overflow: visible; margin-bottom: 1.8vh; }
+.pub-slide-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  font-size: clamp(2.8rem, 6.2vw, 9rem);
+  line-height: 0.92;
+  text-transform: uppercase;
+  color: #100C04;
+  word-break: break-word;
+  display: block;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  -webkit-transform: translateY(38px) scale(0.96);
+  transform: translateY(38px) scale(0.96);
+  opacity: 0;
+}
+.pub-slide.active .pub-slide-title {
+  -webkit-animation: pubTitleIn 0.68s 0.52s cubic-bezier(.22,.61,.36,1) forwards;
+  animation: pubTitleIn 0.68s 0.52s cubic-bezier(.22,.61,.36,1) forwards;
+}
+
+/* Prix — badge vintage proéminent */
+.pub-slide-row { margin-bottom: 1.5vh; }
+.pub-slide-price {
+  display: inline-block;
+  -webkit-transform: scale(0) rotate(-6deg);
+  transform: scale(0) rotate(-6deg);
+  opacity: 0;
+}
+.pub-price-val {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 900;
+  font-size: clamp(2.4rem, 5.8vw, 8.5rem);
+  color: var(--pub-accent, #1C1308);
+  line-height: 1;
+  display: inline-block;
+  border: 4px solid var(--pub-accent, #1C1308);
+  padding: 0.05em 0.35em;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+.pub-slide.active .pub-slide-price {
+  -webkit-animation: pubPopIn 0.7s 0.92s cubic-bezier(.22,.61,.36,1) forwards;
+  animation: pubPopIn 0.7s 0.92s cubic-bezier(.22,.61,.36,1) forwards;
+}
+
+/* Description — serif léger */
+.pub-slide-desc {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(0.9rem, 1.2vw, 1.7rem);
+  color: #3d3318;
+  line-height: 1.5;
+  font-weight: 600;
+  margin-bottom: 2.5vh;
+  opacity: 0;
+  -webkit-transform: translateY(18px);
+  transform: translateY(18px);
+}
+.pub-slide.active .pub-slide-desc {
+  -webkit-animation: pubDescIn 0.6s 1.12s cubic-bezier(.22,.61,.36,1) forwards;
+  animation: pubDescIn 0.6s 1.12s cubic-bezier(.22,.61,.36,1) forwards;
+}
+
+/* Dots */
+.pub-slide-dots {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  gap: 0.8vw;
+  opacity: 0;
+  -webkit-transform: translateY(14px);
+  transform: translateY(14px);
+}
+.pub-slide.active .pub-slide-dots {
+  -webkit-animation: pubFadeUp 0.45s 1.38s ease forwards;
+  animation: pubFadeUp 0.45s 1.38s ease forwards;
+}
+.pub-dot {
+  width: 0.65vw; height: 0.65vw;
+  border-radius: 50%;
+  background: rgba(28,19,8,0.25);
+  -webkit-flex-shrink: 0; flex-shrink: 0;
+  -webkit-transition: background 0.35s, -webkit-transform 0.35s;
+  transition: background 0.35s, transform 0.35s;
+}
+.pub-dot.active { background: var(--pub-accent, #3A5C28); -webkit-transform: scale(1.6); transform: scale(1.6); }
+
+/* ── Colonne droite : illustration plat ── */
+.pub-right {
+  position: relative;
+  width: 58%;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 4;
+  opacity: 0;
+  -webkit-transform: translateX(65px);
+  transform: translateX(65px);
+}
+.pub-slide.active .pub-right {
+  -webkit-animation: pubRightIn 0.88s 0.48s cubic-bezier(.22,.61,.36,1) forwards;
+  animation: pubRightIn 0.88s 0.48s cubic-bezier(.22,.61,.36,1) forwards;
+}
+.pub-slide-img {
+  display: block;
+  width: auto;
+  height: 76vh;
+  max-width: 100%;
+  mix-blend-mode: multiply;
+  opacity: 0;
+  -webkit-transition: opacity 0.5s ease;
+  transition: opacity 0.5s ease;
+  -webkit-image-rendering: auto;
+  image-rendering: auto;
+}
+.pub-slide-img.loaded { opacity: 1; }
+/* Illustration gravure — contraste renforcé pour lisibilité TV avec reflets */
+.pub-slide-img--draw {
+  -webkit-filter: contrast(1.4) brightness(0.88);
+  filter: contrast(1.4) brightness(0.88);
+  height: 76vh;
+  width: auto;
+  max-width: 100%;
+  will-change: opacity;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.pub-slide-img--draw.loaded { opacity: 1; }
+/* Photo fallback → illustration vintage */
+.pub-slide-img--photo {
+  -webkit-filter: grayscale(1) brightness(1.55) contrast(5) sepia(0.18);
+  filter: grayscale(1) brightness(1.55) contrast(5) sepia(0.18);
+}
+.pub-slide-img--photo.loaded { opacity: 1; }
+
+/* ── Barre de progression ── */
+.pub-prog-wrap {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 5px;
+  background: rgba(28,19,8,0.12);
+  z-index: 10;
+}
+.pub-prog-bar { height: 100%; width: 0%; background: var(--pub-accent, #1C1308); }
+.pub-slide.active .pub-prog-bar {
+  -webkit-animation: pubProgress var(--pub-slide-dur, 6000ms) 0s linear forwards;
+  animation: pubProgress var(--pub-slide-dur, 6000ms) 0s linear forwards;
+}
+.pub-prog { display: none; }
+
+/* ── TV 720p / écrans 1280×720 à 1366×768 ────────────────── */
+@media (max-width: 1400px) and (min-width: 901px) {
+  .bhero-band { height: 13vw; }
+  .bhero-photo { width: 28vw; height: 16vw; }
+  .bhero-name { font-size: 3.8vw; }
+  .bhero-pnum { font-size: 2.5vw; }
+  .bhero-brand-corner { font-size: 1.6vw; }
+  .bcat-title { font-size: 2vw; }
+  .bitem-name { font-size: 1.15vw; }
+  .bip { font-size: 1.4vw; }
+}
+
+/* ── Tablette / petit écran ≤ 900px ────────────────────────── */
+@media (max-width: 900px) {
+  .btop-brand { font-size: 7.5vw; }
+  .btop-box-title { font-size: 2vw; }
+  .btop-box-sub { font-size: 1.2vw; }
+  .bhero-band { height: 16vw; }
+  .bhero-photo { width: 24vw; height: 19vw; }
+  .bhero-name { font-size: 4.8vw; }
+  .bhero-pnum { font-size: 3.5vw; }
+  .bhero-brand-corner { font-size: 2vw; }
+  .biph { width: 6.5vw; height: 6.5vw; }
+  .bcat-title { font-size: 2.4vw; }
+  .bitem-name { font-size: 1.5vw; }
+  .bip { font-size: 1.8vw; }
+}
+
+/* ── Portrait mobile / écran très étroit ≤ 600px ──────────── */
+@media (max-width: 600px) {
+  .btop { padding: 2vw 3vw; gap: 2vw; }
+  .btop-brand { font-size: 11vw; }
+  .btop-box { padding: 1vw 2vw; }
+  .btop-box-title { font-size: 3.2vw; }
+  .btop-box-sub { font-size: 2vw; }
+  .bhero-band { height: 22vw; padding: 0; }
+  .bhero-photo { width: 28vw; height: 25vw; }
+  .bhero-name { font-size: 6.5vw; }
+  .bhero-desc { font-size: 2vw; }
+  .bhero-pnum { font-size: 5vw; }
+  .bhero-plbl { font-size: 1.8vw; }
+  .bhero-brand-corner { font-size: 3.5vw; border-left-width: 0.6vw; padding-left: 2vw; }
+  .bmenu { padding: 2vw 1.5vw; }
+  .bcol { padding: 0 1.5vw; }
+  .biph { width: 8.5vw; height: 8.5vw; }
+  .bcat-title { font-size: 3.5vw; }
+  .bitem-name { font-size: 2.2vw; }
+  .bip { font-size: 2.8vw; }
+  .bipm { font-size: 1.5vw; }
 }
