@@ -504,6 +504,11 @@ var defaultMenu = [
   { category: "Desserts", info: "Douceurs maison", items: [
     { title: "Trilece",  description: "Dessert traditionnel au lait", price: "3,50", url: "uploads/Trilece.png" },
     { title: "Tiramisu", description: "Tiramisu maison",              price: "3,50", url: "uploads/Tiramisu.png" }
+  ]},
+  { category: "Menu Enfants", info: "Petits plats pour nos petits clients", items: [
+    { title: "Menu Enfant",     description: "4 Nuggets ou viande au choix",      price: "10,00", badge: "AU CHOIX", url: "uploads/Assiette Enfant.png" },
+    { title: "Assiette Enfant", description: "Frites, viande et sauce au choix",  price: "12,00", url: "uploads/Assiette Enfant.png" },
+    { title: "Mini Burger",     description: "Pain, steak haché, fromage, sauce", price: "6,00",  url: "uploads/Chicken Burger.png" }
   ]}
 ];
 

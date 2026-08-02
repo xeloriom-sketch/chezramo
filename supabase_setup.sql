@@ -122,3 +122,10 @@ INSERT INTO menu_items (id, category, title, price, "menuPrice", badge, url, sor
 ('tiramisu', 'Desserts', 'Tiramisu', '3,50', NULL, NULL, 'uploads/Tiramisu.png', 164)
 
 ON CONFLICT (id) DO NOTHING;
+
+-- Menu Enfants (nouvelle section)
+INSERT INTO menu_items (id, category, title, description, price, "menuPrice", badge, url, sort_order) VALUES
+('menu-enfant-combo',    'Menu Enfants', 'Menu Enfant',     '4 Nuggets ou viande au choix',      '10,00', NULL,    'AU CHOIX', 'uploads/Assiette Enfant.png', 169),
+('menu-enfant-assiette', 'Menu Enfants', 'Assiette Enfant', 'Frites, viande et sauce au choix',  '12,00', NULL,    NULL,       'uploads/Assiette Enfant.png', 170),
+('menu-enfant-burger',   'Menu Enfants', 'Mini Burger',     'Pain, steak haché, fromage, sauce', '6,00',  NULL,    NULL,       'uploads/Chicken Burger.png',  171)
+ON CONFLICT (id) DO NOTHING;
