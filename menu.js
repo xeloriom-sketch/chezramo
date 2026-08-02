@@ -64,6 +64,13 @@ var DEVICE_ID = '';     /* identité stable de cette TV */
   if (TV_MANUAL !== null) {
     if (TV_MANUAL !== 1 && TV_MANUAL !== 2 && TV_MANUAL !== 3) TV_MANUAL = 0;
     TV_ID = TV_MANUAL;
+  } else {
+    /* Rôle auto détecté lors d'une session précédente → appliqué immédiatement,
+       évite le flash "plein menu → demi-menu" au chargement */
+    try {
+      var sa = localStorage.getItem('ramo_tv_auto');
+      if (sa) TV_ID = parseInt(sa, 10) || 0;
+    } catch(e) {}
   }
 })();
 
@@ -304,7 +311,7 @@ function normalizeThumb(img) {
     var canvasSize = Math.max(c.width, c.height);
     if (isHero) {
       /* Héros : normalise sur la plus grande dimension du plat → taille uniforme */
-      var scale = Math.min((canvasSize * 0.88) / foodSize, 2.8);
+      var scale = Math.min((canvasSize * 0.72) / foodSize, 1.5);
       var foodCenterRatio = (minY + maxY) / 2 / c.height;
       var offsetY = (0.5 - foodCenterRatio) * 100;
       img.style.transformOrigin = 'center center';
@@ -1173,6 +1180,7 @@ function tvClaim() {
   var me  = encodeURIComponent(DEVICE_ID);
 
   function got(role) {
+    try { localStorage.setItem('ramo_tv_auto', String(role)); } catch(e) {}
     if (TV_ID !== role) applyRole(role, 'TV ' + role + ' — DÉTECTION AUTO');
   }
   function take(role, next) {
@@ -1406,9 +1414,10 @@ if (TV_ID === 3) {
   showNetStatus('DÉTECTION AUTO DES TV…', '#1c3e7c', 4000);
 }
 
-/* 3. Après 2s : charge menu + détection TV
-   Les vérifications de version sont décalées par TV_ID
-   pour éviter que toutes les TV rechargent simultanément. */
+/* 3. Détection TV immédiate (évite le flash plein-menu → demi-menu) */
+tvClaim();
+
+/* 4. Après 2s : charge menu + version + heartbeat TV */
 setTimeout(function() {
   fetchMenu();
   setInterval(fetchMenu, 30000);
@@ -1416,10 +1425,8 @@ setTimeout(function() {
   var vOff = TV_ID > 0 ? (TV_ID - 1) * 20000 : Math.floor(Math.random() * 15000);
   setTimeout(function() {
     checkVersion();
-    /* Intervalle légèrement aléatoire → les TV ne se synchronisent pas */
     setInterval(checkVersion, 55000 + Math.floor(Math.random() * 10000));
   }, vOff);
-  tvClaim();
   setInterval(tvClaim, 45000);
 }, 2000);
 

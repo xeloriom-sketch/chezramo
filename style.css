@@ -656,8 +656,8 @@ html, body {
   flex: 0 0 auto;
   -webkit-align-self: flex-start;
   align-self: flex-start;
-  width: 22vw;
-  height: 13vw;
+  width: 13vw;
+  height: 11vw;
   margin: 0;
   display: -webkit-box;
   display: -webkit-flex;
@@ -1460,7 +1460,7 @@ html, body {
 /* ── TV 720p / écrans 1280×720 à 1366×768 ────────────────── */
 @media (max-width: 1400px) and (min-width: 901px) {
   .bhero-band { height: 13vw; }
-  .bhero-photo { width: 28vw; height: 16vw; }
+  .bhero-photo { width: 16vw; height: 14vw; }
   .bhero-name { font-size: 3.8vw; }
   .bhero-pnum { font-size: 2.5vw; }
   .bhero-brand-corner { font-size: 1.6vw; }
