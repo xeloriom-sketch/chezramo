@@ -1406,8 +1406,10 @@ if (TV_ID > 0) {
   startAuto();
   if (TV_ID === 3) showNetStatus('TV 3 — MODE PUB', '#8b0000', 5000);
 } else {
-  /* Rôle inconnu → écran noir le temps que Supabase réponde (~1s) */
-  showNetStatus('Détection TV en cours…', '#333', 0);
+  /* Rôle inconnu → écran noir le temps que Supabase réponde (~1s)
+     Affiche l'ID court pour que l'admin puisse identifier cet écran */
+  var _sid = DEVICE_ID ? DEVICE_ID.slice(-6) : '?';
+  showNetStatus('Détection TV en cours… [' + _sid + ']', '#333', 0);
 }
 
 /* 3. Détection TV immédiate (Supabase) — fonctionne même sans rôle caché */

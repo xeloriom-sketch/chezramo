@@ -1112,9 +1112,11 @@ function showTab(tab) {
   if (catLabel)    catLabel.style.display    = showCats ? '' : 'none';
   if (sidebarLinks) sidebarLinks.style.display = showCats ? '' : 'none';
 
-  /* Charger le panel TVs à la première ouverture */
   if (tab === 'tvs') {
     loadTvPanel();
+  } else {
+    /* Stopper l'auto-refresh quand on quitte l'onglet TVs */
+    if (_tvRefreshTimer) { clearInterval(_tvRefreshTimer); _tvRefreshTimer = null; }
   }
 
   /* Fermer sidebar mobile */
@@ -1125,33 +1127,84 @@ function showTab(tab) {
    PANEL TV
 ══════════════════════════════════════════════════════════ */
 
-/* URL de base de cette app (pour générer les liens TV) */
 var TV_BASE_URL = (function() {
-  var loc = window.location.href;
-  /* Enlève admin.html et tout ce qui suit */
-  return loc.replace(/admin\.html.*$/, '').replace(/\/$/, '');
+  return window.location.href.replace(/admin\.html.*$/, '').replace(/\/$/, '');
 })();
+
+var _tvRefreshTimer = null;
+
+function tvUrl(n) {
+  var base = TV_BASE_URL || (window.location.origin + window.location.pathname.replace(/admin\.html.*$/, ''));
+  return base.replace(/\/$/, '') + '/index.html?tv=' + n;
+}
+
+function releaseAllTvRoles() {
+  var roles = [1, 2, 3];
+  var done  = 0;
+  roles.forEach(function(role) {
+    var url = SUPABASE_URL + '/rest/v1/tv_roles?role=eq.' + role;
+    var xhr = new XMLHttpRequest();
+    xhr.open('PATCH', url, true);
+    xhr.setRequestHeader('apikey', SUPABASE_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('Prefer', 'return=minimal');
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4) return;
+      done++;
+      if (done === roles.length) {
+        showToast('Tous les rôles TV libérés — les TVs vont se reconfigurer', 'success', 4000);
+        loadTvPanel();
+      }
+    };
+    xhr.send(JSON.stringify({ device_id: null, last_seen: 0 }));
+  });
+}
 
 function loadTvPanel() {
   var grid = document.getElementById('tv-cards-grid');
   if (!grid) return;
-  grid.innerHTML = '<div class="tv-loading">Chargement des TVs…</div>';
 
-  /* Interroger la table tv_roles */
-  var url = SUPABASE_URL + '/rest/v1/tv_roles?select=*';
+  /* Barre d'outils */
+  var header = document.querySelector('#content-tvs .panel-header');
+  if (header && !header.querySelector('.tv-toolbar')) {
+    var toolbar = document.createElement('div');
+    toolbar.className = 'tv-toolbar';
+    toolbar.innerHTML =
+      '<button class="btn btn-ghost btn-sm" onclick="releaseAllTvRoles()" title="Libère tous les rôles — les TVs se reconfigurent automatiquement">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.87"/></svg>' +
+        ' Tout libérer' +
+      '</button>' +
+      '<span class="tv-refresh-label" id="tv-refresh-label">Actualisation auto dans 10s</span>';
+    header.appendChild(toolbar);
+  }
+
+  /* Lancer l'auto-refresh */
+  if (_tvRefreshTimer) clearInterval(_tvRefreshTimer);
+  var countdown = 10;
+  _tvRefreshTimer = setInterval(function() {
+    countdown--;
+    var lbl = document.getElementById('tv-refresh-label');
+    if (lbl) lbl.textContent = countdown > 0 ? ('Actualisation dans ' + countdown + 's') : 'Actualisation…';
+    if (countdown <= 0) {
+      countdown = 10;
+      fetchTvRoles();
+    }
+  }, 1000);
+
+  fetchTvRoles();
+}
+
+function fetchTvRoles() {
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', url, true);
-  var headers = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': 'Bearer ' + SUPABASE_KEY,
-    'Content-Type': 'application/json'
-  };
-  Object.keys(headers).forEach(function(k) { xhr.setRequestHeader(k, headers[k]); });
+  xhr.open('GET', SUPABASE_URL + '/rest/v1/tv_roles?select=*', true);
+  xhr.setRequestHeader('apikey', SUPABASE_KEY);
+  xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_KEY);
   xhr.onreadystatechange = function() {
     if (xhr.readyState !== 4) return;
     var rows = [];
     if (xhr.status >= 200 && xhr.status < 300) {
-      try { rows = JSON.parse(xhr.responseText) || []; } catch(e) { rows = []; }
+      try { rows = JSON.parse(xhr.responseText) || []; } catch(e) {}
     }
     renderTvCards(rows);
   };
@@ -1163,111 +1216,89 @@ function renderTvCards(rows) {
   var grid = document.getElementById('tv-cards-grid');
   if (!grid) return;
 
-  var now = Date.now();
-  var OFFLINE_MS = 2 * 60 * 1000; /* 2 minutes */
+  var now      = Date.now();
+  var STALE_MS = 2 * 60 * 1000;
 
-  /* Indexer par rôle */
   var byRole = {};
   rows.forEach(function(r) { byRole[r.role] = r; });
 
-  /* Définition des 4 TVs */
   var tvDefs = [
-    { n: 1, role: 1, label: 'TV 1', sublabel: 'Première moitié du menu' },
-    { n: 2, role: 2, label: 'TV 2', sublabel: 'Deuxième moitié du menu' },
-    { n: 3, role: 3, label: 'TV 3', sublabel: 'Mode publicité / diaporama' },
-    { n: 4, role: 4, label: 'TV 4 — TEST', sublabel: 'Menu complet · TV de test / développeur', isTest: true }
+    { n: 1, label: 'TV 1', sublabel: 'Menu — Partie 1' },
+    { n: 2, label: 'TV 2', sublabel: 'Menu — Partie 2' },
+    { n: 3, label: 'TV 3', sublabel: 'Publicités' }
   ];
 
   var html = '';
   tvDefs.forEach(function(tv) {
-    var row = tv.role !== null ? byRole[tv.role] : null;
-    var deviceId  = row ? (row.device_id || '') : '';
-    var lastSeen  = row ? (row.last_seen  || '') : '';
-    var isOnline  = false;
-    var isTest    = !!tv.isTest; /* TV4 test */
-    var isPub     = (tv.role === 3); /* TV3 pub */
-
-    if (lastSeen) {
-      var lastMs = new Date(lastSeen).getTime();
-      if (!isNaN(lastMs)) isOnline = (now - lastMs) < OFFLINE_MS;
-    }
+    var row      = byRole[tv.n] || {};
+    var deviceId = row.device_id || '';
+    var lastMs   = row.last_seen ? Number(row.last_seen) : 0;
+    var isOnline = lastMs > 0 && (now - lastMs) < STALE_MS;
+    var shortId  = deviceId ? deviceId.slice(-8) : '';
 
     /* Badge statut */
-    var badgeHtml;
-    if (isTest && !deviceId) {
-      badgeHtml = '<span class="tv-badge tv-badge-info">Test — non connectée</span>';
-    } else if (isTest && isOnline) {
-      badgeHtml = '<span class="tv-badge tv-badge-live">Test — en ligne</span>';
-    } else if (isTest) {
-      badgeHtml = '<span class="tv-badge tv-badge-offline">Test — hors ligne</span>';
-    } else if (isPub && isOnline) {
-      badgeHtml = '<span class="tv-badge tv-badge-live">Pub — en ligne</span>';
-    } else if (isPub && !deviceId) {
-      badgeHtml = '<span class="tv-badge tv-badge-offline">Pub — non connectée</span>';
-    } else if (isPub) {
-      badgeHtml = '<span class="tv-badge tv-badge-offline">Pub — hors ligne</span>';
-    } else if (!deviceId) {
-      badgeHtml = '<span class="tv-badge tv-badge-offline">Non configurée</span>';
-    } else if (isOnline) {
-      badgeHtml = '<span class="tv-badge tv-badge-live">En ligne</span>';
-    } else {
-      badgeHtml = '<span class="tv-badge tv-badge-offline">Hors ligne</span>';
+    var badge = isOnline
+      ? '<span class="tv-badge tv-badge-live">En ligne</span>'
+      : (deviceId
+          ? '<span class="tv-badge tv-badge-offline">Hors ligne</span>'
+          : '<span class="tv-badge tv-badge-offline">Non assignée</span>');
+
+    /* Dernière connexion */
+    var lastSeenStr = '';
+    if (lastMs > 0) {
+      var d  = new Date(lastMs);
+      var hh = d.getHours().toString().padStart(2, '0');
+      var mm = d.getMinutes().toString().padStart(2, '0');
+      var ss = d.getSeconds().toString().padStart(2, '0');
+      lastSeenStr = hh + ':' + mm + ':' + ss;
     }
 
-    /* Infos device */
-    var deviceHtml;
-    if (!deviceId) {
-      deviceHtml = '<div class="tv-device empty">Aucun appareil enregistré</div>';
-    } else {
-      deviceHtml = '<div class="tv-device">' + esc(deviceId) + '</div>';
-    }
-
-    /* Dernier vu */
-    var lastSeenHtml = '';
-    if (lastSeen) {
-      var d = new Date(lastSeen);
-      var h = d.getHours().toString().padStart(2,'0');
-      var m = d.getMinutes().toString().padStart(2,'0');
-      var seenStr = h + ':' + m;
-      lastSeenHtml = '<span class="tv-badge tv-badge-info" style="font-size:0.6rem">Vu à ' + seenStr + '</span>';
-    }
-
-    /* Boutons */
-    var actionsHtml =
-        '<button class="btn btn-ghost" onclick="resetTvRole(' + tv.role + ')" title="Réinitialiser TV' + tv.n + '">' +
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
-            '<polyline points="1 4 1 10 7 10"/>' +
-            '<path d="M3.51 15a9 9 0 1 0 .49-4.87"/>' +
-          '</svg>' +
-          ' Réinitialiser' +
-        '</button>' +
-        '<button class="btn btn-outline" onclick="copyTvUrl(' + tv.n + ')" title="Copier lien TV' + tv.n + '">' +
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
-            '<rect x="9" y="9" width="13" height="13" rx="2"/>' +
-            '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>' +
-          '</svg>' +
-          ' Copier' +
-        '</button>';
+    /* URL d'assignation */
+    var url = tvUrl(tv.n);
 
     html +=
-      '<div class="tv-card">' +
+      '<div class="tv-card' + (isOnline ? ' tv-card-online' : '') + '">' +
         '<div class="tv-card-top">' +
           '<div class="tv-icon">' +
-            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">' +
-              '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>' +
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">' +
+              '<rect x="2" y="3" width="20" height="14" rx="2"/>' +
+              '<line x1="8" y1="21" x2="16" y2="21"/>' +
+              '<line x1="12" y1="17" x2="12" y2="21"/>' +
             '</svg>' +
           '</div>' +
-          '<div class="tv-status-badges">' +
-            badgeHtml +
-            lastSeenHtml +
-          '</div>' +
+          '<div class="tv-status-badges">' + badge + '</div>' +
         '</div>' +
+
         '<div>' +
           '<div class="tv-label">' + esc(tv.label) + '</div>' +
           '<div class="tv-sublabel">' + esc(tv.sublabel) + '</div>' +
         '</div>' +
-        deviceHtml +
-        '<div class="tv-actions">' + actionsHtml + '</div>' +
+
+        /* Appareil connecté */
+        (deviceId
+          ? '<div class="tv-device">' +
+              '<span class="tv-device-id">' + esc(shortId) + '</span>' +
+              (lastSeenStr ? '<span class="tv-device-seen">Vu à ' + lastSeenStr + '</span>' : '') +
+            '</div>'
+          : '<div class="tv-device empty">Aucun appareil</div>') +
+
+        /* URL d'assignation */
+        '<div class="tv-url-section">' +
+          '<div class="tv-url-label">Lien à ouvrir sur cet écran</div>' +
+          '<div class="tv-url-box">' + esc(url) + '</div>' +
+        '</div>' +
+
+        /* Actions */
+        '<div class="tv-actions">' +
+          '<button class="btn btn-ghost btn-sm" onclick="resetTvRole(' + tv.n + ')">' +
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.87"/></svg>' +
+            ' Libérer' +
+          '</button>' +
+          '<button class="btn btn-primary btn-sm" onclick="copyTvUrl(' + tv.n + ')">' +
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+            ' Copier le lien' +
+          '</button>' +
+        '</div>' +
       '</div>';
   });
 
@@ -1300,11 +1331,7 @@ function resetTvRole(role) {
 }
 
 function copyTvUrl(n) {
-  var url = TV_BASE_URL + '/index.html?tv=' + n;
-  /* Fallback si l'URL de base détection échoue */
-  if (!TV_BASE_URL || TV_BASE_URL === '') {
-    url = window.location.origin + window.location.pathname.replace(/admin\.html.*$/, '') + 'index.html?tv=' + n;
-  }
+  var url = tvUrl(n);
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url).then(function() {
       showToast('Lien copié : ' + url, 'success', 4000);

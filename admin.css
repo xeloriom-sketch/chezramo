@@ -1246,6 +1246,38 @@ body {
   align-items: center;
 }
 .tv-device.empty { color: #2a2a38; font-family: 'Inter', sans-serif; font-style: italic; }
+.tv-device-id   { font-family: 'Courier New', monospace; color: #6a6a78; }
+.tv-device-seen { margin-left: auto; font-size: 0.65rem; color: #3a3a48; }
+
+.tv-card-online { border-color: rgba(34,197,94,0.2); }
+
+/* Lien d'assignation */
+.tv-url-section { display: flex; flex-direction: column; gap: 0.3rem; }
+.tv-url-label   { font-size: 0.65rem; color: #3a3a48; text-transform: uppercase; letter-spacing: 0.5px; }
+.tv-url-box {
+  background: #08080c;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.65rem;
+  color: #4a9eff;
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+/* Toolbar du panel TVs */
+.tv-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.tv-refresh-label {
+  font-size: 0.7rem;
+  color: #3a3a48;
+  margin-left: auto;
+}
 
 .tv-actions {
   display: -webkit-flex;
@@ -1255,8 +1287,8 @@ body {
 .tv-actions .btn {
   -webkit-flex: 1;
   flex: 1;
-  font-size: 0.78rem;
-  min-height: 40px;
+  font-size: 0.75rem;
+  min-height: 36px;
 }
 
 .tv-loading {
