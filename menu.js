@@ -62,33 +62,25 @@ var DEVICE_ID = '';     /* identité stable de cette TV */
     } catch (e) {}
   }
   if (TV_MANUAL !== null) {
-    if (TV_MANUAL !== 1 && TV_MANUAL !== 2 && TV_MANUAL !== 3 && TV_MANUAL !== 4) TV_MANUAL = 0;
+    if (TV_MANUAL !== 1 && TV_MANUAL !== 2 && TV_MANUAL !== 3) TV_MANUAL = 0;
     TV_ID = TV_MANUAL;
   }
 })();
 
-/* Mode développeur : localhost uniquement (pas de claim de rôle)
-   Depuis n'importe quel autre appareil, la TV se détecte normalement
-   et prend le rôle 4 si les rôles 1 et 2 sont déjà occupés. */
-var IS_DEV = !!(
-  location.hostname === 'localhost' ||
-  location.hostname === '127.0.0.1'
-);
 
 /* Normalise un nom de catégorie pour comparaison sans accent ni casse */
 function normCat(s) {
   return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
-/* Split TV1/TV2 fixé par noms de catégories (accent-insensible)
-   pour que Grillades reste toujours TV2 même si Supabase utilise
-   des noms légèrement différents (accents, casse). */
+/* Split TV1/TV2/TV3 fixé par noms de catégories (accent-insensible)
+   pour que les catégories restent sur la bonne TV même si Supabase
+   utilise des noms légèrement différents (accents, casse). */
 var _tv1Cats = null;
 var _tv2Cats = null;
 function _initTvCats() {
   if (_tv1Cats) return;
-  _tv1Cats = {};
-  _tv2Cats = {};
+  _tv1Cats = {}; _tv2Cats = {};
   var half = Math.ceil(defaultMenu.length / 2);
   for (var _i = 0; _i < defaultMenu.length; _i++) {
     var _key = normCat(defaultMenu[_i].category);
@@ -97,7 +89,7 @@ function _initTvCats() {
   }
 }
 function slidesForTv(data) {
-  if (TV_ID === 3) return [];
+  if (TV_ID === 3) return [];          /* TV3 = pub, pas de menu */
   if (TV_ID !== 1 && TV_ID !== 2) return data;
   _initTvCats();
   var out1 = [], out2 = [], unk = [];
@@ -288,8 +280,7 @@ function normalizeThumb(img) {
   var isHero  = par.className.indexOf('bhero-photo') !== -1;
   var isThumb = par.className.indexOf('biph') !== -1;
   if (!isHero && !isThumb) return;
-  /* TV3 pub : image originale avec fond, object-fit:cover gère l'affichage */
-  if (isHero && TV_ID === 3) return;
+  if (isHero && TV_ID === 3) return; /* TV3 pub : pas de normalisation sur le fond */
   try {
     var c = document.createElement('canvas');
     c.width  = img.naturalWidth;
@@ -417,7 +408,7 @@ function precacheAllImages(data) {
    DONNÉES MENU PAR DÉFAUT (fallback offline)
    ════════════════════════════════════════════════ */
 var defaultMenu = [
-  { category: "Sandwichs Vedettes", info: "Viande de veau 100% Maison", items: [
+  { category: "Sandwichs Vedettes", info: "", items: [
     { title: "Kebab",       description: "Pain rond, veau maison, crudités",        price: "9,00",  menuPrice: "12,00", url: "uploads/Kebab.png" },
     { title: "Kebab Frites",description: "Viande et frites servis dans le pain",    price: "9,50",                      url: "uploads/Kebab Frites.png" },
     { title: "Kebab Geant", description: "Double portion de viande de veau",        price: "15,00", menuPrice: "17,00", badge: "XXL", url: "uploads/Kebab Geant.png" }
@@ -605,22 +596,9 @@ function buildSlidesHtml() {
    BOARD_MAX_COL "lignes" max, 3 colonnes par page.
    1 page = tout visible d'un coup, sans attendre. */
 function boardPages(data) {
-  /* TV2 : tout en 1 page statique, 3 colonnes réparties équitablement */
-  if (TV_ID === 2) {
-    var t = Math.ceil(data.length / 3);
-    return [[ data.slice(0, t), data.slice(t, 2 * t), data.slice(2 * t) ]];
-  }
-  var cols = [], cur = [], used = 0;
-  for (var i = 0; i < data.length; i++) {
-    var c    = data[i];
-    var cost = (c.items || []).length + (c.info ? 2 : 1.5);
-    if (used > 0 && used + cost > BOARD_MAX_COL) { cols.push(cur); cur = []; used = 0; }
-    cur.push(c); used += cost;
-  }
-  if (cur.length) cols.push(cur);
-  var pages = [];
-  for (var p = 0; p < cols.length; p += 3) pages.push(cols.slice(p, p + 3));
-  return pages;
+  /* 1 page statique par TV : 3 colonnes réparties équitablement */
+  var t = Math.ceil(data.length / 3);
+  return [[ data.slice(0, t), data.slice(t, 2 * t), data.slice(2 * t) ]];
 }
 
 /* Item circulaire : photo ronde + nom + prix */
@@ -646,9 +624,8 @@ function boardItemHtml(item, showImg) {
 
 function boardCatHtml(cat) {
   var items = cat.items || [];
-  var duo   = items.length <= 2 ? ' bcat--duo' : '';
   var html  =
-    '<div class="bcat' + duo + '">' +
+    '<div class="bcat">' +
       '<div class="bcat-head">' +
         '<span class="bcat-title">' + (cat.category || '') + '</span>' +
         '<span class="bcat-line"></span>' +
@@ -687,7 +664,7 @@ var HERO_EXTRA_HTML =
   '</div>';
 
 function buildBoardHtml() {
-  /* ── TV 3 : pub-mode plein écran (bannière géante) ── */
+  /* ── TV 3 : pub-mode plein écran ── */
   if (TV_ID === 3) {
     slideTotal = 1;
     return '<div class="slide board pub active" id="s0">' +
@@ -695,7 +672,6 @@ function buildBoardHtml() {
       '<div class="pub-prog" id="pub-prog"></div>' +
     '</div>';
   }
-
   var pages  = boardPages(viewData);
   slideTotal = pages.length;
   var html = '';
@@ -739,7 +715,7 @@ var HERO_FEATURED = [
 var PUB_EXCLUDE = ['miche', 'assiette', 'assiete'];
 
 function heroItems() {
-  /* TV 3 pub-mode : utilise tout le menu, pas juste la moitié */
+  /* TV3 pub : utilise tout le menu, pas juste la moitié */
   var source = (TV_ID === 3) ? menuData : viewData;
   /* Collecte tous les plats avec photo */
   var all = [], seen = {};
@@ -793,33 +769,15 @@ function heroRender() {
         '<div class="bhero-plbl">MENU</div>' +
       '</div>';
   }
-  var html;
-  if (TV_ID === 3) {
-    /* ── Mode pub TV 3 : layout enrichi avec branding + badge ── */
-    var catLabel = (it.category || '').replace(/&amp;/g,'&');
-    html =
-      '<div class="bhero-photo">' +
-        '<img data-src="' + safeUrl + '" data-thumb="1" src="" alt="" decoding="async">' +
-      '</div>' +
-      '<div class="bhero-right">' +
-        '<div class="pub-brand">CHEZ RAMO</div>' +
-        (catLabel ? '<div class="pub-cat">' + catLabel + '</div>' : '') +
-        '<div class="bhero-name">' + (it.title || '') + '</div>' +
-        '<div class="pub-sep"></div>' +
-        (it.description ? '<div class="bhero-desc">' + it.description + '</div>' : '') +
-        '<div class="bhero-prices">' + pricesHtml + '</div>' +
-      '</div>';
-  } else {
-    html =
-      '<div class="bhero-photo">' +
-        '<img data-src="' + safeUrl + '" data-thumb="1" src="" alt="" decoding="async">' +
-      '</div>' +
-      '<div class="bhero-right">' +
-        '<div class="bhero-name">' + (it.title || '') + '</div>' +
-        (it.description ? '<div class="bhero-desc">' + it.description + '</div>' : '') +
-        '<div class="bhero-prices">' + pricesHtml + '</div>' +
-      '</div>';
-  }
+  var html =
+    '<div class="bhero-photo">' +
+      '<img data-src="' + safeUrl + '" data-thumb="1" src="" alt="" decoding="async">' +
+    '</div>' +
+    '<div class="bhero-right">' +
+      '<div class="bhero-name">' + (it.title || '') + '</div>' +
+      (it.description ? '<div class="bhero-desc">' + it.description + '</div>' : '') +
+      '<div class="bhero-prices">' + pricesHtml + '</div>' +
+    '</div>';
   for (var c = 0; c < inners.length; c++) {
     var inner = inners[c];
     inner.innerHTML = html;
@@ -827,7 +785,6 @@ function heroRender() {
     if (img) {
       var src = img.getAttribute('data-src');
       img.removeAttribute('data-src');
-      /* TV3 pub : image originale haute qualité (pas la vignette 420px) */
       if (TV_ID === 3) { loadImg(img, src); } else { loadThumb(img, src); }
     }
     inner.style.opacity = '1';
@@ -1210,8 +1167,7 @@ function tvPatch(filter, body, cb) {
 }
 
 function tvClaim() {
-  if (TV_MANUAL !== null) return;               /* choix manuel prioritaire */
-  if (IS_DEV) return;                           /* dev chez soi → pas de claim */
+  if (TV_MANUAL !== null) return;
   if (typeof fetch === 'undefined' || netQuality === 'offline') return;
   var now = Date.now();
   var me  = encodeURIComponent(DEVICE_ID);
@@ -1232,15 +1188,10 @@ function tvClaim() {
   refresh(1, function() {
     refresh(2, function() {
       refresh(3, function() {
-        refresh(4, function() {
-          take(1, function() {
-            take(2, function() {
-              take(3, function() {
-                take(4, function() {
-                  /* Tous les rôles pris : menu complet (fallback) */
-                  if (TV_ID !== 0) applyRole(0, 'TV UNIQUE — MENU COMPLET');
-                });
-              });
+        take(1, function() {
+          take(2, function() {
+            take(3, function() {
+              if (TV_ID !== 0) applyRole(0, 'TV UNIQUE — MENU COMPLET');
             });
           });
         });
@@ -1448,9 +1399,7 @@ startAuto();
 
 /* Rappel du rôle TV au démarrage */
 if (TV_ID === 3) {
-  showNetStatus('TV 3 — MODE PUB — DÉTECTION AUTO', '#8b0000', 5000);
-} else if (TV_ID === 4) {
-  showNetStatus('TV 4 — MODE TEST — MENU COMPLET', '#5a3e9c', 5000);
+  showNetStatus('TV 3 — MODE PUB', '#8b0000', 5000);
 } else if (TV_ID === 1 || TV_ID === 2) {
   showNetStatus('TV ' + TV_ID + ' — MANUEL — ' + viewData.length + ' CATÉGORIES', '#1c3e7c', 5000);
 } else if (TV_MANUAL === null) {
@@ -1470,10 +1419,8 @@ setTimeout(function() {
     /* Intervalle légèrement aléatoire → les TV ne se synchronisent pas */
     setInterval(checkVersion, 55000 + Math.floor(Math.random() * 10000));
   }, vOff);
-  if (!IS_DEV) {
-    tvClaim();
-    setInterval(tvClaim, 45000);
-  }
+  tvClaim();
+  setInterval(tvClaim, 45000);
 }, 2000);
 
 /* 4. Après 6s : pre-cache TOUTES les images en arrière-plan */

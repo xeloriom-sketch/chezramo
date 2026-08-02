@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════
--- CHEZ RAMO — Détection auto des rôles TV 1 / TV 2
+-- CHEZ RAMO — Détection auto des rôles TV 1 / TV 2 / TV 3
 -- Colle ce SQL dans : Supabase > SQL Editor > New Query
 -- (à exécuter UNE FOIS avant de déployer la détection auto)
 -- ══════════════════════════════════════════════════════
@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS tv_roles (
 
 INSERT INTO tv_roles (role, device_id, last_seen) VALUES
   (1, NULL, 0),
-  (2, NULL, 0)
+  (2, NULL, 0),
+  (3, NULL, 0)
 ON CONFLICT (role) DO NOTHING;
 
 ALTER TABLE tv_roles ENABLE ROW LEVEL SECURITY;
