@@ -1261,7 +1261,7 @@ function fetchMenu() {
       catInfo[defaultMenu[k].category] = defaultMenu[k].info || '';
     }
     /* Catégories à masquer du board (affichées ailleurs : bannière, etc.) */
-    var HIDDEN_CATS = ['Boissons & Boissons Chaudes', 'Boissons'];
+    var HIDDEN_CATS = ['Boissons & Boissons Chaudes', 'Boissons', 'Grillades'];
     for (var r = 0; r < rows.length; r++) {
       var row = rows[r];
       if (HIDDEN_CATS.indexOf(row.category) !== -1) continue;
@@ -1291,14 +1291,15 @@ function fetchMenu() {
       var bi = catOrder[normCat(b.category)]; if (bi === undefined) bi = 999;
       return ai - bi;
     });
-    /* Ne re-render que si les données ont vraiment changé */
+    /* Ne re-render que si le contenu de CETTE TV a vraiment changé */
     var freshJson = JSON.stringify(fresh);
     if (freshJson === lastMenuJson) return;
     lastMenuJson = freshJson;
     menuData = fresh;
-    viewData = slidesForTv(menuData);
+    var newView = slidesForTv(menuData);
+    if (JSON.stringify(newView) === JSON.stringify(viewData)) return;
+    viewData = newView;
     if (current >= viewData.length) current = 0;
-    /* Mise à jour silencieuse : aucun flash visible */
     render();
     showSlide(current);
     startAuto();
