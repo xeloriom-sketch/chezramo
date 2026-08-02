@@ -1507,3 +1507,70 @@ html, body {
   .bip { font-size: 2.8vw; }
   .bipm { font-size: 1.5vw; }
 }
+
+/* ── Écran de sélection TV ──────────────────── */
+#tv-setup {
+  position: fixed;
+  inset: 0;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4vw;
+  z-index: 9999;
+}
+.tvs-brand {
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  font-size: 6vw;
+  letter-spacing: 0.15em;
+  color: #fff;
+}
+.tvs-brand span { color: #e8a020; }
+.tvs-title {
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 1.8vw;
+  color: #aaa;
+  letter-spacing: 0.05em;
+}
+.tvs-buttons {
+  display: flex;
+  gap: 3vw;
+  margin-top: 1vw;
+}
+.tvs-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8vw;
+  width: 22vw;
+  height: 14vw;
+  border: none;
+  border-radius: 1.2vw;
+  cursor: pointer;
+  background: #1a1a1a;
+  border: 0.2vw solid #333;
+  transition: transform 0.15s, border-color 0.15s;
+  text-decoration: none;
+}
+.tvs-btn:hover, .tvs-btn:focus {
+  transform: scale(1.05);
+  border-color: #e8a020;
+  outline: none;
+}
+.tvs-num {
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  font-size: 4.5vw;
+  color: #fff;
+  line-height: 1;
+}
+.tvs-label {
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 1.3vw;
+  color: #888;
+  letter-spacing: 0.05em;
+}
+.tvs-btn-1 .tvs-num { color: #4a9eff; }
+.tvs-btn-2 .tvs-num { color: #4aff8a; }
+.tvs-btn-3 .tvs-num { color: #e8a020; }

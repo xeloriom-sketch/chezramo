@@ -1398,35 +1398,56 @@ if (!navigator.onLine) {
   showNetStatus('HORS LIGNE — Menu en cache', '#333333', 0);
 }
 
-/* 2. Affiche le menu immédiatement depuis les données locales */
-render();
-showSlide(0);
-startAuto();
+/* 2. Écran de sélection si aucun rôle connu, sinon affiche le menu */
+if (TV_MANUAL === null && TV_ID === 0) {
+  /* Première ouverture ou cache effacé : montrer le sélecteur de TV */
+  var _setup = document.createElement('div');
+  _setup.id = 'tv-setup';
+  _setup.innerHTML =
+    '<div class="tvs-brand">CHEZ <span>RAMO</span></div>' +
+    '<div class="tvs-title">Choisissez le rôle de cet écran</div>' +
+    '<div class="tvs-buttons">' +
+      '<a class="tvs-btn tvs-btn-1" href="?tv=1">' +
+        '<span class="tvs-num">TV 1</span>' +
+        '<span class="tvs-label">Menu — Partie 1</span>' +
+      '</a>' +
+      '<a class="tvs-btn tvs-btn-2" href="?tv=2">' +
+        '<span class="tvs-num">TV 2</span>' +
+        '<span class="tvs-label">Menu — Partie 2</span>' +
+      '</a>' +
+      '<a class="tvs-btn tvs-btn-3" href="?tv=3">' +
+        '<span class="tvs-num">TV 3</span>' +
+        '<span class="tvs-label">Publicités</span>' +
+      '</a>' +
+    '</div>';
+  document.body.appendChild(_setup);
+} else {
+  /* Rôle connu : affichage immédiat du menu */
+  render();
+  showSlide(0);
+  startAuto();
 
-/* Rappel du rôle TV au démarrage */
-if (TV_ID === 3) {
-  showNetStatus('TV 3 — MODE PUB', '#8b0000', 5000);
-} else if (TV_ID === 1 || TV_ID === 2) {
-  showNetStatus('TV ' + TV_ID + ' — MANUEL — ' + viewData.length + ' CATÉGORIES', '#1c3e7c', 5000);
-} else if (TV_MANUAL === null) {
-  showNetStatus('DÉTECTION AUTO DES TV…', '#1c3e7c', 4000);
-}
+  if (TV_ID === 3) {
+    showNetStatus('TV 3 — MODE PUB', '#8b0000', 5000);
+  } else if (TV_ID === 1 || TV_ID === 2) {
+    showNetStatus('TV ' + TV_ID + ' — MANUEL — ' + viewData.length + ' CATÉGORIES', '#1c3e7c', 5000);
+  }
 
-/* 3. Détection TV immédiate (évite le flash plein-menu → demi-menu) */
-tvClaim();
+  /* 3. Détection TV immédiate */
+  tvClaim();
 
-/* 4. Après 2s : charge menu + version + heartbeat TV */
-setTimeout(function() {
-  fetchMenu();
-  setInterval(fetchMenu, 30000);
-  /* Décalage version : TV1=0s, TV2=20s, TV3=40s, TV0=aléatoire 0-15s */
-  var vOff = TV_ID > 0 ? (TV_ID - 1) * 20000 : Math.floor(Math.random() * 15000);
+  /* 4. Après 2s : charge menu + version + heartbeat TV */
   setTimeout(function() {
-    checkVersion();
-    setInterval(checkVersion, 55000 + Math.floor(Math.random() * 10000));
-  }, vOff);
-  setInterval(tvClaim, 45000);
-}, 2000);
+    fetchMenu();
+    setInterval(fetchMenu, 30000);
+    var vOff = TV_ID > 0 ? (TV_ID - 1) * 20000 : Math.floor(Math.random() * 15000);
+    setTimeout(function() {
+      checkVersion();
+      setInterval(checkVersion, 55000 + Math.floor(Math.random() * 10000));
+    }, vOff);
+    setInterval(tvClaim, 45000);
+  }, 2000);
+}
 
 /* 4. Après 6s : pre-cache TOUTES les images en arrière-plan */
 setTimeout(function() { precacheAllImages(menuData); }, 6000);
