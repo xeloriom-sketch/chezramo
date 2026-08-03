@@ -502,7 +502,7 @@ var defaultMenu = [
     { title: "Assiette Enfant", description: "Frites, viande et sauce au choix",  price: "12,00", url: "uploads/Assiette Enfant.png" }
   ]},
   { category: "Nos Sauces", items: [
-    { title: "Nos Sauces", description: "Algérienne, Blanche, Samouraï... À partir de la 3ème sauce : 1€ supplémentaire", price: "INCLUSE", badge: "3ÈME: 1€ SUPP.", url: "uploads/Nos Sauces.png" }
+    { title: "Nos Sauces", description: "Blanche · Algérienne · Mayonnaise · Ketchup · Samouraï · Curry · Barbecue · Andalouse · Tartare · Burger · Harissa · Moutarde", price: "", badge: "3ÈME: 1€ SUPP.", url: "uploads/Nos Sauces.png" }
   ]}
 ];
 
