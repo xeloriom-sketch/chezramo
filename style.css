@@ -932,6 +932,7 @@ html, body {
 .bip {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
   font-size: 2.1vw;
+  font-weight: 700;
   color: #ffffff;
   line-height: 1;
 }
@@ -939,6 +940,7 @@ html, body {
 .bipm {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
   font-size: 1.4vw;
+  font-weight: 700;
   color: #e01010;
   letter-spacing: 0.08vw;
 }
