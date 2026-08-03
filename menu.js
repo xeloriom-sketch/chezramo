@@ -453,8 +453,7 @@ var defaultMenu = [
   ]},
   { category: "Burgers", info: "Menu : +3,00 Euro (Frites + Boisson)", items: [
     { title: "Chicken Burger",description: "Poulet croustillant et cheddar",   price: "6,00", menuPrice: "9,00", url: "uploads/Chicken Burger.png" },
-    { title: "Cheese Burger", description: "Steak haché et fromage fondu",     price: "6,00", menuPrice: "9,00", url: "uploads/Cheese Burger.png" },
-    { title: "Fish Burger",   description: "Poisson pané et sauce tartare",    price: "6,00", menuPrice: "9,00", url: "uploads/Fish Burger.png" }
+    { title: "Cheese Burger", description: "Steak haché et fromage fondu",     price: "6,00", menuPrice: "9,00", url: "uploads/Cheese Burger.png" }
   ]},
   { category: "Finger Food", info: "Nos petites faims croustillantes", items: [
     { title: "Nuggets (x7)",description: "Filets de poulet frits dorés",   price: "8,50", url: "uploads/Nuggets (x7).png" },
@@ -462,9 +461,10 @@ var defaultMenu = [
     { title: "Tenders (x4)",description: "Aiguillettes de poulet tendres", price: "7,50", url: "uploads/Tenders (x4).png" }
   ]},
   { category: "Accompagnements & Sauces", info: "Pour compléter votre repas", items: [
-    { title: "Frites",          description: "Petite: 2,00€ | Grande: 3,00€",     price: "2,00",   url: "uploads/Frites.png" },
+    { title: "Frites",          description: "Petite portion",                    price: "2,00",   url: "uploads/Frites.png" },
+    { title: "Grande Frite",    description: "Grande portion",                    price: "3,00",   url: "uploads/Frites.png" },
     { title: "Barquette Viande",description: "Portion de veau 100% maison",       price: "10,00",  url: "uploads/Barquette.png" },
-    { title: "Nos Sauces",      description: "Algérienne, Blanche, Samouraï... Incluse avec votre sandwich ou menu", price: "", menuPrice: "0,50", badge: "AU CHOIX", url: "uploads/Nos Sauces.png" }
+    { title: "Nos Sauces",      description: "Algérienne, Blanche, Samouraï...",  price: "INCLUSE", badge: "1€/SUPP.", url: "uploads/Nos Sauces.png" }
   ]},
   { category: "Salades Fraiches", info: "Préparées avec des produits frais", items: [
     { title: "Salade Grecque",   description: "Tomates, concombres, olives, feta, oignons", price: "6,00",  url: "uploads/Salade_Grecque.png" },
@@ -496,8 +496,7 @@ var defaultMenu = [
   ]},
   { category: "Menu Enfants", info: "Petits plats pour nos petits clients", items: [
     { title: "Menu Enfant",     description: "4 Nuggets ou viande au choix",      price: "10,00", badge: "AU CHOIX", url: "uploads/Assiette Enfant.png" },
-    { title: "Assiette Enfant", description: "Frites, viande et sauce au choix",  price: "12,00", url: "uploads/Assiette Enfant.png" },
-    { title: "Mini Burger",     description: "Pain, steak haché, fromage, sauce", price: "6,00",  url: "uploads/Chicken Burger.png" }
+    { title: "Assiette Enfant", description: "Frites, viande et sauce au choix",  price: "12,00", url: "uploads/Assiette Enfant.png" }
   ]}
 ];
 
