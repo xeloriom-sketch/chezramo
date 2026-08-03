@@ -98,7 +98,11 @@ function _initTvCats() {
   }
 }
 function slidesForTv(data) {
-  if (TV_ID === 3) return data;        /* TV3 = diapo : tout le menu */
+  if (TV_ID === 3) return data.map(function(cat) {
+    return Object.assign({}, cat, { items: (cat.items || []).filter(function(it) {
+      return (it.title || '').toLowerCase() !== 'grande frite';
+    })});
+  });        /* TV3 = diapo : tout le menu sauf Grande Frite */
   if (TV_ID !== 1 && TV_ID !== 2) return data;
   _initTvCats();
   var out1 = [], out2 = [], unk = [];
