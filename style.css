@@ -922,10 +922,13 @@ html, body {
   display: flex;
   -webkit-flex-direction: row;
   flex-direction: row;
+  -webkit-flex-wrap: nowrap;
+  flex-wrap: nowrap;
   -webkit-box-align: baseline;
   -webkit-align-items: baseline;
   align-items: baseline;
-  gap: 0.6vw;
+  gap: 0.4vw;
+  white-space: nowrap;
 }
 .bip { margin-bottom: 0.06vw; }
 .bipm { margin-bottom: 0; }
@@ -939,7 +942,7 @@ html, body {
 .bip sup { font-size: 55%; color: #e01010; vertical-align: super; }
 .bipm {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
-  font-size: 2.1vw;
+  font-size: 1.7vw;
   font-weight: 700;
   color: #e01010;
   letter-spacing: 0.08vw;
