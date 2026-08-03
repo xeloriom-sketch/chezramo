@@ -610,7 +610,7 @@ function boardItemHtml(item, showImg) {
     : '<span class="biph biph-empty"></span>';
   var priceHtml = '<span class="bitem-price">';
   if (p) priceHtml += '<span class="bip">' + p + (/\d/.test(p) ? '<sup>€</sup>' : '') + '</span>';
-  if (mp) priceHtml += '<span class="bipm">MENU ' + mp + '€</span>';
+  if (mp) priceHtml += '<span class="bipm">M ' + mp + '€</span>';
   priceHtml += '</span>';
   return (
     '<div class="bitem">' + thumb +
