@@ -501,7 +501,7 @@ var defaultMenu = [
     { title: "Menu Enfant",     description: "4 Nuggets ou viande au choix",      price: "10,00", badge: "AU CHOIX", url: "uploads/Assiette Enfant.png" },
     { title: "Assiette Enfant", description: "Frites, viande et sauce au choix",  price: "12,00", url: "uploads/Assiette Enfant.png" }
   ]},
-  { category: "Nos Sauces", info: "<span style=\"font-size:1.5vw;font-weight:700;color:#ffffff;letter-spacing:0.05vw\">Blanche · Algérienne · Mayonnaise · Ketchup · Samouraï · Curry · Barbecue · Andalouse · Tartare · Burger · Harissa · Moutarde</span>", items: [
+  { category: "Nos Sauces", info: "<span style=\"font-size:1.15vw;font-weight:700;color:#ffffff;letter-spacing:0.04vw\">Blanche · Algérienne · Mayonnaise · Ketchup · Samouraï · Curry · Barbecue · Andalouse · Tartare · Burger · Harissa · Moutarde</span>", items: [
     { title: "Nos Sauces", description: "Blanche · Algérienne · Mayonnaise · Ketchup · Samouraï · Curry · Barbecue · Andalouse · Tartare · Burger · Harissa · Moutarde", price: "", badge: "3ÈME: 1€ SUPP.", url: "uploads/Nos Sauces.png" }
   ]}
 ];
