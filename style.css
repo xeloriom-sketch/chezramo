@@ -1431,11 +1431,11 @@ html, body {
 
 /* ── TV 720p / écrans 1280×720 à 1366×768 ────────────────── */
 @media (max-width: 1400px) and (min-width: 901px) {
-  .bhero-band { height: 10vw; }
-  .bhero-photo { width: 14vw; height: 14vw; }
-  .bhero-name { font-size: 3.8vw; }
-  .bhero-pnum { font-size: 2.5vw; }
-  .bhero-brand-corner { font-size: 1.6vw; }
+  .bhero-band { height: 4.5vw; }
+  .bhero-photo { width: 11vw; height: 10vw; }
+  .bhero-name { font-size: 2.5vw; }
+  .bhero-pnum { font-size: 2vw; }
+  .bhero-brand-corner { font-size: 1.2vw; }
   .bcat-title { font-size: 2.2vw; }
   .bitem-name { font-size: 1.5vw; }
   .bip { font-size: 1.8vw; }
@@ -1448,11 +1448,11 @@ html, body {
   .btop-brand { font-size: 7.5vw; }
   .btop-box-title { font-size: 2vw; }
   .btop-box-sub { font-size: 1.2vw; }
-  .bhero-band { height: 16vw; }
-  .bhero-photo { width: 24vw; height: 19vw; }
-  .bhero-name { font-size: 4.8vw; }
-  .bhero-pnum { font-size: 3.5vw; }
-  .bhero-brand-corner { font-size: 2vw; }
+  .bhero-band { height: 8vw; }
+  .bhero-photo { width: 14vw; height: 12vw; }
+  .bhero-name { font-size: 3vw; }
+  .bhero-pnum { font-size: 2.2vw; }
+  .bhero-brand-corner { font-size: 1.5vw; }
   .biph { width: 6.5vw; height: 6.5vw; }
   .bcat-title { font-size: 2.4vw; }
   .bitem-name { font-size: 1.5vw; }
@@ -1466,8 +1466,8 @@ html, body {
   .btop-box { padding: 1vw 2vw; }
   .btop-box-title { font-size: 3.2vw; }
   .btop-box-sub { font-size: 2vw; }
-  .bhero-band { height: 22vw; padding: 0; }
-  .bhero-photo { width: 28vw; height: 25vw; }
+  .bhero-band { height: 12vw; padding: 0; }
+  .bhero-photo { width: 16vw; height: 14vw; }
   .bhero-name { font-size: 6.5vw; }
   .bhero-desc { font-size: 2vw; }
   .bhero-pnum { font-size: 5vw; }
