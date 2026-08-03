@@ -511,7 +511,7 @@ html, body {
 .bhero-band {
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
-  height: 12vw;
+  height: 8vw;
   background: #c40000;
   padding: 0;
   display: -webkit-box;
@@ -535,7 +535,7 @@ html, body {
   -webkit-box-align: center;
   -webkit-align-items: center;
   align-items: center;
-  padding: 1vw 1.5vw 1vw 2.2vw;
+  padding: 1vw 1.5vw 1vw 5vw;
   gap: 2vw;
   opacity: 1;
   overflow: visible;
@@ -544,14 +544,13 @@ html, body {
   -webkit-transition: opacity 0.5s ease, -webkit-transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
   transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
 }
-.bhero-photo { margin-right: 2vw; }
 /* → panneau statique sauces (droite) */
 .bhero-extra {
-  width: 22vw;
+  width: 27vw;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
   border-left: 2px solid rgba(255,255,255,0.22);
-  padding: 1.2vw 1.5vw;
+  padding: 0.7vw 1.2vw;
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
@@ -564,8 +563,8 @@ html, body {
 }
 .bhero-extra-title {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
-  font-size: 1.2vw;
-  letter-spacing: 0.18vw;
+  font-size: 1.45vw;
+  letter-spacing: 0.15vw;
   color: rgba(255,255,255,0.9);
   border-bottom: 2px solid rgba(255,255,255,0.3);
   padding-bottom: 0.4vw;
@@ -578,87 +577,46 @@ html, body {
   border-bottom: 1px solid rgba(255,255,255,0.15);
   margin-top: 0.3vw;
 }
-/* 2 colonnes : Sauces | Boissons */
-.bhero-extra-cols {
+/* Sauces + Boissons : 2 lignes horizontales (titre · items) */
+.bhero-xrow {
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
-  -webkit-box-flex: 1;
-  -webkit-flex: 1 1 0%;
-  flex: 1 1 0%;
-  gap: 1vw;
-  min-height: 0;
+  -webkit-box-align: baseline;
+  -webkit-align-items: baseline;
+  align-items: baseline;
+  gap: 0.7vw;
+  white-space: nowrap;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  padding-bottom: 0.5vw;
 }
-.bhero-extra-col {
-  -webkit-box-flex: 1;
-  -webkit-flex: 1 1 0%;
-  flex: 1 1 0%;
-  min-width: 0;
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  -webkit-flex-direction: column;
-  flex-direction: column;
-  gap: 0.4vw;
-}
-.bhero-extra-col:first-child {
-  border-right: 1px solid rgba(255,255,255,0.15);
-  padding-right: 0.8vw;
-  margin-right: 1vw;
-}
-.bhero-extra-sauce {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  -webkit-flex-direction: column;
-  flex-direction: column;
-  gap: 0.3vw;
-}
-.bhero-extra-sauce span { margin-bottom: 0.3vw; }
-.bhero-extra-sauce span:last-child { margin-bottom: 0; }
-.bhero-extra-sauce span {
-  font-family: 'Inter', Arial, Helvetica, sans-serif;
-  font-size: 0.88vw;
-  font-weight: 600;
-  color: rgba(255,255,255,0.82);
-  letter-spacing: 0.04vw;
-  padding-bottom: 0.3vw;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-/* Ligne boisson : nom à gauche, prix à droite */
-.bhero-drink {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: flex;
-  -webkit-box-pack: justify;
-  -webkit-justify-content: space-between;
-  justify-content: space-between;
-  -webkit-box-align: center;
-  -webkit-align-items: center;
-  align-items: center;
-  padding-bottom: 0.28vw;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-.bhero-drink-name {
+.bhero-xrow:last-child { border-bottom: none; padding-bottom: 0; }
+.bhero-xtitle {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
-  font-size: 0.92vw;
-  letter-spacing: 0.06vw;
-  color: rgba(255,255,255,0.85);
+  font-size: 1.3vw;
+  letter-spacing: 0.18vw;
+  color: rgba(255,255,255,0.55);
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  text-transform: uppercase;
 }
-.bhero-drink-price {
+.bhero-xitems {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
-  font-size: 0.95vw;
+  font-size: 1.3vw;
+  letter-spacing: 0.05vw;
   color: #ffffff;
-  letter-spacing: 0.04vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .bhero-photo {
   -webkit-flex: 0 0 auto;
   flex: 0 0 auto;
-  -webkit-align-self: flex-start;
-  align-self: flex-start;
-  width: 13vw;
-  height: 11vw;
-  margin: 0;
+  -webkit-align-self: flex-end;
+  align-self: flex-end;
+  width: 11vw;
+  height: 10.5vw;
+  margin: 0 1.5vw -2vw 2vw;
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
@@ -718,7 +676,8 @@ html, body {
   padding-left: 1vw;
   border-left: 0.35vw solid #e01010;
 }
-.bhero-label, .bhero-name, .bhero-desc { margin-bottom: 0.4vw; }
+.bhero-label, .bhero-desc { margin-bottom: 0.4vw; }
+.bhero-name { margin-bottom: 0; }
 .bhero-label {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
   font-size: 1vw;
@@ -741,12 +700,23 @@ html, body {
   color: rgba(255,255,255,0.85);
   line-height: 1.4;
 }
+.bhero-name-row {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 1.5vw;
+  margin-bottom: 0.3vw;
+}
 .bhero-prices {
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
-  gap: 1vw;
-  margin-top: 0.3vw;
+  gap: 0.8vw;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
 }
 .bhero-pcard { margin-right: 1vw; }
 .bhero-pcard:last-child { margin-right: 0; }
@@ -839,7 +809,7 @@ html, body {
 .bcat-title {
   display: block;
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
-  font-size: 1.75vw;
+  font-size: 2.2vw;
   font-style: italic;
   color: #ffffff;
   text-transform: uppercase;
@@ -851,7 +821,7 @@ html, body {
 .bcat-info {
   display: block;
   font-family: 'Inter', Arial, Helvetica, sans-serif;
-  font-size: 0.8vw;
+  font-size: 0.95vw;
   color: rgba(255,255,255,0.5);
   font-weight: 500;
   margin-bottom: 0.25vw;
@@ -887,8 +857,8 @@ html, body {
 .bcat-items .bitem:last-child .biph,
 .bcat--duo .biph { margin-bottom: 0; }
 .biph {
-  width: 4.6vw;
-  height: 4.6vw;
+  width: 5.0vw;
+  height: 5.0vw;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
   border-radius: 50%;
@@ -934,13 +904,13 @@ html, body {
   margin-right: 1.1vw;
   margin-bottom: 0;
 }
-.bcat--duo .bitem-name { font-size: 1.35vw; -webkit-box-flex: 1; -webkit-flex: 1 1 0%; flex: 1 1 0%; min-width: 0; }
+.bcat--duo .bitem-name { font-size: 1.5vw; -webkit-box-flex: 1; -webkit-flex: 1 1 0%; flex: 1 1 0%; min-width: 0; }
 .bcat--duo .bitem-price { -webkit-align-items: flex-start; align-items: flex-start; }
-.bcat--duo .bip { font-size: 1.7vw; }
+.bcat--duo .bip { font-size: 1.85vw; }
 .bcat--duo .biph img { -webkit-transform: scale(1); transform: scale(1); }
 .bitem-name {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
-  font-size: 1.05vw;
+  font-size: 1.8vw;
   color: #ffffff;
   text-transform: uppercase;
   line-height: 1.1;
@@ -961,14 +931,14 @@ html, body {
 .bipm { margin-bottom: 0; }
 .bip {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
-  font-size: 1.35vw;
+  font-size: 2.1vw;
   color: #ffffff;
   line-height: 1;
 }
 .bip sup { font-size: 55%; color: #e01010; vertical-align: super; }
 .bipm {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
-  font-size: 0.8vw;
+  font-size: 1.4vw;
   color: #e01010;
   letter-spacing: 0.08vw;
 }
@@ -976,7 +946,7 @@ html, body {
   display: inline-block;
   color: #e01010;
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
-  font-size: 0.75vw;
+  font-size: 1.0vw;
   letter-spacing: 0.1vw;
   margin-left: 0.3vw;
 }
@@ -1459,14 +1429,16 @@ html, body {
 
 /* ── TV 720p / écrans 1280×720 à 1366×768 ────────────────── */
 @media (max-width: 1400px) and (min-width: 901px) {
-  .bhero-band { height: 13vw; }
-  .bhero-photo { width: 16vw; height: 14vw; }
+  .bhero-band { height: 10vw; }
+  .bhero-photo { width: 14vw; height: 14vw; }
   .bhero-name { font-size: 3.8vw; }
   .bhero-pnum { font-size: 2.5vw; }
   .bhero-brand-corner { font-size: 1.6vw; }
-  .bcat-title { font-size: 2vw; }
-  .bitem-name { font-size: 1.15vw; }
-  .bip { font-size: 1.4vw; }
+  .bcat-title { font-size: 2.2vw; }
+  .bitem-name { font-size: 1.5vw; }
+  .bip { font-size: 1.8vw; }
+  .bipm { font-size: 1.15vw; }
+  .biph { width: 5.5vw; height: 5.5vw; }
 }
 
 /* ── Tablette / petit écran ≤ 900px ────────────────────────── */
@@ -1506,4 +1478,46 @@ html, body {
   .bitem-name { font-size: 2.2vw; }
   .bip { font-size: 2.8vw; }
   .bipm { font-size: 1.5vw; }
+}
+
+/* ── Loader TV ───────────────────────────────── */
+#tv-loader {
+  position: fixed;
+  inset: 0;
+  background: #080810;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+#tv-loader.tvl-out { opacity: 0; pointer-events: none; }
+.tvl-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3.5vw;
+}
+.tvl-brand {
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  font-size: 7vw;
+  letter-spacing: 0.22em;
+  color: #fff;
+  line-height: 1;
+}
+.tvl-brand span { color: #e8a020; }
+.tvl-dots { display: flex; gap: 0.8vw; }
+.tvl-dot {
+  width: 0.65vw;
+  height: 0.65vw;
+  background: #e8a020;
+  border-radius: 50%;
+  animation: tvl-pulse 1.2s ease-in-out infinite;
+}
+.tvl-dot:nth-child(2) { animation-delay: 0.2s; }
+.tvl-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes tvl-pulse {
+  0%, 80%, 100% { opacity: 0.15; transform: scale(0.7); }
+  40%           { opacity: 1;    transform: scale(1.2); }
 }

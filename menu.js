@@ -98,7 +98,7 @@ function _initTvCats() {
   }
 }
 function slidesForTv(data) {
-  if (TV_ID === 3) return [];          /* TV3 = pub, pas de menu */
+  if (TV_ID === 3) return data;        /* TV3 = diapo : tout le menu */
   if (TV_ID !== 1 && TV_ID !== 2) return data;
   _initTvCats();
   var out1 = [], out2 = [], unk = [];
@@ -127,9 +127,10 @@ var MODE = 'board';
     var m = localStorage.getItem('ramo_mode');
     if (m === 'diapo' || m === 'board') MODE = m;
   } catch (e) {}
+  if (TV_ID === 3) MODE = 'diapo'; /* TV3 : slider à la place du pub */
 })();
-var BOARD_DURATION = 22000; /* rotation entre pages du panneau */
-var BOARD_MAX_COL  = 14;    /* budget "lignes" par colonne — ~2 catégories max */
+var BOARD_DURATION = 20000; /* rotation entre pages du panneau */
+var BOARD_MAX_COL  = 9;     /* moins de catégories par colonne → texte plus grand et aéré */
 
 /* ════════════════════════════════════════════════
    DÉTECTION RÉSEAU & ADAPTATION
@@ -448,8 +449,7 @@ var defaultMenu = [
   ]},
   { category: "Assiettes & Salade", info: "Produits frais et de qualité", items: [
     { title: "Assiette Enfant",  description: "Frites + viandes",                  price: "12,00", url: "uploads/Assiette Enfant.png" },
-    { title: "Assiette Emporter",description: "Format pratique (Mixte: 18,00€)",   price: "15,00", url: "uploads/Assiette Emporter.png" },
-    { title: "Salade du Berger", description: "Crudités, feta et olives",          price: "10,00", url: "uploads/Salade du Berger.png" }
+    { title: "Assiette Emporter",description: "Format pratique (Mixte: 18,00€)",   price: "15,00", url: "uploads/Assiette Emporter.png" }
   ]},
   { category: "Burgers", info: "Menu : +3,00 Euro (Frites + Boisson)", items: [
     { title: "Chicken Burger",description: "Poulet croustillant et cheddar",   price: "6,00", menuPrice: "9,00", url: "uploads/Chicken Burger.png" },
@@ -468,11 +468,10 @@ var defaultMenu = [
   ]},
   { category: "Salades Fraiches", info: "Préparées avec des produits frais", items: [
     { title: "Salade Grecque",   description: "Tomates, concombres, olives, feta, oignons", price: "6,00",  url: "uploads/Salade_Grecque.png" },
-    { title: "Salade Shope",     description: "Saladerie fraîche maison",                   price: "6,00",  url: "uploads/Salade_Shope.png" },
-    { title: "Salade de Poulet", description: "Poulet grillé, frites et crudités",          price: "12,00", url: "uploads/Salade_de_Poulet.png" }
+    { title: "Salade du Berger", description: "Crudités, feta et olives",                   price: "10,00", url: "uploads/Salade du Berger.png" },
+    { title: "Salade Shope",     description: "Saladerie fraîche maison",                   price: "6,00",  url: "uploads/Salade_Shope.png" }
   ]},
   { category: "Salades & Burek", info: "Spécialités maison", items: [
-    { title: "Salade de Boeuf",description: "Viande de boeuf, frites et crudités",  price: "13,00", url: "uploads/Salade_de_Boeuf.png" },
     { title: "Burek Fromage",  description: "Burek au fromage, feuilleté maison",    price: "3,50",  url: "uploads/Burek_Fromage.png" },
     { title: "Burek Epinards", description: "Burek aux épinards et fromage",         price: "3,50",  url: "uploads/Burek_Épinards.png" }
   ]},
@@ -490,11 +489,6 @@ var defaultMenu = [
     { title: "Qofte x5",  description: "5 boulettes grillées maison",  price: "9,00",  url: "uploads/Qofte_x5.png" },
     { title: "Qofte x7",  description: "7 boulettes grillées maison",  price: "11,00", url: "uploads/Qofte_x7.png" },
     { title: "Qofte x10", description: "10 boulettes grillées maison", price: "13,00", url: "uploads/Qofte_x10.png" }
-  ]},
-  { category: "Menu Enfants", info: "Pour les petits appétits", items: [
-    { title: "Menu Nuggets",  description: "Nuggets x4, frites et boisson", price: "6,00", url: "uploads/Nuggets (x7).png" },
-    { title: "Menu Escalope", description: "Escalope, frites et boisson",   price: "6,00", url: "uploads/Escalope.png" },
-    { title: "Menu Cheese",   description: "Cheese burger, frites, boisson",price: "6,00", url: "uploads/Cheese Burger.png" }
   ]},
   { category: "Desserts", info: "Douceurs maison", items: [
     { title: "Trilece",  description: "Dessert traditionnel au lait", price: "3,50", url: "uploads/Trilece.png" },
@@ -600,7 +594,7 @@ function buildSlidesHtml() {
    BOARD_MAX_COL "lignes" max, 3 colonnes par page.
    1 page = tout visible d'un coup, sans attendre. */
 function boardPages(data) {
-  /* 1 page statique par TV : 3 colonnes réparties équitablement */
+  /* 1 page statique — tout affiché d'un coup, aucune rotation */
   var t = Math.ceil(data.length / 3);
   return [[ data.slice(0, t), data.slice(t, 2 * t), data.slice(2 * t) ]];
 }
@@ -646,36 +640,17 @@ function boardCatHtml(cat) {
 
 var HERO_EXTRA_HTML =
   '<div class="bhero-extra">' +
-    '<div class="bhero-extra-cols">' +
-      '<div class="bhero-extra-col">' +
-        '<div class="bhero-extra-title">Sauces</div>' +
-        '<div class="bhero-extra-sauce">' +
-          '<span>Algérienne</span>' +
-          '<span>Blanche</span>' +
-          '<span>Samouraï</span>' +
-          '<span>Harissa</span>' +
-        '</div>' +
-      '</div>' +
-      '<div class="bhero-extra-col">' +
-        '<div class="bhero-extra-title">Boissons</div>' +
-        '<div class="bhero-extra-sauce">' +
-          '<div class="bhero-drink"><span class="bhero-drink-name">33CL</span><span class="bhero-drink-price">2,00€</span></div>' +
-          '<div class="bhero-drink"><span class="bhero-drink-name">CAFÉ</span><span class="bhero-drink-price">1,50€</span></div>' +
-          '<div class="bhero-drink"><span class="bhero-drink-name">THÉ</span><span class="bhero-drink-price">1,50€</span></div>' +
-        '</div>' +
-      '</div>' +
+    '<div class="bhero-xrow">' +
+      '<span class="bhero-xtitle">Sauces</span>' +
+      '<span class="bhero-xitems">Algérienne · Blanche · Samouraï · Harissa</span>' +
+    '</div>' +
+    '<div class="bhero-xrow">' +
+      '<span class="bhero-xtitle">Boissons</span>' +
+      '<span class="bhero-xitems">33CL 2,00€ · CAFÉ 1,50€ · THÉ 1,50€</span>' +
     '</div>' +
   '</div>';
 
 function buildBoardHtml() {
-  /* ── TV 3 : pub-mode plein écran ── */
-  if (TV_ID === 3) {
-    slideTotal = 1;
-    return '<div class="slide board pub active" id="s0">' +
-      '<div class="pub-cols" id="pub-cols"></div>' +
-      '<div class="pub-prog" id="pub-prog"></div>' +
-    '</div>';
-  }
   var pages  = boardPages(viewData);
   slideTotal = pages.length;
   var html = '';
@@ -778,9 +753,11 @@ function heroRender() {
       '<img data-src="' + safeUrl + '" data-thumb="1" src="" alt="" decoding="async">' +
     '</div>' +
     '<div class="bhero-right">' +
-      '<div class="bhero-name">' + (it.title || '') + '</div>' +
+      '<div class="bhero-name-row">' +
+        '<div class="bhero-name">' + (it.title || '') + '</div>' +
+        (pricesHtml ? '<div class="bhero-prices">' + pricesHtml + '</div>' : '') +
+      '</div>' +
       (it.description ? '<div class="bhero-desc">' + it.description + '</div>' : '') +
-      '<div class="bhero-prices">' + pricesHtml + '</div>' +
     '</div>';
   for (var c = 0; c < inners.length; c++) {
     var inner = inners[c];
@@ -1125,10 +1102,16 @@ function applyRole(n, label) {
   TV_ID    = n;
   viewData = slidesForTv(menuData);
   current  = 0;
-  render();
-  showSlide(0);
-  startAuto();
-  if (label) showNetStatus(label, '#1c3e7c', 5000);
+  _roleFetched = true;
+  if (_loaderDone || !_loaderEl) {
+    /* Loader déjà parti : re-render visible (changement de rôle en cours d'utilisation) */
+    render(); showSlide(0); startAuto();
+    if (label) showNetStatus(label, '#1c3e7c', 5000);
+  } else {
+    /* Loader encore présent : déclencher la sortie du loader */
+    if (label) showNetStatus(label, '#1c3e7c', 5000);
+    _tryHideLoader();
+  }
 }
 
 /* Choix manuel : touches 1 / 2 / 0 */
@@ -1262,9 +1245,25 @@ function fetchMenu() {
     }
     /* Catégories à masquer du board (affichées ailleurs : bannière, etc.) */
     var HIDDEN_CATS = ['Boissons & Boissons Chaudes', 'Boissons', 'Grillades'];
+    /* Items supprimés du menu local mais encore présents dans Supabase
+       Clés et valeurs normalisées (sans accents, sans casse) pour matcher Supabase */
+    var HIDDEN_ITEMS_NORM = {};
+    (function() {
+      var raw = {
+        'Assiettes & Salade': ['Salade du Berger'],
+        'Salades Fraiches':   ['Salade de Poulet'],
+        'Salades & Burek':    ['Salade de Boeuf'],
+        'Menu Enfants':       ['Menu Nuggets', 'Menu Escalope', 'Menu Cheese']
+      };
+      Object.keys(raw).forEach(function(cat) {
+        HIDDEN_ITEMS_NORM[normCat(cat)] = raw[cat].map(normCat);
+      });
+    })();
     for (var r = 0; r < rows.length; r++) {
       var row = rows[r];
       if (HIDDEN_CATS.indexOf(row.category) !== -1) continue;
+      var hiddenInCat = HIDDEN_ITEMS_NORM[normCat(row.category)];
+      if (hiddenInCat && hiddenInCat.indexOf(normCat(row.title)) !== -1) continue;
       if (!cats[row.category]) {
         cats[row.category] = { category: row.category, info: catInfo[row.category] || '', items: [] };
       }
@@ -1282,8 +1281,26 @@ function fetchMenu() {
     var freshNorm = {};
     for (var fi = 0; fi < fresh.length; fi++) freshNorm[normCat(fresh[fi].category)] = true;
     for (var di = 0; di < defaultMenu.length; di++) {
-      if (!freshNorm[normCat(defaultMenu[di].category)]) {
-        fresh.push(JSON.parse(JSON.stringify(defaultMenu[di])));
+      var defCat  = defaultMenu[di];
+      var normKey = normCat(defCat.category);
+      if (!freshNorm[normKey]) {
+        /* Catégorie absente de Supabase → injecter depuis local */
+        fresh.push(JSON.parse(JSON.stringify(defCat)));
+      } else {
+        /* Catégorie présente → compléter les items manquants */
+        for (var fj = 0; fj < fresh.length; fj++) {
+          if (normCat(fresh[fj].category) !== normKey) continue;
+          var sbTitles = {};
+          for (var si = 0; si < fresh[fj].items.length; si++) {
+            sbTitles[normCat(fresh[fj].items[si].title)] = true;
+          }
+          for (var dj = 0; dj < defCat.items.length; dj++) {
+            if (!sbTitles[normCat(defCat.items[dj].title)]) {
+              fresh[fj].items.push(JSON.parse(JSON.stringify(defCat.items[dj])));
+            }
+          }
+          break;
+        }
       }
     }
     fresh.sort(function(a, b) {
@@ -1291,11 +1308,14 @@ function fetchMenu() {
       var bi = catOrder[normCat(b.category)]; if (bi === undefined) bi = 999;
       return ai - bi;
     });
-    /* Ne re-render que si le contenu de CETTE TV a vraiment changé */
     var freshJson = JSON.stringify(fresh);
+    menuData = fresh; /* toujours mettre à jour menuData */
+    _menuFetched = true;
+    _tryHideLoader(); /* cache le loader si rôle aussi prêt */
+    /* Re-render visible uniquement si le loader est parti ET le contenu a changé */
     if (freshJson === lastMenuJson) return;
     lastMenuJson = freshJson;
-    menuData = fresh;
+    if (!_loaderDone) return; /* loader encore visible : pas besoin de re-render, _tryHideLoader le fait */
     var newView = slidesForTv(menuData);
     if (JSON.stringify(newView) === JSON.stringify(viewData)) return;
     viewData = newView;
@@ -1396,42 +1416,69 @@ tick();
    DÉMARRAGE
    ══════════════════════════════════════════════ */
 
-/* 1. Adaptation immédiate selon la qualité réseau actuelle */
+/* ── Loader : masque l'affichage jusqu'à ce que Supabase soit prêt ── */
+var _loaderEl    = null;
+var _loaderDone  = false;
+var _loaderAt    = Date.now();
+var _menuFetched = false;
+var _roleFetched = (TV_ID > 0); /* vrai si rôle déjà connu depuis le cache */
+
+function _tryHideLoader() {
+  if (_loaderDone || !_menuFetched || !_roleFetched) return;
+  _loaderDone = true;
+  render(); showSlide(0); startAuto();
+  var wait = Math.max(0, 700 - (Date.now() - _loaderAt));
+  setTimeout(function() {
+    if (!_loaderEl) return;
+    _loaderEl.classList.add('tvl-out');
+    setTimeout(function() {
+      if (_loaderEl && _loaderEl.parentNode) _loaderEl.parentNode.removeChild(_loaderEl);
+      _loaderEl = null;
+    }, 550);
+  }, wait);
+}
+
+if (TV_ID !== 3) {
+  _loaderEl = document.createElement('div');
+  _loaderEl.id = 'tv-loader';
+  _loaderEl.innerHTML =
+    '<div class="tvl-inner">' +
+      '<div class="tvl-brand">CHEZ <span>RAMO</span></div>' +
+      '<div class="tvl-dots">' +
+        '<div class="tvl-dot"></div>' +
+        '<div class="tvl-dot"></div>' +
+        '<div class="tvl-dot"></div>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(_loaderEl);
+  /* Sécurité : affiche quand même après 5s si Supabase ne répond pas */
+  setTimeout(function() {
+    _menuFetched = true; _roleFetched = true; _tryHideLoader();
+  }, 5000);
+} else {
+  /* TV3 diapo : pas de loader, rendu immédiat */
+  render(); showSlide(0); startAuto();
+}
+
+/* 1. Adaptation réseau */
 applyNetQuality(getNetQuality());
 if (!navigator.onLine) {
   showNetStatus('HORS LIGNE — Menu en cache', '#333333', 0);
+  _menuFetched = true; _tryHideLoader();
 }
 
-/* 2. Affiche le menu (ou attend la détection auto si rôle inconnu) */
-if (TV_ID > 0) {
-  /* Rôle connu depuis le cache → affichage immédiat sans flash */
-  render();
-  showSlide(0);
-  startAuto();
-  if (TV_ID === 3) showNetStatus('TV 3 — MODE PUB', '#8b0000', 5000);
-} else {
-  /* Rôle inconnu → écran noir le temps que Supabase réponde (~1s)
-     Affiche l'ID court pour que l'admin puisse identifier cet écran */
-  var _sid = DEVICE_ID ? DEVICE_ID.slice(-6) : '?';
-  showNetStatus('Détection TV en cours… [' + _sid + ']', '#333', 0);
-}
-
-/* 3. Détection TV immédiate (Supabase) — fonctionne même sans rôle caché */
+/* 2. Détection TV immédiate */
 tvClaim();
 
-/* 4. Après 2s : charge menu + version + heartbeat TV */
+/* 3. Fetch Supabase immédiatement (plus de délai 2s) */
+fetchMenu();
+setInterval(fetchMenu, 30000);
+var vOff = TV_ID > 0 ? (TV_ID - 1) * 20000 : Math.floor(Math.random() * 15000);
 setTimeout(function() {
-  /* Si tvClaim n'a pas encore rendu (réseau lent), forcer le rendu */
-  if (TV_ID === 0) { render(); showSlide(0); startAuto(); }
-  fetchMenu();
-  setInterval(fetchMenu, 30000);
-  var vOff = TV_ID > 0 ? (TV_ID - 1) * 20000 : Math.floor(Math.random() * 15000);
-  setTimeout(function() {
-    checkVersion();
-    setInterval(checkVersion, 55000 + Math.floor(Math.random() * 10000));
-  }, vOff);
-  setInterval(tvClaim, 45000);
-}, 2000);
+  checkVersion();
+  setInterval(checkVersion, 55000 + Math.floor(Math.random() * 10000));
+}, vOff);
+setInterval(tvClaim, 45000);
 
-/* 4. Après 6s : pre-cache TOUTES les images en arrière-plan */
+/* 4. Pre-cache images en arrière-plan */
 setTimeout(function() { precacheAllImages(menuData); }, 6000);
