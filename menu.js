@@ -468,7 +468,6 @@ var defaultMenu = [
     { title: "Frites",          description: "Petite portion",                    price: "2,00",   url: "uploads/Frites.png" },
     { title: "Grande Frite",    description: "Grande portion",                    price: "3,00",   url: "uploads/Frites.png" },
     { title: "Barquette Viande",description: "Portion de veau 100% maison",       price: "10,00",  url: "uploads/Barquette.png" },
-    { title: "Nos Sauces",      description: "Algérienne, Blanche, Samouraï...",  price: "INCLUSE", badge: "1€/SUPP.", url: "uploads/Nos Sauces.png" }
   ]},
   { category: "Salades Fraiches", info: "Préparées avec des produits frais", items: [
     { title: "Salade Grecque",   description: "Tomates, concombres, olives, feta, oignons", price: "6,00",  url: "uploads/Salade_Grecque.png" },
@@ -501,6 +500,9 @@ var defaultMenu = [
   { category: "Menu Enfants", info: "Petits plats pour nos petits clients", items: [
     { title: "Menu Enfant",     description: "4 Nuggets ou viande au choix",      price: "10,00", badge: "AU CHOIX", url: "uploads/Assiette Enfant.png" },
     { title: "Assiette Enfant", description: "Frites, viande et sauce au choix",  price: "12,00", url: "uploads/Assiette Enfant.png" }
+  ]},
+  { category: "Nos Sauces", items: [
+    { title: "Nos Sauces", description: "Algérienne, Blanche, Samouraï... À partir de la 3ème sauce : 1€ supplémentaire", price: "INCLUSE", badge: "3ÈME: 1€ SUPP.", url: "uploads/Nos Sauces.png" }
   ]}
 ];
 
