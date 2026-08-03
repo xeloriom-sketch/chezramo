@@ -511,7 +511,7 @@ html, body {
 .bhero-band {
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
-  height: 6.5vw;
+  height: 5vw;
   background: #c40000;
   padding: 0;
   display: -webkit-box;
@@ -616,7 +616,7 @@ html, body {
   align-self: flex-end;
   width: 9.5vw;
   height: 9vw;
-  margin: 0 1.5vw -1vw 2vw;
+  margin: 0 1.5vw -3.5vw 2vw;
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
