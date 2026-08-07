@@ -9,13 +9,52 @@ Site 100% statique hébergé sur **GitHub Pages**, données menu dans **Supabase
 
 ---
 
-## Les 3 applications
+## Les 4 applications
 
 | Fichier | Rôle |
 |---|---|
 | `index.html` + `menu.js` + `style.css` | **Écran TV** : diaporama automatique du menu (catégorie par catégorie, 3 plats max par slide) |
 | `admin.html` + `admin.js` + `admin.css` | **Panneau admin** : modifier plats, prix, catégories → écrit dans Supabase |
 | `generer-diaporama.html` | **Plan B clé USB** : génère des PNG du menu à copier sur clé USB (si la TV n'a pas de navigateur / pas de wifi) |
+| `landing/index.html` | **Landing page client** : page vitrine publique Tailwind CSS + Alpine.js (panier, accordéon menu, avis, réservation). Images → `../uploads/` (même dossier que les photos TV). Menu complet dans un accordéon 7 catégories. Voir ci-dessous. |
+
+## Landing page (`landing/index.html`)
+
+Site vitrine public de Chez Ramo. Stack : **Tailwind CSS** (CDN JIT) + **Alpine.js** + Lenis smooth scroll.
+
+### Structure des sections
+
+| Section | Id HTML | Notes |
+|---|---|---|
+| Hero | — | Titre animé mot par mot, burger flottant, CTA commande |
+| Marquee | — | Bande défilante avec spécialités |
+| La Différence | — | 3 colonnes : arguments gauche + image burger déconstruit centre + arguments droite |
+| Les Plus Commandés | — | 3 cards best-sellers (Kebab, Galette, Tacos) avec panier Alpine.js |
+| Notre Carte | `#menu` | Accordéon 7 catégories (voir ci-dessous) |
+| Avis | `#avis` | Carousel drag d'avis clients + compteur animé |
+| À Propos | — | Histoire + horaires + infos pratiques |
+| Réservation/Contact | — | Formulaire, carte, adresse |
+| Footer | — | Liens nav, horaires, RS |
+
+### Accordéon NOTRE CARTE (7 catégories)
+
+Catégories dans l'ordre, clés Alpine.js entre parenthèses :
+
+1. **Kebab & Galettes** (`kebab`) — Kebab, Kebab Frites, Kebab Géant XXL, Galette, Miche Kebab, Cordon Bleu, Kofte, Américain, Escalope (seul 9 € / menu 12 €)
+2. **Tacos** (`tacos`) — Tacos 10 €, Maxi Tacos MAXI 15 €
+3. **Burgers & Finger Food** (`burgers`) — Chicken Burger, Cheese Burger (6 € / menu 9 €), Nuggets ×7, Wings ×4, Tenders ×4
+4. **Assiettes Gourmet** (`assiettes`) — 8 assiettes de 12 à 18 € (frites + blé + crudités inclus)
+5. **Plats Maison & Qofte** (`plats`) — Escalope Crème, Filet de Poulet, Pleskavice, Makarona, Qofte ×5/×7/×10
+6. **Salades & Burek** (`salades`) — 3 salades + Burek Fromage/Épinards/Viande + Fli-Flija
+7. **Desserts & Boissons** (`drinks`) — Trilece, Tiramisu, Menu Enfant, Frites, Barquette, Soda 33cl, Café, Thé
+
+### Images
+
+- Les images de la landing page viennent du **même dossier `uploads/`** que les photos des TV.
+- Depuis `landing/index.html`, les chemins sont donc `../uploads/Kebab.png`, `../uploads/Tacos.png`, etc.
+- Les noms de fichiers correspondent exactement aux champs `url` du `defaultMenu` dans `menu.js`.
+- **Ne pas utiliser** les anciennes illustrations `cl_*.png` — utiliser les vraies photos food.
+- `uploads/cut/` = versions détourées (fond transparent) — disponibles pour certains plats.
 
 ## Flux de données
 

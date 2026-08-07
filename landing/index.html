@@ -473,7 +473,7 @@
   <header x-data="{ scrolled: false, hidden: false, lastY: 0 }"
           @scroll.window="const y = window.scrollY; hidden = y > lastY && y > 220; scrolled = y > 90; lastY = y;"
           class="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none transition-all duration-300"
-          :class="hidden ? '-translate-y-full' : 'translate-y-0'">
+          :class="hidden && !navMenuOpen ? '-translate-y-full' : 'translate-y-0'">
 
     <!-- Pill flottant : transparent en haut, island vert au scroll -->
     <div class="pointer-events-auto transition-all duration-400 ease-[cubic-bezier(.16,1,.3,1)] w-full"
@@ -518,11 +518,85 @@
             <span x-show="cartCount > 0" x-text="cartCount"
                   class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-accent text-brand text-[9px] font-extrabold flex items-center justify-center"></span>
           </button>
+
+          <!-- Hamburger — mobile only -->
+          <button @click="navMenuOpen = !navMenuOpen"
+                  class="md:hidden relative rounded-full flex items-center justify-center hover:bg-white/15 transition-all duration-200 ml-1"
+                  :class="scrolled ? 'w-8 h-8' : 'w-10 h-10'"
+                  aria-label="Menu">
+            <svg x-show="!navMenuOpen" :class="scrolled ? 'w-4 h-4' : 'w-5 h-5'" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+              <line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/>
+            </svg>
+            <svg x-show="navMenuOpen" :class="scrolled ? 'w-4 h-4' : 'w-5 h-5'" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+              <line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/>
+            </svg>
+          </button>
         </div>
 
       </div>
     </div>
   </header>
+
+  <!-- Mobile nav — full screen, hors header (stacking context propre) -->
+  <div x-show="navMenuOpen" x-cloak
+       @keydown.escape.window="navMenuOpen = false"
+       x-transition:enter="transition ease-[cubic-bezier(.16,1,.3,1)] duration-350"
+       x-transition:enter-start="opacity-0 -translate-y-full"
+       x-transition:enter-end="opacity-100 translate-y-0"
+       x-transition:leave="transition ease-in duration-250"
+       x-transition:leave-start="opacity-100 translate-y-0"
+       x-transition:leave-end="opacity-0 -translate-y-full"
+       class="fixed inset-0 z-[200] bg-[#163828] flex flex-col md:hidden overflow-hidden">
+
+    <!-- Barre du haut : logo + bouton fermer -->
+    <div class="flex items-center justify-between px-6 pt-5 pb-4 shrink-0">
+      <span class="font-baloo font-extrabold text-xl text-cream tracking-wide">CHEZ RAMO</span>
+      <button @click="navMenuOpen = false"
+              class="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center active:scale-95 transition-transform"
+              aria-label="Fermer">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+          <line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Séparateur -->
+    <div class="h-px bg-white/10 mx-6"></div>
+
+    <!-- Liens -->
+    <nav class="flex flex-col flex-1 justify-center px-6 gap-0">
+      <a href="#menu"    @click="navMenuOpen=false"
+         class="group flex items-center justify-between py-5 border-b border-white/10 last:border-0">
+        <span class="font-baloo font-extrabold text-[clamp(28px,7vw,36px)] text-cream uppercase tracking-wide group-hover:text-accent transition-colors">Menu</span>
+        <span class="text-cream/30 text-xs font-mono">01</span>
+      </a>
+      <a href="#avis"    @click="navMenuOpen=false"
+         class="group flex items-center justify-between py-5 border-b border-white/10 last:border-0">
+        <span class="font-baloo font-extrabold text-[clamp(28px,7vw,36px)] text-cream uppercase tracking-wide group-hover:text-accent transition-colors">Avis</span>
+        <span class="text-cream/30 text-xs font-mono">02</span>
+      </a>
+      <a href="#about"   @click="navMenuOpen=false"
+         class="group flex items-center justify-between py-5 border-b border-white/10 last:border-0">
+        <span class="font-baloo font-extrabold text-[clamp(28px,7vw,36px)] text-cream uppercase tracking-wide group-hover:text-accent transition-colors">À propos</span>
+        <span class="text-cream/30 text-xs font-mono">03</span>
+      </a>
+      <a href="#contact" @click="navMenuOpen=false"
+         class="group flex items-center justify-between py-5 border-b border-white/10 last:border-0">
+        <span class="font-baloo font-extrabold text-[clamp(28px,7vw,36px)] text-cream uppercase tracking-wide group-hover:text-accent transition-colors">Contact</span>
+        <span class="text-cream/30 text-xs font-mono">04</span>
+      </a>
+    </nav>
+
+    <!-- Footer du menu -->
+    <div class="px-6 pb-10 shrink-0 space-y-3">
+      <a href="#menu" @click="navMenuOpen=false"
+         class="flex items-center justify-center gap-2 w-full font-baloo font-extrabold text-base uppercase tracking-widest py-4 rounded-full bg-accent text-brand active:scale-[.98] transition-transform">
+        Commander maintenant
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <p class="text-center text-cream/30 text-xs font-mono tracking-widest">LAGNIEU · OUVERT 7J/7</p>
+    </div>
+  </div>
 
   <!-- ===== HERO ===== -->
   <section class="relative bg-brand pt-36 pb-0 overflow-hidden hero-section">
@@ -531,8 +605,8 @@
 
     <div class="relative z-10 max-w-7xl mx-auto px-4 text-center">
       <h1 class="hero-h1 font-baloo font-extrabold leading-[0.88] tracking-[.01em] text-[#1E4D3A] [paint-order:stroke_fill] drop-shadow-[0_4px_4px_rgba(0,0,0,0.15)]">
-        <span class="hero-word block text-[clamp(52px,11vw,140px)]" style="animation-delay:0ms">BIEN GRILLÉ</span>
-        <span class="hero-word block text-[clamp(52px,11vw,140px)]" style="animation-delay:180ms">À LAGNIEU</span>
+        <span class="hero-word block text-[clamp(52px,11vw,140px)]" style="animation-delay:0ms">TERRIBLEMENT</span>
+        <span class="hero-word block text-[clamp(52px,11vw,140px)]" style="animation-delay:180ms">BON.</span>
       </h1>
 
       <!-- image burger avec main – collée à la vague -->
@@ -545,13 +619,16 @@
     </div>
 
     <!-- vague ajustée pour sortir la main – plus fine -->
-    <div class="relative z-0 h-[100px] -mt-[90px] pointer-events-none">
-      <div class="absolute left-[-24px] bottom-0 h-[80px] bg-cream rounded-[120px_120px_0_0] w-[calc(100%+48px)]"></div>
-      <div class="absolute left-[-6%] bottom-[10%] w-[26%] aspect-square rounded-full bg-cream"></div>
-      <div class="absolute left-[10%] bottom-0 w-[34%] aspect-square rounded-full bg-cream"></div>
-      <div class="absolute left-[32%] bottom-[-4%] w-[38%] aspect-square rounded-full bg-cream"></div>
-      <div class="absolute right-[10%] bottom-0 w-[34%] aspect-square rounded-full bg-cream"></div>
-      <div class="absolute right-[-6%] bottom-[10%] w-[26%] aspect-square rounded-full bg-cream"></div>
+    <div class="relative z-0 h-[220px] md:h-[100px] -mt-[210px] md:-mt-[90px] pointer-events-none">
+      <!-- Fond principal -->
+      <div class="absolute left-[-24px] bottom-0 h-[200px] md:h-[80px] bg-cream rounded-[240px_240px_0_0] md:rounded-[120px_120px_0_0] w-[calc(100%+48px)]"></div>
+
+      <!-- Cercles montés beaucoup plus haut sur mobile -->
+      <div class="absolute left-[-6%] bottom-[40%] md:bottom-[10%] w-[26%] aspect-square rounded-full bg-cream"></div>
+      <div class="absolute left-[10%] bottom-[45%] md:bottom-0 w-[34%] aspect-square rounded-full bg-cream"></div>
+      <div class="absolute left-[32%] bottom-[38%] md:bottom-[-4%] w-[38%] aspect-square rounded-full bg-cream"></div>
+      <div class="absolute right-[10%] bottom-[45%] md:bottom-0 w-[34%] aspect-square rounded-full bg-cream"></div>
+      <div class="absolute right-[-6%] bottom-[40%] md:bottom-[10%] w-[26%] aspect-square rounded-full bg-cream"></div>
     </div>
     <!-- ===== MARQUEE – banderole plus grande et avec les textes demandés ===== -->
     <div class="relative z-10 bg-accent border-y-3 border-brand py-5 overflow-hidden -mt-[6vw]">
@@ -586,18 +663,24 @@
     <div class="absolute inset-0 pattern-bg"></div>
 
     <!-- top wave -->
-    <div class="relative -mx-4 h-[clamp(200px,28vw,360px)]">
-      <div class="absolute -top-0.5 left-0 right-0 h-[44%] bg-cream rounded-b-[120px]"></div>
-      <div class="absolute left-[-6%] top-[18%] w-[26%] aspect-square rounded-full bg-cream"></div>
-      <div class="absolute left-[10%] top-[6%] w-[34%] aspect-square rounded-full bg-cream"></div>
-      <div class="absolute left-[32%] top-0 w-[38%] aspect-square rounded-full bg-cream"></div>
-      <div class="absolute right-[10%] top-[6%] w-[34%] aspect-square rounded-full bg-cream"></div>
-      <div class="absolute right-[-6%] top-[18%] w-[26%] aspect-square rounded-full bg-cream"></div>
-      <div class="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-4">
-        <h2 class="font-baloo font-bold text-[clamp(32px,8vw,80px)] leading-[1.02] text-brand max-w-10xl mt-4 md:mt-40 mx-auto">
+    <!-- top wave -->
+    <div class="relative -mx-4 h-[220px] md:h-[clamp(200px,28vw,360px)] mb-10 md:mb-0">
+      <!-- Fond principal (200px sur mobile, comme l'autre vague) -->
+      <div class="absolute -top-0.5 left-0 right-0 h-[200px] md:h-[44%] bg-cream rounded-b-[240px] md:rounded-b-[120px]"></div>
+
+      <!-- Cercles calés au pixel près en version miroir (top au lieu de bottom) -->
+      <div class="absolute left-[-6%] top-[40%] md:top-[18%] w-[26%] aspect-square rounded-full bg-cream"></div>
+      <div class="absolute left-[10%] top-[45%] md:top-[6%] w-[34%] aspect-square rounded-full bg-cream"></div>
+      <div class="absolute left-[32%] top-[38%] md:top-0 w-[38%] aspect-square rounded-full bg-cream"></div>
+      <div class="absolute right-[10%] top-[45%] md:top-[6%] w-[34%] aspect-square rounded-full bg-cream"></div>
+      <div class="absolute right-[-6%] top-[40%] md:top-[18%] w-[26%] aspect-square rounded-full bg-cream"></div>
+
+      <!-- Contenu -->
+      <div class="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-4 ">
+        <h2 class="font-baloo font-bold text-[clamp(32px,8vw,80px)] leading-[1.02] text-brand max-w-10xl mt-0 md:mt-40 mx-auto">
           CE QUI REND<br>CHEZ RAMO UNIQUE ?
         </h2>
-        <p class="mt-4 max-w-xl text-sm sm:text-xl leading-relaxed ">
+        <p class="mt-2 md:mt-4 max-w-xl text-sm sm:text-xl leading-relaxed">
           Une broche artisanale qui tourne toute la journée, des sauces préparées sur place, et une équipe passionnée qui ne transige pas sur la qualité.
         </p>
       </div>
@@ -930,7 +1013,7 @@
         <button @click="toggleCategory('drinks')" class="w-full flex items-center justify-between text-brand transition"
                 :class="openCategory==='drinks' ? 'bg-accent py-5 px-6 font-baloo font-black text-2xl md:text-3xl tracking-wide' : 'py-5 px-2 font-baloo font-black text-2xl md:text-3xl tracking-wide hover:opacity-70 group'">
           <div class="flex items-center gap-5">
-            <img src="https://img.icons8.com/ios/100/1E4D3A/soda-pop.png" alt="" loading="lazy" class="w-12 h-12 object-contain shrink-0" :class="openCategory !== 'drinks' ? 'group-hover:scale-110 transition-transform' : ''">
+            <img src="https://img.icons8.com/ios/100/1E4D3A/cake.png" alt="" loading="lazy" class="w-12 h-12 object-contain shrink-0" :class="openCategory !== 'drinks' ? 'group-hover:scale-110 transition-transform' : ''">
             <span>DESSERTS &amp; BOISSONS</span>
           </div>
           <svg class="w-7 h-7 shrink-0 transition-transform duration-300" :class="openCategory==='drinks' ? 'rotate-90' : 'group-hover:translate-x-1'" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="4" y1="12" x2="20" y2="12"/><polyline points="14 6 20 12 14 18"/></svg>
@@ -983,9 +1066,9 @@
       <!-- track — pas d'overflow:hidden pour que les cartes penchées soient visibles -->
       <div class="py-6">
         <div class="flex gap-4 sm:gap-6 transition-transform duration-500 ease-[cubic-bezier(.16,1,.3,1)] cursor-grab active:cursor-grabbing"
-             :style="`transform: translateX(calc(-${reviewIndex} * (min(340px,72vw) + clamp(16px,4vw,20px)) + 50vw - min(170px,36vw) + ${isDragging ? dragDelta : 0}px))`">
+             :style="`transform: translateX(calc(-${reviewIndex} * (min(480px,88vw) + clamp(16px,4vw,20px)) + 50vw - min(240px,44vw) + ${isDragging ? dragDelta : 0}px))`">
           <template x-for="(rv, i) in reviews" :key="i">
-            <div class="flex-none w-[min(340px,72vw)] rounded-3xl p-6 sm:p-8 text-center border-2 transition-all duration-500"
+            <div class="flex-none w-[min(480px,88vw)] rounded-3xl p-6 sm:p-8 text-center border-2 transition-all duration-500"
                  :class="i === reviewIndex
                    ? 'bg-cream border-cream shadow-2xl scale-100 rotate-0 z-10'
                    : i < reviewIndex
@@ -1362,215 +1445,220 @@
   </div>
 
   <!-- ===== CHECKOUT MODAL IMMERSIF ===== -->
+  <!-- ══ CHECKOUT (3 étapes) ══ -->
   <div x-show="checkoutOpen" x-cloak
-       x-transition:enter="transition duration-300 ease-out"
+       x-transition:enter="transition duration-250 ease-out"
        x-transition:enter-start="opacity-0"
        x-transition:enter-end="opacity-100"
        x-transition:leave="transition duration-200 ease-in"
        x-transition:leave-start="opacity-100"
        x-transition:leave-end="opacity-0"
-       class="fixed inset-0 z-[95] flex items-center justify-center"
-       style="padding: clamp(8px, 2.5vw, 24px)">
+       class="fixed inset-0 z-[95] flex items-end sm:items-center justify-center">
 
-    <!-- ── Backdrop flouté + nuages animés ── -->
-    <div @click="paymentPhase !== 'paying' ? closeCheckout() : null"
-         class="absolute inset-0 cursor-pointer overflow-hidden"
-         style="background: radial-gradient(ellipse at 42% 52%, #163d2e 0%, #06150e 100%)">
-      <!-- lueur centrale -->
-      <div class="absolute inset-0 pointer-events-none"
-           style="background: radial-gradient(ellipse 55% 45% at 50% 50%, rgba(30,77,58,0.45) 0%, transparent 70%)"></div>
+    <!-- Backdrop -->
+    <div @click="paymentPhase !== 'paying' && checkoutStep < 3 ? closeCheckout() : null"
+         class="absolute inset-0 bg-black/50 backdrop-blur-[3px]"></div>
 
-      <!-- nuages -->
-      <svg class="co-cloud co-cloud-a" style="top:4%;left:2%;width:280px;opacity:.11" viewBox="0 0 200 90"><path d="M30,70 Q10,70 10,52 Q10,34 28,32 Q30,10 55,13 Q65,2 85,12 Q108,2 115,22 Q138,18 142,38 Q165,38 165,56 Q165,70 148,70 Z"/></svg>
-      <svg class="co-cloud co-cloud-b" style="top:7%;right:3%;width:220px;opacity:.09" viewBox="0 0 200 90"><path d="M25,70 Q5,70 5,53 Q5,36 22,33 Q24,12 48,14 Q58,3 78,13 Q100,3 108,22 Q130,18 135,37 Q158,37 158,55 Q158,70 142,70 Z"/></svg>
-      <svg class="co-cloud co-cloud-c" style="bottom:11%;left:5%;width:200px;opacity:.07;animation-delay:-4s" viewBox="0 0 200 90"><path d="M30,70 Q10,70 10,52 Q10,34 28,32 Q30,10 55,13 Q65,2 85,12 Q108,2 115,22 Q138,18 142,38 Q165,38 165,56 Q165,70 148,70 Z"/></svg>
-      <svg class="co-cloud co-cloud-a" style="bottom:7%;right:5%;width:240px;opacity:.06;animation-delay:-8s;animation-duration:15s" viewBox="0 0 200 90"><path d="M25,70 Q5,70 5,53 Q5,36 22,33 Q24,12 48,14 Q58,3 78,13 Q100,3 108,22 Q130,18 135,37 Q158,37 158,55 Q158,70 142,70 Z"/></svg>
-      <svg class="co-cloud co-cloud-b" style="top:41%;left:-2%;width:170px;opacity:.05;animation-delay:-2s" viewBox="0 0 200 90"><path d="M30,70 Q10,70 10,52 Q10,34 28,32 Q30,10 55,13 Q65,2 85,12 Q108,2 115,22 Q138,18 142,38 Q165,38 165,56 Q165,70 148,70 Z"/></svg>
-      <svg class="co-cloud co-cloud-c" style="top:39%;right:-1%;width:155px;opacity:.06;animation-delay:-5s" viewBox="0 0 200 90"><path d="M25,70 Q5,70 5,53 Q5,36 22,33 Q24,12 48,14 Q58,3 78,13 Q100,3 108,22 Q130,18 135,37 Q158,37 158,55 Q158,70 142,70 Z"/></svg>
-    </div>
+    <!-- Carte principale -->
+    <div class="relative bg-white w-full sm:max-w-4xl rounded-t-[1.5rem] sm:rounded-3xl overflow-hidden flex flex-col"
+         style="max-height:96vh; box-shadow:0 32px 80px rgba(0,0,0,0.35)">
 
-    <!-- ── Modal deux colonnes ── -->
-    <div class="relative anim-modal-in w-full flex rounded-[2rem] overflow-hidden"
-         style="max-width: min(860px, 97vw); max-height: min(92vh, 640px);
-                box-shadow: 0 40px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05)">
-
-      <!-- ══ PANNEAU GAUCHE — récap commande ══ -->
-      <div class="hidden sm:flex flex-col w-[300px] lg:w-[340px] shrink-0 relative overflow-hidden"
-           style="background: linear-gradient(155deg, #1E4D3A 0%, #0c2218 100%)">
-        <!-- orbes décoratifs -->
-        <div class="co-orb" style="width:240px;height:240px;background:radial-gradient(circle,rgba(170,220,80,0.07),transparent);top:-90px;left:-70px;--d:8s"></div>
-        <div class="co-orb" style="width:180px;height:180px;background:radial-gradient(circle,rgba(245,236,217,0.04),transparent);bottom:-50px;right:-50px;--d:11s;animation-delay:-4s"></div>
-        <div class="co-orb" style="width:90px;height:90px;background:radial-gradient(circle,rgba(200,180,60,0.06),transparent);top:50%;right:10px;--d:6s;animation-delay:-2s"></div>
-        <!-- grille de points -->
-        <div class="absolute inset-0 pointer-events-none"
-             style="background-image:radial-gradient(circle,rgba(245,236,217,0.055) 1px,transparent 1px);background-size:22px 22px"></div>
-
-        <div class="relative flex flex-col h-full p-7 lg:p-8">
-          <!-- en-tête -->
-          <div class="mb-5 shrink-0">
-            <p class="text-cream/30 text-[9px] tracking-[.28em] uppercase font-extrabold mb-0.5">Chez Ramo</p>
-            <h2 class="font-baloo font-extrabold text-2xl lg:text-3xl text-cream leading-tight"
-                x-text="paymentPhase === 'paid' ? 'C\'est parti !' : 'Votre commande'"></h2>
+      <!-- ── TOP BAR ── -->
+      <div class="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-gray-100 shrink-0">
+        <!-- Logo -->
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-brand rounded-xl flex items-center justify-center shrink-0">
+            <span class="font-baloo font-extrabold text-accent text-sm leading-none">R</span>
           </div>
+          <span class="font-baloo font-extrabold text-brand text-base">Chez Ramo</span>
+        </div>
+        <!-- Étapes -->
+        <div class="hidden sm:flex items-center gap-2 bg-gray-100 rounded-2xl p-1.5">
+          <span :class="checkoutStep===1 ? 'bg-brand text-white shadow-sm' : 'text-gray-400'"
+                class="px-4 py-1.5 text-xs font-bold rounded-xl transition-all cursor-default">1. Panier</span>
+          <div class="w-3 h-0.5 bg-gray-300 rounded"></div>
+          <span :class="checkoutStep===2 ? 'bg-brand text-white shadow-sm' : 'text-gray-400'"
+                class="px-4 py-1.5 text-xs font-bold rounded-xl transition-all cursor-default">2. Paiement</span>
+          <div class="w-3 h-0.5 bg-gray-300 rounded"></div>
+          <span :class="checkoutStep===3 ? 'bg-brand text-white shadow-sm' : 'text-gray-300'"
+                class="px-4 py-1.5 text-xs font-bold rounded-xl transition-all cursor-default">3. Confirmation</span>
+        </div>
+        <!-- Fermer -->
+        <button @click="closeCheckout()" x-show="paymentPhase !== 'paying'"
+                class="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition shrink-0">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
 
-          <!-- liste articles -->
-          <div class="flex-1 overflow-y-auto scrollbar-hide" x-show="paymentPhase !== 'paid'">
-            <div class="space-y-2.5">
-              <template x-for="item in cart" :key="item.key || item.name">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="flex items-start gap-2 flex-1 min-w-0">
-                    <div class="w-1.5 h-1.5 rounded-full bg-accent/40 shrink-0 mt-[5px]"></div>
-                    <span class="text-sm text-cream/65 leading-snug" x-text="item.name + (item.qty > 1 ? ' ×' + item.qty : '')"></span>
+      <!-- ══ ÉTAPE 1 : PANIER ══ -->
+      <div x-show="checkoutStep === 1" class="flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:env(safe-area-inset-bottom)">
+        <div class="p-5 sm:p-7 grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+
+          <!-- Liste articles -->
+          <div class="lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-bold text-gray-900">Mon panier</h2>
+              <span class="text-xs text-gray-400 font-medium" x-text="cartCount + ' article' + (cartCount>1?'s':'')"></span>
+            </div>
+            <div class="space-y-3">
+              <template x-for="(item, idx) in cart" :key="item.key || item.name">
+                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-bold text-gray-900 leading-snug" x-text="item.name"></p>
+                    <p class="text-xs text-gray-400 mt-0.5" x-text="money(item.price) + ' / unité'"></p>
+                    <div class="flex items-center gap-3 mt-3">
+                      <button @click="stepItem(idx, -1)"
+                              class="w-7 h-7 rounded-xl bg-white border border-gray-200 text-gray-700 flex items-center justify-center font-bold text-sm hover:bg-gray-100 transition">−</button>
+                      <span class="text-sm font-bold text-gray-800 w-4 text-center tabular-nums" x-text="item.qty"></span>
+                      <button @click="stepItem(idx, 1)"
+                              class="w-7 h-7 rounded-xl bg-brand text-white flex items-center justify-center font-bold text-sm hover:bg-[#163d2e] transition">+</button>
+                    </div>
                   </div>
-                  <span class="text-sm font-semibold text-cream/90 shrink-0 tabular-nums" x-text="money(item.price * item.qty)"></span>
+                  <div class="flex flex-col items-end justify-between gap-4 shrink-0">
+                    <button @click="stepItem(idx, -item.qty)" class="text-gray-300 hover:text-red-400 transition">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                      </svg>
+                    </button>
+                    <span class="text-base font-bold text-gray-900 tabular-nums" x-text="money(item.price * item.qty)"></span>
+                  </div>
                 </div>
               </template>
             </div>
           </div>
 
-          <!-- état succès -->
-          <div x-show="paymentPhase === 'paid'" class="flex-1 flex flex-col items-center justify-center text-center relative overflow-hidden">
-            <div class="co-star" style="left:22%;top:48%;--r:35deg;--delay:.1s;color:#C8B84A">
-              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            </div>
-            <div class="co-star" style="left:68%;top:52%;--r:-42deg;--delay:.22s;color:rgba(245,236,217,.6)">
-              <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            </div>
-            <div class="co-star" style="left:48%;top:58%;--r:60deg;--delay:.38s;color:#C8B84A">
-              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            </div>
-            <div class="co-star" style="left:80%;top:45%;--r:-20deg;--delay:.5s;color:rgba(245,236,217,.4)">
-              <svg class="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            </div>
-            <div class="co-ring w-20 h-20 rounded-full border-2 border-accent/30 bg-accent/10 flex items-center justify-center mb-4">
-              <svg class="w-10 h-10 text-accent" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                <polyline class="co-check-path" points="20 6 9 17 4 12"/>
-              </svg>
-            </div>
-            <p class="font-baloo font-extrabold text-xl text-cream mb-2">Commande confirmée</p>
-            <p class="text-xs text-cream/40 leading-relaxed">Venez nous rendre visite<br>au restaurant.</p>
-          </div>
-
-          <!-- total -->
-          <div class="mt-auto pt-4 border-t border-cream/8 shrink-0" x-show="paymentPhase !== 'paid'">
-            <div class="flex items-end justify-between gap-2">
-              <div>
-                <p class="text-[9px] text-cream/30 uppercase tracking-[.22em] font-extrabold mb-1">Total TTC</p>
-                <p class="font-baloo font-extrabold text-3xl lg:text-4xl co-total tabular-nums leading-none" x-text="money(total)"></p>
+          <!-- Résumé -->
+          <div class="bg-gray-50 rounded-2xl border border-gray-100 p-5 flex flex-col gap-4">
+            <h3 class="text-sm font-bold text-gray-900">Résumé de commande</h3>
+            <div class="space-y-2.5 pb-3 border-b border-gray-200 text-sm">
+              <div class="flex justify-between text-gray-500">
+                <span>Sous-total</span>
+                <span class="font-bold text-gray-900 tabular-nums" x-text="money(total)"></span>
               </div>
-              <div class="shrink-0 px-3 py-2 rounded-xl border border-cream/10 bg-cream/5 text-center">
-                <svg class="w-4 h-4 text-cream/35 mx-auto mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                <p class="text-[9px] text-cream/30 font-bold tracking-wide uppercase leading-none">Retrait</p>
+              <div class="flex justify-between text-gray-500">
+                <span>Frais de service</span>
+                <span class="font-bold text-green-600 text-xs">Gratuit</span>
               </div>
             </div>
+            <div class="flex justify-between font-bold text-gray-900">
+              <span>Total TTC</span>
+              <span class="text-brand text-xl tabular-nums" x-text="money(total)"></span>
+            </div>
+            <div class="flex items-center gap-2 bg-brand/5 rounded-xl px-3 py-2.5 border border-brand/10">
+              <svg class="w-4 h-4 text-brand/50 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span class="text-xs text-brand/60 font-semibold">Retrait au restaurant · Lagnieu</span>
+            </div>
+            <button @click="goToPaymentStep()" :disabled="cart.length === 0"
+                    class="w-full py-4 rounded-2xl bg-brand text-white font-baloo font-extrabold text-sm tracking-wide hover:bg-[#163d2e] active:scale-[.98] transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+                    style="box-shadow:0 8px 28px rgba(30,77,58,0.22)">
+              Passer au paiement
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <p class="flex items-center justify-center gap-1.5 text-[10px] text-gray-400">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Chiffré TLS · Stripe
+            </p>
           </div>
         </div>
       </div>
 
-      <!-- ══ PANNEAU DROIT — paiement ══ -->
-      <div class="flex-1 bg-cream flex flex-col" style="min-width:0">
+      <!-- ══ ÉTAPE 2 : PAIEMENT ══ -->
+      <div x-show="checkoutStep === 2" class="flex-1 overflow-y-auto overscroll-contain" style="padding-bottom:env(safe-area-inset-bottom)">
+        <div class="p-5 sm:p-8 w-full max-w-lg mx-auto">
 
-        <!-- header droit -->
-        <div class="flex items-center justify-between px-6 sm:px-7 pt-6 pb-4 border-b border-brand/10 shrink-0">
-          <div>
-            <!-- récap mobile uniquement -->
-            <div class="flex sm:hidden items-center gap-1.5 mb-1">
-              <span class="text-xs text-brand/45 tabular-nums" x-text="cartCount + ' article' + (cartCount>1?'s':'')"></span>
-              <span class="text-brand/25 text-xs">·</span>
-              <span class="font-baloo font-extrabold text-base text-brand tabular-nums" x-text="money(total)"></span>
+          <!-- Barre retour + montant -->
+          <div class="flex items-center gap-3 mb-6" x-show="paymentPhase !== 'paying'">
+            <button @click="checkoutStep = 1"
+                    class="w-9 h-9 rounded-2xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition shrink-0">
+              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="flex-1">
+              <h2 class="text-base font-bold text-gray-900">Paiement sécurisé</h2>
+              <p class="text-[10px] text-gray-400 flex items-center gap-1 mt-0.5">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Chiffré TLS · Stripe
+              </p>
             </div>
-            <h2 class="font-baloo font-extrabold text-lg sm:text-xl text-brand leading-tight"
-                x-text="paymentPhase === 'paid' ? 'Merci !' : 'Paiement sécurisé'"></h2>
-            <p x-show="paymentPhase !== 'paid'" class="text-[10px] text-[#8A8A8A] mt-0.5 flex items-center gap-1.5">
-              <svg class="w-2.5 h-2.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              Chiffré TLS · Stripe
-            </p>
+            <div class="text-right shrink-0">
+              <p class="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Total</p>
+              <p class="font-baloo font-extrabold text-brand text-lg tabular-nums" x-text="money(total)"></p>
+            </div>
           </div>
-          <button @click="closeCheckout()" x-show="paymentPhase !== 'paying'"
-                  class="w-8 h-8 rounded-full border border-brand/15 hover:border-brand hover:bg-accent/30 transition-all flex items-center justify-center shrink-0">
-            <svg class="w-3.5 h-3.5 text-brand/40 group-hover:text-brand" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
 
-        <!-- corps scrollable -->
-        <div class="flex-1 overflow-y-auto overscroll-contain px-6 sm:px-7 py-5 space-y-4"
-             style="padding-bottom: max(1.5rem, env(safe-area-inset-bottom))">
-
-          <!-- loading -->
+          <!-- Loading -->
           <div x-show="paymentPhase === 'loading'" class="py-16 text-center">
             <div class="w-10 h-10 mx-auto border-[3px] border-brand/15 border-t-brand rounded-full animate-spin-slow"></div>
-            <p class="mt-4 text-sm text-[#8A8A8A]">Initialisation…</p>
+            <p class="mt-4 text-sm text-gray-400">Initialisation…</p>
           </div>
 
-          <!-- formulaire Stripe -->
+          <!-- Formulaire Stripe -->
           <div x-show="paymentPhase === 'form'" class="space-y-4">
             <div id="express-checkout-element"></div>
-
             <div id="co-divider" class="hidden items-center gap-3">
-              <div class="flex-1 h-px bg-brand/10"></div>
-              <span class="text-[10px] text-[#8A8A8A] tracking-[.12em] uppercase font-bold shrink-0">ou payer par carte</span>
-              <div class="flex-1 h-px bg-brand/10"></div>
+              <div class="flex-1 h-px bg-gray-200"></div>
+              <span class="text-[10px] text-gray-400 tracking-[.12em] uppercase font-bold shrink-0">ou payer par carte</span>
+              <div class="flex-1 h-px bg-gray-200"></div>
             </div>
-
             <form @submit.prevent="submitStripePayment()" class="space-y-4">
               <div id="stripe-payment-element" class="min-h-[200px]"></div>
               <button type="submit"
-                      class="w-full py-4 rounded-2xl bg-brand text-cream font-baloo font-extrabold text-base tracking-wide hover:bg-[#163d2e] active:scale-[0.98] transition-all"
-                      style="box-shadow: 0 8px 28px rgba(30,77,58,0.28)"
+                      class="w-full py-4 rounded-2xl bg-brand text-white font-baloo font-extrabold text-base tracking-wide hover:bg-[#163d2e] active:scale-[0.98] transition-all"
+                      style="box-shadow:0 8px 28px rgba(30,77,58,0.28)"
                       x-text="'Payer · ' + money(total)"></button>
             </form>
-
-            <div class="flex items-center justify-center gap-2 pb-1">
-              <svg class="w-3 h-3 text-[#8A8A8A]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <p class="text-[10px] text-[#8A8A8A] tracking-wide">Apple Pay · Google Pay · Carte · Stripe</p>
-            </div>
+            <p class="flex items-center justify-center gap-2 text-[10px] text-gray-400 pb-2">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Apple Pay · Google Pay · Carte · Stripe
+            </p>
           </div>
 
-          <!-- traitement -->
+          <!-- Traitement -->
           <div x-show="paymentPhase === 'paying'" class="py-16 text-center">
             <div class="w-12 h-12 mx-auto border-[3px] border-brand/15 border-t-brand rounded-full animate-spin-slow"></div>
-            <p class="mt-4 text-sm text-[#8A8A8A] font-medium">Autorisation en cours…</p>
-            <p class="text-xs text-[#8A8A8A]/50 mt-1">Ne fermez pas cette page</p>
+            <p class="mt-4 text-sm text-gray-500 font-medium">Autorisation en cours…</p>
+            <p class="text-xs text-gray-400 mt-1">Ne fermez pas cette page</p>
           </div>
 
-          <!-- erreur -->
+          <!-- Erreur -->
           <div x-show="paymentPhase === 'error'" class="space-y-3 py-2">
-            <div class="rounded-2xl border border-[#C8412F]/20 bg-[#C8412F]/5 p-5 text-center">
-              <div class="w-12 h-12 rounded-full bg-[#C8412F]/10 flex items-center justify-center mx-auto mb-3">
-                <svg class="w-6 h-6 text-[#C8412F]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div class="rounded-2xl border border-red-200 bg-red-50 p-5 text-center">
+              <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
               </div>
-              <p class="text-sm font-semibold text-[#C8412F]" x-text="paymentError || 'Paiement refusé.'"></p>
+              <p class="text-sm font-semibold text-red-600" x-text="paymentError || 'Paiement refusé.'"></p>
             </div>
-            <button @click="retryPayment()"
-                    class="w-full py-3.5 rounded-2xl bg-brand text-cream font-semibold text-sm tracking-wide hover:bg-[#163d2e] transition"
-                    style="box-shadow: 0 8px 28px rgba(30,77,58,0.25)">
-              Réessayer
-            </button>
-            <button @click="closeCheckout()"
-                    class="w-full py-2.5 text-[#8A8A8A] text-sm hover:text-brand transition-colors">
-              Annuler
-            </button>
+            <button @click="retryPayment()" class="w-full py-3.5 rounded-2xl bg-brand text-white font-semibold text-sm tracking-wide hover:bg-[#163d2e] transition" style="box-shadow:0 8px 28px rgba(30,77,58,0.25)">Réessayer</button>
+            <button @click="closeCheckout()" class="w-full py-2.5 text-gray-400 text-sm hover:text-gray-600 transition-colors">Annuler</button>
           </div>
+        </div>
+      </div>
 
-          <!-- succès — version mobile + bouton fermer -->
-          <div x-show="paymentPhase === 'paid'">
-            <!-- mobile uniquement -->
-            <div class="sm:hidden py-4 text-center mb-4">
-              <div class="co-ring w-16 h-16 rounded-full bg-brand/10 border-2 border-brand/20 flex items-center justify-center mx-auto mb-5">
-                <svg class="w-8 h-8" fill="none" stroke="#1E4D3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                  <polyline class="co-check-path" points="20 6 9 17 4 12"/>
-                </svg>
-              </div>
-              <h3 class="font-baloo font-extrabold text-2xl text-brand">C'est parti !</h3>
-              <p class="mt-2 text-sm text-[#8A8A8A] leading-relaxed">Commande confirmée.<br>Venez la récupérer au restaurant.</p>
-            </div>
-            <button @click="closeCheckout()"
-                    class="w-full py-4 rounded-2xl bg-brand text-cream font-baloo font-extrabold text-sm tracking-wide hover:bg-[#163d2e] transition active:scale-[0.98]"
-                    style="box-shadow: 0 8px 28px rgba(30,77,58,0.28)">
-              Fermer
-            </button>
+      <!-- ══ ÉTAPE 3 : CONFIRMATION ══ -->
+      <div x-show="checkoutStep === 3" class="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
+        <!-- Icône succès -->
+        <div class="relative w-28 h-28 mx-auto mb-6 flex items-center justify-center">
+          <span class="absolute top-1 left-2 w-3 h-3 rounded-full bg-accent/70 animate-ping"></span>
+          <span class="absolute top-0 right-4 w-2 h-2 rounded-full bg-brand/30"></span>
+          <span class="absolute bottom-2 left-4 w-2 h-2 rounded-full bg-accent/50"></span>
+          <span class="absolute bottom-3 right-2 w-2 h-2 rounded-full bg-brand/20"></span>
+          <div class="w-20 h-20 rounded-full bg-brand flex items-center justify-center"
+               style="box-shadow:0 8px 32px rgba(30,77,58,0.32)">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
           </div>
-
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Paiement réussi !</h2>
+        <p class="text-sm text-gray-400 font-medium">Merci pour votre commande chez Ramo.</p>
+        <p class="text-xs font-bold text-gray-700 bg-gray-100 py-2 px-5 rounded-xl inline-block my-5" x-text="'N° de commande : RMO-' + orderId"></p>
+        <div class="w-full max-w-xs space-y-3">
+          <button @click="closeCheckout()"
+                  class="w-full py-4 rounded-2xl bg-brand text-white font-baloo font-extrabold text-sm tracking-wide hover:bg-[#163d2e] transition active:scale-[.98]"
+                  style="box-shadow:0 8px 28px rgba(30,77,58,0.28)">
+            Retour à l'accueil
+          </button>
         </div>
       </div>
 
@@ -1586,6 +1674,7 @@
       cart: [],
       cartOpen: false,
       checkoutOpen: false,
+      checkoutStep: 1,
       openCategory: 'burgers',
       reservation: null,
       newsletterMsg: 'Inscrivez-vous pour recevoir nos promos et nouveautés Chez Ramo.',
@@ -1594,6 +1683,7 @@
       orderId: 1042,
       eta: 25,
       deliveryFee: 0,
+      navMenuOpen: false,
 
       // ---- customizer ----
       customizer: null,
@@ -1705,6 +1795,13 @@
         if (this.cart.length === 0) return;
         this.cartOpen = false;
         this.checkoutOpen = true;
+        this.checkoutStep = 1;
+        this.paymentPhase = 'form';
+        this.paymentError = null;
+      },
+      async goToPaymentStep() {
+        if (this.cart.length === 0) return;
+        this.checkoutStep = 2;
         this.paymentPhase = 'loading';
         this.paymentError = null;
 
@@ -1726,7 +1823,7 @@
               theme: 'stripe',
               variables: {
                 colorPrimary: '#1E4D3A',
-                colorBackground: '#F5ECD9',
+                colorBackground: '#FFFFFF',
                 colorText: '#1E4D3A',
                 colorDanger: '#C8412F',
                 fontFamily: '"Baloo 2", system-ui, sans-serif',
@@ -1793,7 +1890,7 @@
               redirect: 'if_required',
             });
             if (error) { this.paymentError = error.message; this.paymentPhase = 'error'; }
-            else { this.cart = []; this.paymentPhase = 'paid'; }
+            else { this.orderId = Math.floor(1000 + Math.random()*9000); this.cart = []; this.checkoutStep = 3; }
           });
 
           // Payment Element (carte)
@@ -1812,6 +1909,7 @@
       },
       closeCheckout() {
         this.checkoutOpen = false;
+        this.checkoutStep = 1;
         this.paymentPhase = 'form';
         this.paymentError = null;
         this._stripeElements = null;
@@ -1839,8 +1937,9 @@
           this.paymentError = error.message;
           this.paymentPhase = 'error';
         } else {
+          this.orderId = Math.floor(1000 + Math.random()*9000);
           this.cart = [];
-          this.paymentPhase = 'paid';
+          this.checkoutStep = 3;
         }
       },
 
@@ -1894,9 +1993,10 @@
             document.querySelectorAll('a[href^="#"]').forEach(a => {
               a.addEventListener('click', e => {
                 const id = a.getAttribute('href').slice(1);
-                if (!id) return;
+                e.preventDefault();
+                if (!id) { lenis.scrollTo(0, { duration: 0.9 }); return; }
                 const target = document.getElementById(id);
-                if (target) { e.preventDefault(); lenis.scrollTo(target, { offset: -72, duration: 1.1 }); }
+                if (target) lenis.scrollTo(target, { offset: -72, duration: 1.1 });
               });
             });
           }
