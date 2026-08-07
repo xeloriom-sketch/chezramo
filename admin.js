@@ -20,22 +20,22 @@ function toDb(obj) {
   var out = {};
   Object.keys(obj).forEach(function(k) {
     var v = obj[k];
-    // Normalise les chaînes vides → null pour éviter les erreurs de contrainte
     var val = (v === '' || v === undefined) ? null : v;
-    if  (k === 'desc') out['description'] = val;
-    else               out[k]            = val;
+    if      (k === 'desc')      out['description'] = val;
+    else if (k === 'menuPrice') out['menu_price']  = val;
+    else                        out[k]             = val;
   });
   return out;
 }
 
 function fromDb(r) {
   return {
-    id:         r.id         || '',
-    category:   r.category   || '',
-    title:      r.title      || '',
+    id:         r.id          || '',
+    category:   r.category    || '',
+    title:      r.title       || '',
     desc:       r.description || r.desc || '',
     price:      r.price       || '',
-    menuPrice:  r.menuPrice || '',
+    menuPrice:  r.menu_price  || r.menuPrice || '',
     badge:      r.badge       || '',
     url:        r.url         || '',
     sort_order: r.sort_order  || 0
