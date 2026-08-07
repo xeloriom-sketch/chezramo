@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -10,8 +10,6 @@
   <!-- Clé publique Stripe (injectée par server.js — jamais la clé secrète ici) -->
   <meta name="stripe-pk" content="STRIPE_PUBLIC_KEY_PLACEHOLDER">
 
-  <!-- Stripe.js — chargé en premier, avant Alpine -->
-  <script src="https://js.stripe.com/v3/"></script>
   <!-- Tailwind via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -27,10 +25,10 @@
   <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.14.3/dist/cdn.min.js"></script>
   <!-- Alpine.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
-  <!-- Motion.js -->
-  <script src="https://cdn.jsdelivr.net/npm/motion@11.13.1/dist/motion.js"></script>
-  <!-- Lenis -->
-  <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+  <!-- Motion.js — defer pour ne pas bloquer le rendu -->
+  <script defer src="https://cdn.jsdelivr.net/npm/motion@11.13.1/dist/motion.js"></script>
+  <!-- Lenis — defer pour ne pas bloquer le rendu -->
+  <script defer src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
 
   <!-- Preload LCP image -->
   <link rel="preload" as="image" href="../uploads/pasted-1785851492914-0.webp" type="image/webp">
@@ -149,6 +147,13 @@
     [x-cloak] {
       display: none !important;
     }
+
+    /* scrollbar personnalisée */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #F0E2BA; }
+    ::-webkit-scrollbar-thumb { background: #1E4D3A; border-radius: 99px; border: 2px solid #F0E2BA; }
+    ::-webkit-scrollbar-thumb:hover { background: #E8A93B; }
+    * { scrollbar-width: thin; scrollbar-color: #1E4D3A #F0E2BA; }
 
     /* pattern background */
     .pattern-bg {
@@ -453,7 +458,7 @@
 
 <body>
 
-<div x-data="app()" x-init="initLenis(); initReveals(); autoAdvanceReviews();" class="min-h-screen bg-cream">
+<div x-data="app()" x-init="initLenis(); initReveals(); autoAdvanceReviews(); fetchLandingMenu();" class="min-h-screen bg-cream">
 
   <!-- ===== FLOATING CART BUTTON (mobile only, shows when cart not empty) ===== -->
   <div x-show="cartCount > 0 && !cartOpen && !customizer"
@@ -613,7 +618,7 @@
       <div class="relative max-w-3xl mx-auto -mt-[3vw] z-20">
         <picture>
           <source srcset="../uploads/pasted-1785851492914-0.webp" type="image/webp">
-          <img src="../uploads/pasted-1785851492914-0.png" alt="Burger maison" loading="eager" fetchpriority="high" class="w-[clamp(280px,38vw,520px)] mx-auto hero-burger">
+          <img src="../uploads/pasted-1785851492914-0.png" alt="Burger maison" loading="eager" fetchpriority="high" width="776" height="1000" class="w-[clamp(280px,38vw,520px)] mx-auto hero-burger">
         </picture>
       </div>
     </div>
@@ -633,25 +638,25 @@
     <!-- ===== MARQUEE – banderole plus grande et avec les textes demandés ===== -->
     <div class="relative z-10 bg-accent border-y-3 border-brand py-5 overflow-hidden -mt-[6vw]">
       <div class="flex w-max animate-marquee">
-        <div class="flex gap-8 sm:gap-14 pr-8 sm:pr-14 font-baloo font-extrabold text-2xl sm:text-4xl text-brand whitespace-nowrap">
-          <span>✳ KEBAB</span>
-          <span>✳ FRITES FRAÎCHES</span>
-          <span>✳ SAUCES SECRÈTES</span>
-          <span>✳ DURUM DORÉ</span>
-          <span>✳ BROCHE ARTISANALE</span>
-          <span>✳ TACOS 2 VIANDES</span>
-          <span>✳ HALAL CERTIFIÉ</span>
-          <span>✳ FAIT À LA MINUTE</span>
+        <div class="flex items-center gap-8 sm:gap-14 pr-8 sm:pr-14 font-baloo font-extrabold text-2xl sm:text-4xl text-brand whitespace-nowrap">
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>KEBAB</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>FRITES FRAÎCHES</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>SAUCES SECRÈTES</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>DURUM DORÉ</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>BROCHE ARTISANALE</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>TACOS 2 VIANDES</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>HALAL CERTIFIÉ</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>FAIT À LA MINUTE</span>
         </div>
-        <div class="flex gap-8 sm:gap-14 pr-8 sm:pr-14 font-baloo font-extrabold text-2xl sm:text-4xl text-brand whitespace-nowrap" aria-hidden="true">
-          <span>✳ KEBAB</span>
-          <span>✳ FRITES FRAÎCHES</span>
-          <span>✳ SAUCES SECRÈTES</span>
-          <span>✳ DURUM DORÉ</span>
-          <span>✳ BROCHE ARTISANALE</span>
-          <span>✳ TACOS 2 VIANDES</span>
-          <span>✳ HALAL CERTIFIÉ</span>
-          <span>✳ FAIT À LA MINUTE</span>
+        <div class="flex items-center gap-8 sm:gap-14 pr-8 sm:pr-14 font-baloo font-extrabold text-2xl sm:text-4xl text-brand whitespace-nowrap" aria-hidden="true">
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>KEBAB</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>FRITES FRAÎCHES</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>SAUCES SECRÈTES</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>DURUM DORÉ</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>BROCHE ARTISANALE</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>TACOS 2 VIANDES</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>HALAL CERTIFIÉ</span>
+          <span class="flex items-center gap-3 sm:gap-4"><svg class="w-3 h-3 sm:w-4 sm:h-4 shrink-0 fill-brand" viewBox="0 0 16 16"><path d="M8 0l2.5 5.5L16 8l-5.5 2.5L8 16l-2.5-5.5L0 8l5.5-2.5z"/></svg>FAIT À LA MINUTE</span>
         </div>
       </div>
     </div>
@@ -762,7 +767,7 @@
         <a href="#menu-full" class="px-6 py-3.5 rounded-full border-2 border-brand text-xs font-bold uppercase tracking-widest hover:bg-brand hover:text-cream transition magnetic">Voir la carte</a>
       </div>
 
-      <div class="mt-16 sm:mt-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      <div class="mt-20 sm:mt-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-14 sm:gap-8">
         <!-- Kebab -->
         <div class="relative pt-4 pb-6 px-5 rounded-3xl bg-brand text-cream text-center reveal-stagger card-lift" style="--stagger-delay:0ms">
           <picture>
@@ -853,16 +858,13 @@
             <div class="overflow-hidden"><img src="../uploads/cut/Kebab.webp" alt="Kebab" loading="lazy" class="w-full h-52 object-contain p-4 group-hover:scale-105 transition-transform duration-500"></div>
             <div class="p-5 text-center"><h3 class="font-baloo font-extrabold text-[9px] uppercase tracking-[.2em] text-cream/50 mb-2">INGRÉDIENTS</h3><p class="text-xs leading-relaxed text-cream/80 mb-4">Pain rond, veau de broche tranché minute, crudités fraîches, sauce au choix. Seul 9 € — Menu 12 €</p><div class="w-full bg-cream text-brand font-extrabold text-[9px] uppercase tracking-wider py-3 rounded-full">AJOUTER AU PANIER</div></div>
           </div>
-          <div class="md:col-span-8 divide-y divide-brand/20">
-            <div class="py-3 first:pt-0 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Kebab</h2><p class="text-xs text-brand/55 mt-0.5">Pain rond, veau maison, crudités — Menu +3 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">9,00 €</span><button @click="openCustomizer('Kebab', 9, 12)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Kebab Frites</h2><p class="text-xs text-brand/55 mt-0.5">Viande et frites servies dans le pain</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">9,50 €</span><button @click="openCustomizer('Kebab Frites', 9.5, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Kebab Géant <span class="text-[9px] bg-brand text-cream px-1.5 py-0.5 rounded-full ml-1 font-extrabold align-middle">XXL</span></h2><p class="text-xs text-brand/55 mt-0.5">Double portion de veau maison — Menu +2 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">15,00 €</span><button @click="openCustomizer('Kebab Géant', 15, 17)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Galette (Dürum)</h2><p class="text-xs text-brand/55 mt-0.5">Fine galette roulée, veau, crudités — Menu +3 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">9,00 €</span><button @click="openCustomizer('Galette', 9, 12)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Miche Kebab</h2><p class="text-xs text-brand/55 mt-0.5">Pain miche traditionnel croustillant — Menu +3 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">9,00 €</span><button @click="openCustomizer('Miche Kebab', 9, 12)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Cordon Bleu</h2><p class="text-xs text-brand/55 mt-0.5">Sandwich au cordon bleu fondant — Menu +3 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">9,00 €</span><button @click="openCustomizer('Cordon Bleu', 9, 12)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Kofte</h2><p class="text-xs text-brand/55 mt-0.5">Boulettes de viande hachée épicées — Menu +3 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">9,00 €</span><button @click="openCustomizer('Kofte', 9, 12)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Américain</h2><p class="text-xs text-brand/55 mt-0.5">Steak haché et cheddar fondu — Menu +3 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">9,00 €</span><button @click="openCustomizer('Américain', 9, 12)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Escalope</h2><p class="text-xs text-brand/55 mt-0.5">Filet de poulet pané maison — Menu +3 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">9,00 €</span><button @click="openCustomizer('Escalope', 9, 12)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
+          <div class="md:col-span-8">
+            <template x-for="(item, idx) in categoryItems(['Sandwichs Vedettes','Nos Specialites','Tradition & Galettes'])" :key="item.title">
+              <div :class="idx===0?'pb-3':'py-3 border-t border-brand/20'" class="flex justify-between items-start gap-3">
+                <div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase" x-text="item.title"></h2><p class="text-xs text-brand/55 mt-0.5" x-text="item.description||item.desc||''"></p></div>
+                <div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums" x-text="fmtPrice(item.price)"></span><button @click="openCustomizer(item.title, parseMenuPrice(item.price), parseMenuPrice(item.menu_price))" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -884,9 +886,13 @@
             <div class="overflow-hidden"><img src="../uploads/cut/Tacos.webp" alt="Tacos" loading="lazy" class="w-full h-52 object-contain p-4 group-hover:scale-105 transition-transform duration-500"></div>
             <div class="p-5 text-center"><h3 class="font-baloo font-extrabold text-[9px] uppercase tracking-[.2em] text-cream/50 mb-2">INGRÉDIENTS</h3><p class="text-xs leading-relaxed text-cream/80 mb-4">Viande au choix, sauce fromagère et frites incluses. Format Maxi avec 2 viandes disponible.</p><div class="w-full bg-cream text-brand font-extrabold text-[9px] uppercase tracking-wider py-3 rounded-full">AJOUTER AU PANIER</div></div>
           </div>
-          <div class="md:col-span-8 divide-y divide-brand/20">
-            <div class="py-3 first:pt-0 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Tacos</h2><p class="text-xs text-brand/55 mt-0.5">Sauce fromagère et frites incluses — Menu +3 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">10,00 €</span><button @click="openCustomizer('Tacos', 10, 13)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Maxi Tacos <span class="text-[9px] bg-[#C8412F] text-cream px-1.5 py-0.5 rounded-full ml-1 font-extrabold align-middle">MAXI</span></h2><p class="text-xs text-brand/55 mt-0.5">Format géant avec 2 viandes — Menu +2 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">15,00 €</span><button @click="openCustomizer('Maxi Tacos', 15, 17)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
+          <div class="md:col-span-8">
+            <template x-for="(item, idx) in categoryItems(['Tacos'])" :key="item.title">
+              <div :class="idx===0?'pb-3':'py-3 border-t border-brand/20'" class="flex justify-between items-start gap-3">
+                <div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase" x-text="item.title"></h2><p class="text-xs text-brand/55 mt-0.5" x-text="item.description||item.desc||''"></p></div>
+                <div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums" x-text="fmtPrice(item.price)"></span><button @click="openCustomizer(item.title, parseMenuPrice(item.price), parseMenuPrice(item.menu_price))" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -908,12 +914,13 @@
             <div class="overflow-hidden"><img src="../uploads/cut/Chicken Burger.webp" alt="Burger" loading="lazy" class="w-full h-52 object-contain p-4 group-hover:scale-105 transition-transform duration-500"></div>
             <div class="p-5 text-center"><h3 class="font-baloo font-extrabold text-[9px] uppercase tracking-[.2em] text-cream/50 mb-2">INGRÉDIENTS</h3><p class="text-xs leading-relaxed text-cream/80 mb-4">Poulet croustillant, cheddar fondant, sauce maison. Menu burger +3 € (frites + boisson).</p><div class="w-full bg-cream text-brand font-extrabold text-[9px] uppercase tracking-wider py-3 rounded-full">AJOUTER AU PANIER</div></div>
           </div>
-          <div class="md:col-span-8 divide-y divide-brand/20">
-            <div class="py-3 first:pt-0 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Chicken Burger</h2><p class="text-xs text-brand/55 mt-0.5">Poulet croustillant et cheddar — Menu +3 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">6,00 €</span><button @click="openCustomizer('Chicken Burger', 6, 9)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Cheese Burger</h2><p class="text-xs text-brand/55 mt-0.5">Steak haché et fromage fondu — Menu +3 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">6,00 €</span><button @click="openCustomizer('Cheese Burger', 6, 9)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Nuggets ×7</h2><p class="text-xs text-brand/55 mt-0.5">Filets de poulet frits dorés</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">8,50 €</span><button @click="openCustomizer('Nuggets ×7', 8.5, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Wings ×4</h2><p class="text-xs text-brand/55 mt-0.5">Ailerons de poulet épicés</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">7,50 €</span><button @click="openCustomizer('Wings ×4', 7.5, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Tenders ×4</h2><p class="text-xs text-brand/55 mt-0.5">Aiguillettes de poulet tendres</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">7,50 €</span><button @click="openCustomizer('Tenders ×4', 7.5, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
+          <div class="md:col-span-8">
+            <template x-for="(item, idx) in categoryItems(['Burgers','Finger Food'])" :key="item.title">
+              <div :class="idx===0?'pb-3':'py-3 border-t border-brand/20'" class="flex justify-between items-start gap-3">
+                <div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase" x-text="item.title"></h2><p class="text-xs text-brand/55 mt-0.5" x-text="item.description||item.desc||''"></p></div>
+                <div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums" x-text="fmtPrice(item.price)"></span><button @click="openCustomizer(item.title, parseMenuPrice(item.price), parseMenuPrice(item.menu_price), itemHasSauce(item.category))" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -935,15 +942,13 @@
             <div class="overflow-hidden"><img src="../uploads/cut/Assiette Mixte.webp" alt="Assiette Mixte" loading="lazy" class="w-full h-52 object-contain p-4 group-hover:scale-105 transition-transform duration-500"></div>
             <div class="p-5 text-center"><h3 class="font-baloo font-extrabold text-[9px] uppercase tracking-[.2em] text-cream/50 mb-2">INGRÉDIENTS</h3><p class="text-xs leading-relaxed text-cream/80 mb-4">Kebab + 2 viandes au choix. Frites, blé et crudités fraîches du jour inclus dans toutes les assiettes.</p><div class="w-full bg-cream text-brand font-extrabold text-[9px] uppercase tracking-wider py-3 rounded-full">AJOUTER AU PANIER</div></div>
           </div>
-          <div class="md:col-span-8 divide-y divide-brand/20">
-            <div class="py-3 first:pt-0 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Assiette Kebab</h2><p class="text-xs text-brand/55 mt-0.5">Veau maison servi à l'assiette</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">15,00 €</span><button @click="openCustomizer('Assiette Kebab', 15, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Assiette Escalope</h2><p class="text-xs text-brand/55 mt-0.5">Poulet pané ou grillé</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">15,00 €</span><button @click="openCustomizer('Assiette Escalope', 15, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Assiette Kofte</h2><p class="text-xs text-brand/55 mt-0.5">Boulettes maison grillées</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">15,00 €</span><button @click="openCustomizer('Assiette Kofte', 15, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Assiette Steak</h2><p class="text-xs text-brand/55 mt-0.5">Steaks hachés grillés minute</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">15,00 €</span><button @click="openCustomizer('Assiette Steak', 15, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Assiette Cordon Bleu</h2><p class="text-xs text-brand/55 mt-0.5">Deux cordons bleus fondants</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">15,00 €</span><button @click="openCustomizer('Assiette Cordon Bleu', 15, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Assiette Mixte <span class="text-[9px] bg-brand text-cream px-1.5 py-0.5 rounded-full ml-1 font-extrabold align-middle">MIXTE</span></h2><p class="text-xs text-brand/55 mt-0.5">Kebab + 2 viandes au choix</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">18,00 €</span><button @click="openCustomizer('Assiette Mixte', 18, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Assiette Enfant</h2><p class="text-xs text-brand/55 mt-0.5">Frites + viande au choix</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">12,00 €</span><button @click="openCustomizer('Assiette Enfant', 12, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Assiette Emporter</h2><p class="text-xs text-brand/55 mt-0.5">Format pratique — Mixte 18 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">15,00 €</span><button @click="openCustomizer('Assiette Emporter', 15, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
+          <div class="md:col-span-8">
+            <template x-for="(item, idx) in categoryItems(['Assiettes Gourmet','Assiettes Gourmet (Suite)','Assiettes & Salade'])" :key="item.title">
+              <div :class="idx===0?'pb-3':'py-3 border-t border-brand/20'" class="flex justify-between items-start gap-3">
+                <div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase" x-text="item.title"></h2><p class="text-xs text-brand/55 mt-0.5" x-text="item.description||item.desc||''"></p></div>
+                <div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums" x-text="fmtPrice(item.price)"></span><button @click="openCustomizer(item.title, parseMenuPrice(item.price), parseMenuPrice(item.menu_price))" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -965,14 +970,13 @@
             <div class="overflow-hidden"><img src="../uploads/cut/Qofte_x7.webp" alt="Qofte" loading="lazy" class="w-full h-52 object-contain p-4 group-hover:scale-105 transition-transform duration-500"></div>
             <div class="p-5 text-center"><h3 class="font-baloo font-extrabold text-[9px] uppercase tracking-[.2em] text-cream/50 mb-2">INGRÉDIENTS</h3><p class="text-xs leading-relaxed text-cream/80 mb-4">7 boulettes grillées maison. Frites, fromage, tomate, concombre et sauce blanche.</p><div class="w-full bg-cream text-brand font-extrabold text-[9px] uppercase tracking-wider py-3 rounded-full">AJOUTER AU PANIER</div></div>
           </div>
-          <div class="md:col-span-8 divide-y divide-brand/20">
-            <div class="py-3 first:pt-0 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Escalope Crème</h2><p class="text-xs text-brand/55 mt-0.5">Poulet à la crème, champignons, légumes</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">12,50 €</span><button @click="openCustomizer('Escalope Crème', 12.5, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Filet de Poulet</h2><p class="text-xs text-brand/55 mt-0.5">Frites, fromage, tomate, sauce blanche</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">12,00 €</span><button @click="openCustomizer('Filet de Poulet', 12, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Pleskavice</h2><p class="text-xs text-brand/55 mt-0.5">Frites, fromage, tomate, sauce blanche</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">9,50 €</span><button @click="openCustomizer('Pleskavice', 9.5, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Makarona</h2><p class="text-xs text-brand/55 mt-0.5">Penne, sauce tomate, fromage râpé</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">8,50 €</span><button @click="openCustomizer('Makarona', 8.5, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Qofte ×5</h2><p class="text-xs text-brand/55 mt-0.5">5 boulettes grillées maison</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">9,00 €</span><button @click="openCustomizer('Qofte ×5', 9, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Qofte ×7</h2><p class="text-xs text-brand/55 mt-0.5">7 boulettes grillées maison</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">11,00 €</span><button @click="openCustomizer('Qofte ×7', 11, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Qofte ×10</h2><p class="text-xs text-brand/55 mt-0.5">10 boulettes grillées maison</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">13,00 €</span><button @click="openCustomizer('Qofte ×10', 13, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
+          <div class="md:col-span-8">
+            <template x-for="(item, idx) in categoryItems(['Plats Maison','Qofte Grillees','Burek & Specialites'])" :key="item.title">
+              <div :class="idx===0?'pb-3':'py-3 border-t border-brand/20'" class="flex justify-between items-start gap-3">
+                <div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase" x-text="item.title"></h2><p class="text-xs text-brand/55 mt-0.5" x-text="item.description||item.desc||''"></p></div>
+                <div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums" x-text="fmtPrice(item.price)"></span><button @click="openCustomizer(item.title, parseMenuPrice(item.price), parseMenuPrice(item.menu_price), itemHasSauce(item.category))" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -994,14 +998,13 @@
             <div class="overflow-hidden"><img src="../uploads/cut/Salade du Berger.webp" alt="Salade" loading="lazy" class="w-full h-52 object-contain p-4 group-hover:scale-105 transition-transform duration-500"></div>
             <div class="p-5 text-center"><h3 class="font-baloo font-extrabold text-[9px] uppercase tracking-[.2em] text-cream/50 mb-2">INGRÉDIENTS</h3><p class="text-xs leading-relaxed text-cream/80 mb-4">Salades fraîches du jour. Burek feuilleté fait maison — fromage, épinards ou viande.</p><div class="w-full bg-cream text-brand font-extrabold text-[9px] uppercase tracking-wider py-3 rounded-full">AJOUTER AU PANIER</div></div>
           </div>
-          <div class="md:col-span-8 divide-y divide-brand/20">
-            <div class="py-3 first:pt-0 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Salade Grecque</h2><p class="text-xs text-brand/55 mt-0.5">Tomates, concombres, olives, feta, oignons</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">6,00 €</span><button @click="openCustomizer('Salade Grecque', 6, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Salade du Berger</h2><p class="text-xs text-brand/55 mt-0.5">Crudités, feta et olives</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">10,00 €</span><button @click="openCustomizer('Salade du Berger', 10, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Salade Shope</h2><p class="text-xs text-brand/55 mt-0.5">Saladerie fraîche maison</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">6,00 €</span><button @click="openCustomizer('Salade Shope', 6, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Burek Fromage</h2><p class="text-xs text-brand/55 mt-0.5">Feuilleté maison au fromage</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">3,50 €</span><button @click="openCustomizer('Burek Fromage', 3.5, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Burek Épinards</h2><p class="text-xs text-brand/55 mt-0.5">Feuilleté aux épinards et fromage</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">3,50 €</span><button @click="openCustomizer('Burek Épinards', 3.5, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Burek Viande</h2><p class="text-xs text-brand/55 mt-0.5">Feuilleté croustillant à la viande</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">4,00 €</span><button @click="openCustomizer('Burek Viande', 4, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Fli – Flija</h2><p class="text-xs text-brand/55 mt-0.5">Fli traditionnel fait maison</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">4,00 €</span><button @click="openCustomizer('Fli-Flija', 4, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
+          <div class="md:col-span-8">
+            <template x-for="(item, idx) in categoryItems(['Salades Fraiches','Salades & Burek'])" :key="item.title">
+              <div :class="idx===0?'pb-3':'py-3 border-t border-brand/20'" class="flex justify-between items-start gap-3">
+                <div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase" x-text="item.title"></h2><p class="text-xs text-brand/55 mt-0.5" x-text="item.description||item.desc||''"></p></div>
+                <div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums" x-text="fmtPrice(item.price)"></span><button @click="openCustomizer(item.title, parseMenuPrice(item.price), parseMenuPrice(item.menu_price), false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -1023,23 +1026,13 @@
             <div class="overflow-hidden"><img src="../uploads/cut/Trilece.webp" alt="Trilece" loading="lazy" class="w-full h-52 object-contain p-4 group-hover:scale-105 transition-transform duration-500"></div>
             <div class="p-5 text-center"><h3 class="font-baloo font-extrabold text-[9px] uppercase tracking-[.2em] text-cream/50 mb-2">NOTRE SÉLECTION</h3><p class="text-xs leading-relaxed text-cream/80 mb-4">Douceurs maison, sodas, eaux et boissons chaudes. Menu Enfant disponible au choix.</p><div class="w-full bg-cream text-brand font-extrabold text-[9px] uppercase tracking-wider py-3 rounded-full">AJOUTER AU PANIER</div></div>
           </div>
-          <div class="md:col-span-8 divide-y divide-brand/20">
-            <div class="py-3 first:pt-0 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Trilece</h2><p class="text-xs text-brand/55 mt-0.5">Dessert traditionnel au lait</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">3,50 €</span><button @click="openCustomizer('Trilece', 3.5, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Tiramisu</h2><p class="text-xs text-brand/55 mt-0.5">Tiramisu maison</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">3,50 €</span><button @click="openCustomizer('Tiramisu', 3.5, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Menu Enfant</h2><p class="text-xs text-brand/55 mt-0.5">4 Nuggets ou viande au choix</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">10,00 €</span><button @click="openCustomizer('Menu Enfant', 10, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Frites</h2><p class="text-xs text-brand/55 mt-0.5">Petite — Grande 3,00 €</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">2,00 €</span><button @click="openCustomizer('Frites', 2, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Barquette Viande</h2><p class="text-xs text-brand/55 mt-0.5">Portion de veau 100% maison</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">10,00 €</span><button @click="openCustomizer('Barquette Viande', 10, 0)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Coca-Cola</h2><p class="text-xs text-brand/55 mt-0.5">33 cl</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">2,00 €</span><button @click="openCustomizer('Coca-Cola', 2, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Fanta Orange</h2><p class="text-xs text-brand/55 mt-0.5">33 cl</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">2,00 €</span><button @click="openCustomizer('Fanta Orange', 2, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Fanta Citron</h2><p class="text-xs text-brand/55 mt-0.5">33 cl</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">2,00 €</span><button @click="openCustomizer('Fanta Citron', 2, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Sprite</h2><p class="text-xs text-brand/55 mt-0.5">33 cl — citron vert</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">2,00 €</span><button @click="openCustomizer('Sprite', 2, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Ice Tea Pêche</h2><p class="text-xs text-brand/55 mt-0.5">33 cl — Lipton pêche</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">2,00 €</span><button @click="openCustomizer('Ice Tea Pêche', 2, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Ice Tea Citron</h2><p class="text-xs text-brand/55 mt-0.5">33 cl — Lipton citron</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">2,00 €</span><button @click="openCustomizer('Ice Tea Citron', 2, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Oasis</h2><p class="text-xs text-brand/55 mt-0.5">33 cl — tropical</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">2,00 €</span><button @click="openCustomizer('Oasis', 2, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Eau plate</h2><p class="text-xs text-brand/55 mt-0.5">50 cl — Evian ou Volvic</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">1,00 €</span><button @click="openCustomizer('Eau plate', 1, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Eau gazeuse</h2><p class="text-xs text-brand/55 mt-0.5">33 cl — Perrier</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">1,50 €</span><button @click="openCustomizer('Eau gazeuse', 1.5, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Café</h2><p class="text-xs text-brand/55 mt-0.5">Serré, allongé ou noisette</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">1,50 €</span><button @click="openCustomizer('Café', 1.5, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
-            <div class="py-3 flex justify-between items-start gap-3"><div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase">Thé à la menthe</h2><p class="text-xs text-brand/55 mt-0.5">Traditionnel ou nature</p></div><div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums">1,50 €</span><button @click="openCustomizer('Thé', 1.5, 0, false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div></div>
+          <div class="md:col-span-8">
+            <template x-for="(item, idx) in categoryItems(['Desserts','Menu Enfants','Accompagnements & Sauces','Boissons & Boissons Chaudes','Boissons'])" :key="item.title">
+              <div :class="idx===0?'pb-3':'py-3 border-t border-brand/20'" class="flex justify-between items-start gap-3">
+                <div><h2 class="font-baloo font-black text-base md:text-lg text-brand uppercase" x-text="item.title"></h2><p class="text-xs text-brand/55 mt-0.5" x-text="item.description||item.desc||''"></p></div>
+                <div class="flex items-center gap-2 shrink-0"><span class="font-baloo font-black text-lg text-brand tabular-nums" x-text="fmtPrice(item.price)"></span><button @click="openCustomizer(item.title, parseMenuPrice(item.price), parseMenuPrice(item.menu_price), false)" class="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center">+</button></div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -1105,8 +1098,9 @@
       <div class="flex justify-center gap-2 mt-6">
         <template x-for="(rv, i) in reviews" :key="i">
           <button @click="reviewIndex = i"
+                  :aria-label="'Avis ' + (i+1)"
                   :class="i === reviewIndex ? 'bg-accent w-7' : 'bg-cream/35 w-2.5'"
-                  class="h-2.5 rounded-full transition-all duration-300 hover:bg-accent"></button>
+                  class="h-2.5 w-2.5 rounded-full transition-all duration-300 hover:bg-accent"></button>
         </template>
       </div>
     </div>
@@ -1139,31 +1133,33 @@
 
             <!-- form -->
             <form x-show="!reservation" @submit.prevent="submitReservation($event)" class="mt-6 space-y-3">
-              <input type="text" name="fullname" placeholder="Nom complet" required class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent">
+              <input type="text" name="fullname" placeholder="Nom complet" required aria-label="Nom complet" class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input type="email" name="email" placeholder="Adresse e-mail" required class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent">
-                <input type="tel" name="phone" placeholder="Téléphone" required class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent">
+                <input type="email" name="email" placeholder="Adresse e-mail" required aria-label="Adresse e-mail" class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent">
+                <input type="tel" name="phone" placeholder="Téléphone" required aria-label="Numéro de téléphone" class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent">
               </div>
-              <div class="grid grid-cols-1 xs:grid-cols-3 gap-3">
-                <input type="date" name="date" required class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent">
-                <select name="time" required class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent">
+              <input type="date" name="date" required aria-label="Date de réservation" class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent">
+              <div class="grid grid-cols-2 gap-3">
+                <select name="time" required aria-label="Heure de réservation" class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent">
+                  <option value="" disabled selected>Heure</option>
                   <option value="12:00">12:00</option>
                   <option value="12:30">12:30</option>
-                  <option value="13:00" selected>13:00</option>
+                  <option value="13:00">13:00</option>
                   <option value="19:00">19:00</option>
                   <option value="19:30">19:30</option>
                   <option value="20:00">20:00</option>
                   <option value="21:00">21:00</option>
                 </select>
-                <select name="guests" required class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent">
+                <select name="guests" required aria-label="Nombre de personnes" class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent">
+                  <option value="" disabled selected>Personnes</option>
                   <option value="2">2 pers.</option>
                   <option value="3">3 pers.</option>
-                  <option value="4" selected>4 pers.</option>
+                  <option value="4">4 pers.</option>
                   <option value="6">6 pers.</option>
                   <option value="8">8 pers.</option>
                 </select>
               </div>
-              <textarea name="message" rows="3" placeholder="Allergies, occasion spéciale, table en terrasse…" class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent resize-y"></textarea>
+              <textarea name="message" rows="3" placeholder="Allergies, occasion spéciale, table en terrasse…" aria-label="Message optionnel" class="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent resize-y"></textarea>
               <button type="submit" class="w-full py-4 rounded-full border-2 border-brand bg-brand text-cream text-sm font-bold uppercase tracking-widest hover:bg-accent hover:text-brand transition btn-hover-scale">Réserver ma table</button>
             </form>
           </div>
@@ -1177,14 +1173,15 @@
         <!-- hours -->
         <div class="relative max-w-4xl mx-auto mt-12 text-center">
           <h2 class="font-baloo font-extrabold text-[clamp(26px,3.4vw,44px)] text-cream">HORAIRES D'OUVERTURE</h2>
-          <div class="mt-8 flex flex-wrap justify-center gap-8 sm:gap-16">
-            <div>
+          <div class="mt-8 flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-16">
+            <div class="text-center">
               <p class="text-xs font-bold tracking-[.2em] uppercase text-accent">Lundi — Samedi</p>
               <p class="font-baloo font-extrabold text-[clamp(24px,3.5vw,48px)] text-cream">11H – 14H30</p>
               <p class="font-baloo font-extrabold text-[clamp(24px,3.5vw,48px)] text-cream">18H – 22H30</p>
             </div>
-            <div class="w-px bg-cream/25 self-stretch"></div>
-            <div>
+            <div class="hidden sm:block w-px bg-cream/25 self-stretch min-h-[80px]"></div>
+            <div class="w-16 h-px bg-cream/25 sm:hidden"></div>
+            <div class="text-center">
               <p class="text-xs font-bold tracking-[.2em] uppercase text-accent">Dimanche</p>
               <p class="font-baloo font-extrabold text-[clamp(24px,3.5vw,48px)] text-[#C8412F] mt-2">FERMÉ</p>
             </div>
@@ -1685,6 +1682,64 @@
       deliveryFee: 0,
       navMenuOpen: false,
 
+      // ---- menu Supabase ----
+      menuData: [
+        {title:'Kebab',description:'Pain rond, veau maison, crudités — Menu +3 €',price:'9,00',menu_price:'12,00',category:'Sandwichs Vedettes'},
+        {title:'Kebab Frites',description:'Viande et frites servies dans le pain',price:'9,50',menu_price:'',category:'Sandwichs Vedettes'},
+        {title:'Kebab Geant',description:'Double portion de veau maison — Menu +2 €',price:'15,00',menu_price:'17,00',category:'Sandwichs Vedettes'},
+        {title:'Kofte',description:'Boulettes de viande hachée épicées — Menu +3 €',price:'9,00',menu_price:'12,00',category:'Nos Specialites'},
+        {title:'Americain',description:'Steak haché et cheddar fondu — Menu +3 €',price:'9,00',menu_price:'12,00',category:'Nos Specialites'},
+        {title:'Escalope',description:'Filet de poulet pané maison — Menu +3 €',price:'9,00',menu_price:'12,00',category:'Nos Specialites'},
+        {title:'Cordon Bleu',description:'Sandwich au cordon bleu fondant — Menu +3 €',price:'9,00',menu_price:'12,00',category:'Tradition & Galettes'},
+        {title:'Galette (Dürum)',description:'Fine galette roulée, veau, crudités — Menu +3 €',price:'9,00',menu_price:'12,00',category:'Tradition & Galettes'},
+        {title:'Miche Kebab',description:'Pain miche traditionnel croustillant — Menu +3 €',price:'9,00',menu_price:'12,00',category:'Tradition & Galettes'},
+        {title:'Tacos',description:'Sauce fromagère et frites incluses — Menu +3 €',price:'10,00',menu_price:'13,00',category:'Tacos'},
+        {title:'Maxi Tacos',description:'Format géant avec 2 viandes — Menu +2 €',price:'15,00',menu_price:'17,00',category:'Tacos'},
+        {title:'Chicken Burger',description:'Poulet croustillant et cheddar — Menu +3 €',price:'6,00',menu_price:'9,00',category:'Burgers'},
+        {title:'Cheese Burger',description:'Steak haché et fromage fondu — Menu +3 €',price:'6,00',menu_price:'9,00',category:'Burgers'},
+        {title:'Nuggets (x7)',description:'Filets de poulet frits dorés',price:'8,50',menu_price:'',category:'Finger Food'},
+        {title:'Wings (x4)',description:'Ailerons de poulet épicés',price:'7,50',menu_price:'',category:'Finger Food'},
+        {title:'Tenders (x4)',description:'Aiguillettes de poulet tendres',price:'7,50',menu_price:'',category:'Finger Food'},
+        {title:'Assiette Kebab',description:'Veau maison servi à l\'assiette',price:'15,00',menu_price:'',category:'Assiettes Gourmet'},
+        {title:'Assiette Escalope',description:'Poulet pané ou grillé',price:'15,00',menu_price:'',category:'Assiettes Gourmet'},
+        {title:'Assiette Kofte',description:'Boulettes maison grillées',price:'15,00',menu_price:'',category:'Assiettes Gourmet'},
+        {title:'Assiette Steak',description:'Steaks hachés grillés minute',price:'15,00',menu_price:'',category:'Assiettes Gourmet (Suite)'},
+        {title:'Assiette Cordon Bleu',description:'Deux cordons bleus fondants',price:'15,00',menu_price:'',category:'Assiettes Gourmet (Suite)'},
+        {title:'Assiette Mixte',description:'Kebab + 2 viandes au choix',price:'18,00',menu_price:'',category:'Assiettes Gourmet (Suite)'},
+        {title:'Assiette Enfant',description:'Frites + viande au choix',price:'12,00',menu_price:'',category:'Assiettes & Salade'},
+        {title:'Assiette Emporter',description:'Format pratique — Mixte 18 €',price:'15,00',menu_price:'',category:'Assiettes & Salade'},
+        {title:'Escalope Crème',description:'Poulet à la crème, champignons, légumes',price:'12,50',menu_price:'',category:'Plats Maison'},
+        {title:'Filet de Poulet',description:'Frites, fromage, tomate, sauce blanche',price:'12,00',menu_price:'',category:'Plats Maison'},
+        {title:'Pleskavice',description:'Frites, fromage, tomate, sauce blanche',price:'9,50',menu_price:'',category:'Plats Maison'},
+        {title:'Makarona',description:'Penne, sauce tomate, fromage râpé',price:'8,50',menu_price:'',category:'Burek & Specialites'},
+        {title:'Qofte x5',description:'5 boulettes grillées maison',price:'9,00',menu_price:'',category:'Qofte Grillees'},
+        {title:'Qofte x7',description:'7 boulettes grillées maison',price:'11,00',menu_price:'',category:'Qofte Grillees'},
+        {title:'Qofte x10',description:'10 boulettes grillées maison',price:'13,00',menu_price:'',category:'Qofte Grillees'},
+        {title:'Salade Grecque',description:'Tomates, concombres, olives, feta, oignons',price:'6,00',menu_price:'',category:'Salades Fraiches'},
+        {title:'Salade du Berger',description:'Crudités, feta et olives',price:'10,00',menu_price:'',category:'Salades Fraiches'},
+        {title:'Salade Shope',description:'Saladerie fraîche maison',price:'6,00',menu_price:'',category:'Salades Fraiches'},
+        {title:'Burek Fromage',description:'Feuilleté maison au fromage',price:'3,50',menu_price:'',category:'Salades & Burek'},
+        {title:'Burek Épinards',description:'Feuilleté aux épinards et fromage',price:'3,50',menu_price:'',category:'Salades & Burek'},
+        {title:'Burek Viande',description:'Feuilleté croustillant à la viande',price:'4,00',menu_price:'',category:'Salades & Burek'},
+        {title:'Fli - Flija',description:'Fli traditionnel fait maison',price:'4,00',menu_price:'',category:'Salades & Burek'},
+        {title:'Trilece',description:'Dessert traditionnel au lait',price:'3,50',menu_price:'',category:'Desserts'},
+        {title:'Tiramisu',description:'Tiramisu maison',price:'3,50',menu_price:'',category:'Desserts'},
+        {title:'Menu Enfant',description:'4 Nuggets ou viande au choix',price:'10,00',menu_price:'',category:'Menu Enfants'},
+        {title:'Frites',description:'Petite — Grande 3,00 €',price:'2,00',menu_price:'',category:'Accompagnements & Sauces'},
+        {title:'Barquette Viande',description:'Portion de veau 100% maison',price:'10,00',menu_price:'',category:'Accompagnements & Sauces'},
+        {title:'Coca-Cola',description:'33 cl',price:'2,00',menu_price:'',category:'Boissons & Boissons Chaudes'},
+        {title:'Fanta Orange',description:'33 cl',price:'2,00',menu_price:'',category:'Boissons & Boissons Chaudes'},
+        {title:'Fanta Citron',description:'33 cl',price:'2,00',menu_price:'',category:'Boissons & Boissons Chaudes'},
+        {title:'Sprite',description:'33 cl — citron vert',price:'2,00',menu_price:'',category:'Boissons & Boissons Chaudes'},
+        {title:'Ice Tea Pêche',description:'33 cl — Lipton pêche',price:'2,00',menu_price:'',category:'Boissons & Boissons Chaudes'},
+        {title:'Ice Tea Citron',description:'33 cl — Lipton citron',price:'2,00',menu_price:'',category:'Boissons & Boissons Chaudes'},
+        {title:'Oasis',description:'33 cl — tropical',price:'2,00',menu_price:'',category:'Boissons & Boissons Chaudes'},
+        {title:'Eau plate',description:'50 cl — Evian ou Volvic',price:'1,00',menu_price:'',category:'Boissons & Boissons Chaudes'},
+        {title:'Eau gazeuse',description:'33 cl — Perrier',price:'1,50',menu_price:'',category:'Boissons & Boissons Chaudes'},
+        {title:'Café',description:'Serré, allongé ou noisette',price:'1,50',menu_price:'',category:'Boissons & Boissons Chaudes'},
+        {title:'Thé à la menthe',description:'Traditionnel ou nature',price:'1,50',menu_price:'',category:'Boissons & Boissons Chaudes'},
+      ],
+
       // ---- customizer ----
       customizer: null,
       custMode: 'seul',
@@ -1814,8 +1869,8 @@
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Erreur serveur');
 
-          const stripe = window._stripe;
-          if (!stripe) throw new Error('Stripe non chargé.');
+          const stripe = await window._loadStripe();
+          if (!stripe) throw new Error('Stripe non disponible.');
 
           const elements = stripe.elements({
             clientSecret: data.clientSecret,
@@ -1947,6 +2002,38 @@
       toggleCategory(cat) {
         this.openCategory = this.openCategory === cat ? null : cat;
       },
+      categoryItems(cats) {
+        return this.menuData.filter(r => cats.indexOf(r.category) !== -1);
+      },
+      fmtPrice(v) {
+        if (!v) return '';
+        var n = typeof v === 'number' ? v : parseFloat(String(v).replace(',', '.'));
+        return isNaN(n) || n === 0 ? '' : n.toFixed(2).replace('.', ',') + ' €';
+      },
+      parseMenuPrice(v) {
+        if (v == null || v === '' || v === '0' || v === 0) return 0;
+        if (typeof v === 'number') return v;
+        return parseFloat(String(v).replace(',', '.')) || 0;
+      },
+      itemHasSauce(cat) {
+        var no = ['Salades Fraiches','Salades & Burek','Accompagnements & Sauces',
+                  'Desserts','Menu Enfants','Finger Food','Burek & Specialites',
+                  'Plats Maison','Boissons & Boissons Chaudes'];
+        return no.indexOf(cat) === -1;
+      },
+      async fetchLandingMenu() {
+        try {
+          var r = await fetch('https://hqfewokpvjmxezhnurbm.supabase.co/rest/v1/menu_items?order=sort_order', {
+            headers: {
+              'apikey': 'sb_publishable_NmIfxaQb5ncapzCtzI5uNQ_tHdCwAyc',
+              'Authorization': 'Bearer sb_publishable_NmIfxaQb5ncapzCtzI5uNQ_tHdCwAyc'
+            }
+          });
+          if (!r.ok) return;
+          var data = await r.json();
+          if (Array.isArray(data) && data.length > 0) this.menuData = data;
+        } catch (e) {}
+      },
 
       // ---- reservation ----
       submitReservation(e) {
@@ -2021,23 +2108,37 @@
 </script>
 
 <script>
-  /* ─── STRIPE INIT ─── */
-  (function initStripe() {
-    // La clé publique est injectée par le serveur via la meta tag ci-dessous
-    const meta = document.querySelector('meta[name="stripe-pk"]');
-    const pk   = meta ? meta.content : null;
-    if (pk && pk.startsWith('pk_')) {
-      window._stripe = Stripe(pk);
-    } else {
-      console.warn('[Stripe] Clé publique manquante. Ajoutez STRIPE_PUBLIC_KEY dans .env');
-    }
+  /* ─── STRIPE LAZY INIT ─── */
+  window._loadStripe = function() {
+    if (window._stripePromise) return window._stripePromise;
+    window._stripePromise = new Promise(function(resolve, reject) {
+      if (window.Stripe) {
+        var meta = document.querySelector('meta[name="stripe-pk"]');
+        var pk = meta ? meta.content : null;
+        if (pk && pk.startsWith('pk_')) { window._stripe = Stripe(pk); resolve(window._stripe); }
+        else resolve(null);
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = 'https://js.stripe.com/v3/';
+      s.onload = function() {
+        var meta = document.querySelector('meta[name="stripe-pk"]');
+        var pk = meta ? meta.content : null;
+        if (pk && pk.startsWith('pk_')) { window._stripe = Stripe(pk); resolve(window._stripe); }
+        else { console.warn('[Stripe] Clé publique manquante.'); resolve(null); }
+      };
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    return window._stripePromise;
+  };
 
-    // Si retour depuis Stripe redirect (3D Secure)
-    const params = new URLSearchParams(window.location.search);
+  // Si retour depuis Stripe redirect (3D Secure)
+  (function() {
+    var params = new URLSearchParams(window.location.search);
     if (params.get('payment') === 'success') {
       window.history.replaceState({}, '', window.location.pathname);
-      // Alpine pas encore dispo ici — on notifie via event
-      window.addEventListener('alpine:init', () => {
+      window.addEventListener('alpine:init', function() {
         document.dispatchEvent(new CustomEvent('stripe:success'));
       });
     }
