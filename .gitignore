@@ -1,12 +1,26 @@
 .DS_Store
 .idea/
+.claude/
 Thumbs.db
+*.HEIC
+*.heic
 
 # Secrets — NE JAMAIS COMMITTER
 .env
 .env.*
 !.env.example
+!landing-next/.env.local.example
 
 # Dependencies
 node_modules/
 npm-debug.log*
+yarn-error.log*
+
+# Next.js build artifacts
+landing-next/.next/
+landing-next/tsconfig.tsbuildinfo
+landing-next/.env.local
+
+# Uploads (served separately, not in git)
+uploads/
+
