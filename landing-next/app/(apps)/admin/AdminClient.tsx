@@ -3,6 +3,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Script from 'next/script'
 
+const FUNCTIONS_BASE = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? ''
+const ADMIN_TOKEN_KEY = 'ramo_admin_token'
+
+function adminToken() { return typeof window !== 'undefined' ? localStorage.getItem(ADMIN_TOKEN_KEY) ?? '' : '' }
+function adminFetchHeaders(withBody = false): Record<string, string> {
+  const h: Record<string, string> = {}
+  if (withBody) h['Content-Type'] = 'application/json'
+  if (FUNCTIONS_BASE) h['Authorization'] = `Bearer ${adminToken()}`
+  return h
+}
+
 /* ─── types ─────────────────────────────────────────────────── */
 type OrderItem = { name: string; qty: number; price: number }
 type Order = {
@@ -1086,7 +1097,18 @@ export default function AdminClient() {
   const isFirst = useRef(true)
 
   useEffect(() => {
-    fetch('/api/admin/verify').then(r => { if (r.ok) setAuthed(true) }).catch(() => {})
+    if (FUNCTIONS_BASE) {
+      const token = adminToken()
+      if (token) {
+        fetch(`${FUNCTIONS_BASE}/admin-auth`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'verify', token }),
+        }).then(r => r.ok ? r.json() : null).then(d => { if (d?.ok) setAuthed(true) }).catch(() => {})
+      }
+    } else {
+      fetch('/api/admin/verify').then(r => { if (r.ok) setAuthed(true) }).catch(() => {})
+    }
     const v = localStorage.getItem('sound_enabled')
     if (v !== null) { const e = v !== 'false'; setSoundEnabled(e); soundEnabledRef.current = e }
     const n = localStorage.getItem('notif_enabled')
@@ -1125,7 +1147,8 @@ export default function AdminClient() {
 
   const fetchReservations = useCallback(async () => {
     try {
-      const res = await fetch('/api/reservations')
+      const url = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/admin-reservations` : '/api/reservations'
+      const res = await fetch(url, { headers: adminFetchHeaders() })
       if (!res.ok) return
       const data: Reservation[] = await res.json()
       if (Array.isArray(data)) setReservations(data)
@@ -1133,9 +1156,10 @@ export default function AdminClient() {
   }, [])
 
   const updateResStatus = useCallback(async (id: number, status: string) => {
-    await fetch('/api/reservations', {
+    const url = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/admin-reservations` : '/api/reservations'
+    await fetch(url, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminFetchHeaders(true),
       body: JSON.stringify({ id, status }),
     })
     fetchReservations()
@@ -1143,7 +1167,8 @@ export default function AdminClient() {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const res = await fetch('/api/orders')
+      const url = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/admin-orders` : '/api/orders'
+      const res = await fetch(url, { headers: adminFetchHeaders() })
       if (!res.ok) return
       const data: Order[] = await res.json()
       if (!Array.isArray(data)) return
@@ -1223,12 +1248,24 @@ export default function AdminClient() {
 
   const login = async (user: string, pw: string): Promise<boolean> => {
     try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user, pass: pw }),
-      })
-      if (!res.ok) return false
+      if (FUNCTIONS_BASE) {
+        const res = await fetch(`${FUNCTIONS_BASE}/admin-auth`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'login', user, pass: pw }),
+        })
+        if (!res.ok) return false
+        const data = await res.json()
+        if (!data.token) return false
+        localStorage.setItem(ADMIN_TOKEN_KEY, data.token)
+      } else {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user, pass: pw }),
+        })
+        if (!res.ok) return false
+      }
       setAuthed(true)
       warmupAudio()
       return true
@@ -1236,7 +1273,8 @@ export default function AdminClient() {
   }
 
   const logout = async () => {
-    await fetch('/api/admin/logout', { method: 'POST' }).catch(() => {})
+    localStorage.removeItem(ADMIN_TOKEN_KEY)
+    if (!FUNCTIONS_BASE) await fetch('/api/admin/logout', { method: 'POST' }).catch(() => {})
     setAuthed(false)
   }
 
@@ -1253,9 +1291,10 @@ export default function AdminClient() {
   }
 
   const updateStatus = useCallback(async (id: number, status: string) => {
-    await fetch('/api/orders', {
+    const url = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/admin-orders` : '/api/orders'
+    await fetch(url, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminFetchHeaders(true),
       body: JSON.stringify({ id, status }),
     })
     fetchOrders()
