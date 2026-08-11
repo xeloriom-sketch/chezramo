@@ -159,10 +159,10 @@ export default function Header() {
       {/* Mobile nav */}
       {navMenuOpen && (
         <div
-          className="fixed inset-0 z-[200] bg-[#163828] flex flex-col md:hidden overflow-hidden"
+          className="nav-open fixed inset-0 z-[200] bg-[#163828] flex flex-col md:hidden overflow-hidden"
           onKeyDown={e => e.key === 'Escape' && setNavMenuOpen(false)}
         >
-          <div className="flex items-center justify-between px-6 pt-5 pb-4 shrink-0">
+          <div className="flex items-center justify-between px-6 pt-5 pb-4 shrink-0 nav-link-in" style={{ animationDelay: '0ms' }}>
             <span className="font-extrabold text-xl text-cream tracking-wide" style={{ fontFamily: 'var(--font-baloo)' }}>CHEZ RAMO</span>
             <button onClick={() => setNavMenuOpen(false)} className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center active:scale-95 transition-transform" aria-label="Fermer">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
@@ -170,19 +170,20 @@ export default function Header() {
           </div>
           <div className="h-px bg-white/10 mx-6" />
           <nav className="flex flex-col flex-1 justify-center px-6 gap-0">
-            {[['#menu','Menu','01'],['#avis','Avis','02'],['#about','À propos','03'],['#contact','Contact','04']].map(([href, label, num]) => (
+            {[['#menu','Menu','01'],['#avis','Avis','02'],['#about','À propos','03'],['#contact','Contact','04']].map(([href, label, num], i) => (
               <a
                 key={href}
                 href={href}
                 onClick={() => setNavMenuOpen(false)}
-                className="group flex items-center justify-between py-5 border-b border-white/10 last:border-0"
+                className="nav-link-in group flex items-center justify-between py-5 border-b border-white/10 last:border-0"
+                style={{ animationDelay: `${80 + i * 60}ms` }}
               >
                 <span className="font-extrabold text-[clamp(28px,7vw,36px)] text-cream uppercase tracking-wide group-hover:text-accent transition-colors" style={{ fontFamily: 'var(--font-baloo)' }}>{label}</span>
                 <span className="text-cream/30 text-xs font-mono">{num}</span>
               </a>
             ))}
           </nav>
-          <div className="px-6 pb-10 shrink-0 space-y-3">
+          <div className="nav-link-in px-6 pb-10 shrink-0 space-y-3" style={{ animationDelay: '340ms' }}>
             <a href="#menu" onClick={() => setNavMenuOpen(false)}
                className="flex items-center justify-center gap-2 w-full font-extrabold text-base uppercase tracking-widest py-4 rounded-full bg-accent text-brand active:scale-[.98] transition-transform"
                style={{ fontFamily: 'var(--font-baloo)' }}>

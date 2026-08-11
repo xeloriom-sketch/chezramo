@@ -17,7 +17,9 @@ const dmSans = DM_Sans({
   display: 'swap',
 })
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.chezramo.fr'
+const SITE_URL  = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.chezramo.fr'
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+const OG_IMAGE  = `${SITE_URL}${BASE_PATH}/og-image.png`
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -50,12 +52,14 @@ export const metadata: Metadata = {
     title: 'Chez Ramo — Kebab, Tacos & Restaurant à Lagnieu',
     description:
       'Le meilleur kebab halal de Lagnieu (01150). Broche artisanale, tacos, burgers et spécialités balkaniques. Commande en ligne rapide.',
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'Chez Ramo — Kebab, Tacos & Restaurant à Lagnieu' }],
   },
 
   twitter: {
     card: 'summary_large_image',
     title: 'Chez Ramo — Kebab & Tacos à Lagnieu (01150)',
     description: 'Le meilleur kebab halal de Lagnieu. Commande en ligne directe.',
+    images: [OG_IMAGE],
   },
 
   robots: {
