@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef, useEffect } from 'react'
 import { useStore } from '@/lib/store'
 import { SAUCES, REMOVABLES, DRINKS } from '@/lib/constants'
 
@@ -13,6 +14,19 @@ export default function CustomizerSheet() {
     money,
   } = useStore()
 
+  const sheetRef = useRef<HTMLDivElement>(null)
+  const boissonRef = useRef<HTMLDivElement>(null)
+
+
+  // Scroll to boisson section when user selects MENU format
+  useEffect(() => {
+    if (custMode === 'menu' && boissonRef.current && sheetRef.current) {
+      setTimeout(() => {
+        boissonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }, 60)
+    }
+  }, [custMode])
+
   if (!customizer) return null
 
   const unitPrice = custUnitPrice()
@@ -21,12 +35,12 @@ export default function CustomizerSheet() {
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
       <div onClick={() => closeCustomizer()} className="absolute inset-0 bg-brand/60 backdrop-blur-sm" />
 
-      <div className="relative w-full sm:w-[min(500px,96vw)] bg-cream shadow-2xl rounded-t-[2rem] sm:rounded-3xl anim-sheet-up overflow-y-auto" style={{ maxHeight: '92vh', WebkitOverflowScrolling: 'touch' }}>
+      <div ref={sheetRef} className="relative w-full sm:w-[min(500px,96vw)] bg-cream shadow-2xl rounded-t-[2rem] sm:rounded-3xl anim-sheet-up flex flex-col" style={{ maxHeight: '92vh' }}>
         <div className="sm:hidden pt-3 pb-1 flex justify-center shrink-0">
           <div className="w-10 h-1 rounded-full bg-brand/25" />
         </div>
 
-        <div className="px-5 sm:px-8 pb-6 sm:pb-8 pt-2 sm:pt-6 safe-pb2">
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 sm:px-8 pb-6 sm:pb-8 pt-2 sm:pt-6 safe-pb2" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
           {/* header */}
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
@@ -67,9 +81,9 @@ export default function CustomizerSheet() {
             </div>
           )}
 
-          {/* Boisson */}
+          {/* Boisson — slides in with animation when MENU is selected */}
           {customizer.menuPrice > 0 && custMode === 'menu' && (
-            <div className="mb-6">
+            <div ref={boissonRef} className="mb-6 cust-slide-down">
               <div className="flex items-center gap-2 mb-3">
                 <p className="text-[10px] font-bold tracking-[.18em] uppercase text-[#8A8A8A]">Boisson</p>
                 <span className="text-[10px] text-[#1E4D3A]/60">Incluse dans le menu</span>
@@ -102,7 +116,7 @@ export default function CustomizerSheet() {
                 <div className="flex items-center gap-2">
                   <p className="text-[10px] font-bold tracking-[.18em] uppercase text-[#8A8A8A]">Sauces</p>
                   {custSauces.length > 0 && (
-                    <span className="text-[10px] font-extrabold bg-brand text-cream px-2 py-0.5 rounded-full">{custSauces.length}</span>
+                    <span className="text-[10px] font-extrabold bg-brand text-cream px-2 py-0.5 rounded-full cust-slide-down">{custSauces.length}</span>
                   )}
                 </div>
                 <div className="text-right">
@@ -131,7 +145,7 @@ export default function CustomizerSheet() {
                 ))}
               </div>
               {custSauces.length > 0 && (
-                <div className="mt-3 px-4 py-2.5 rounded-2xl bg-brand/[0.08] border border-brand/20 flex items-center gap-2">
+                <div className="mt-3 px-4 py-2.5 rounded-2xl bg-brand/[0.08] border border-brand/20 flex items-center gap-2 cust-slide-down">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#8A8A8A] shrink-0">Choisies :</span>
                   <span className="text-xs font-bold text-brand">{custSauces.join(' · ')}</span>
                 </div>
@@ -164,6 +178,12 @@ export default function CustomizerSheet() {
                   </button>
                 ))}
               </div>
+              {custRemovals.length > 0 && (
+                <div className="mt-3 px-4 py-2.5 rounded-2xl bg-[#FEE2E2] border border-[#FECACA] flex items-center gap-2 cust-slide-down">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#C8412F] shrink-0">Retirés :</span>
+                  <span className="text-xs font-bold text-[#C8412F]">{custRemovals.map(r => `Sans ${r}`).join(' · ')}</span>
+                </div>
+              )}
             </div>
           )}
 

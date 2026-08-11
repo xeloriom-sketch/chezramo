@@ -1,11 +1,13 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useStore } from '@/lib/store'
 
 export default function CartSidebar() {
   const { cart, cartOpen, cartCount, total, closeCart, stepItem, openCheckout } = useStore()
   const count = cartCount()
   const money = (n: number) => n.toFixed(2).replace('.', ',') + ' €'
+
 
   if (!cartOpen) return null
 
@@ -32,7 +34,7 @@ export default function CartSidebar() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 scrollbar-hide" style={{ overscrollBehavior: 'contain' }}>
           {cart.length === 0 ? (
             <div className="text-center py-10">
               <svg className="w-14 h-14 mx-auto mb-3 text-brand/25" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.99-1.61L23 6H6"/></svg>

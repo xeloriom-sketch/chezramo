@@ -93,6 +93,20 @@ self.addEventListener('fetch', function(e) {
   );
 });
 
+/* Clic sur une notification → focus ou ouvre l'onglet admin */
+self.addEventListener('notificationclick', function(e) {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      for (var i = 0; i < clientList.length; i++) {
+        var c = clientList[i];
+        if (c.url.indexOf('/admin') !== -1 && 'focus' in c) return c.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('/admin');
+    })
+  );
+});
+
 self.addEventListener('message', function(e) {
   if (!e.data) return;
 

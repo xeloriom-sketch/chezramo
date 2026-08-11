@@ -5,8 +5,9 @@ export default function Hero() {
   ]
 
   return (
-    <section className="relative bg-brand pt-36 pb-0 overflow-hidden hero-section">
+    <section className="relative bg-brand pt-36 pb-0 overflow-hidden hero-section" aria-label="Chez Ramo — Restaurant kebab tacos à Lagnieu">
       <div className="absolute inset-0 pattern-bg" />
+      {/* Texte sémantique pour le SEO — visible par les moteurs, intégré au design */}
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 text-center">
         <h1
@@ -17,12 +18,16 @@ export default function Hero() {
           <span className="hero-word block text-[clamp(52px,11vw,140px)]" style={{ animationDelay: '180ms' }}>BON.</span>
         </h1>
 
+        <p className="sr-only" aria-label="Restaurant kebab tacos Lagnieu">
+          Kebab · Tacos · Burgers — Lagnieu, Ain
+        </p>
+
         <div className="relative max-w-3xl mx-auto -mt-[3vw] z-20">
           <picture>
             <source srcSet="/uploads/pasted-1785851492914-0.webp" type="image/webp" />
             <img
               src="/uploads/pasted-1785851492914-0.png"
-              alt="Burger maison"
+              alt="Kebab halal maison — Chez Ramo restaurant Lagnieu"
               loading="eager"
               fetchPriority="high"
               width={776}

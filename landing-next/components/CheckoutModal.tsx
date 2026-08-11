@@ -2,48 +2,250 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useStore } from '@/lib/store'
-import { useRef } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 
 function money(n: number) { return n.toFixed(2).replace('.', ',') + ' €' }
 
-function generateTicketHTML(orderId: number, cart: { name: string; price: number; qty: number }[], total: number): string {
-  const now = new Date()
-  const dateStr = now.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
-  const timeStr = now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
-  const rows = cart.map(item =>
-    `<tr><td class="td-qty">${item.qty}×</td><td class="td-name">${item.name}</td><td class="td-price">${money(item.price * item.qty)}</td></tr>`
-  ).join('')
+export type SavedTicket = {
+  id: number
+  orderId: number
+  cart: { name: string; price: number; qty: number }[]
+  total: number
+  date: string
+}
 
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Ticket RMO-${orderId}</title><style>
-*{box-sizing:border-box;margin:0;padding:0}@page{size:A4 portrait;margin:0}html,body{width:210mm;height:297mm;font-family:'Helvetica Neue',Arial,sans-serif;background:#F5ECD9;color:#1E4D3A}
-.page{width:210mm;height:297mm;display:flex;flex-direction:column}.header{background:#1E4D3A;color:#F5ECD9;padding:18mm 22mm 14mm;flex-shrink:0}.header-inner{display:flex;align-items:center;justify-content:space-between}.logo{font-size:36pt;font-weight:900;letter-spacing:.06em;line-height:1}.tagline{font-size:9pt;letter-spacing:.18em;text-transform:uppercase;opacity:.6;margin-top:3mm}.order-badge{display:inline-block;background:rgba(245,236,217,.15);border:2px solid rgba(245,236,217,.3);color:#F5ECD9;font-size:9pt;font-weight:800;letter-spacing:.12em;padding:3mm 6mm;border-radius:99mm}.order-num{font-size:22pt;font-weight:900;margin-top:3mm}.meta{padding:7mm 22mm;display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px dashed rgba(30,77,58,.25);flex-shrink:0}.meta-label{font-size:8pt;text-transform:uppercase;letter-spacing:.15em;opacity:.45;margin-bottom:1.5mm}.meta-val{font-size:11pt;font-weight:700}.items{padding:6mm 22mm;flex:1;display:flex;flex-direction:column}.section-label{font-size:8pt;text-transform:uppercase;letter-spacing:.15em;opacity:.4;margin-bottom:4mm}table{width:100%;border-collapse:collapse;flex:1}.td-qty{width:14mm;font-size:11pt;font-weight:700;color:rgba(30,77,58,.45);padding:4mm 4mm 4mm 0;vertical-align:top;border-bottom:1px solid rgba(30,77,58,.1)}.td-name{font-size:12pt;padding:4mm;vertical-align:top;border-bottom:1px solid rgba(30,77,58,.1);line-height:1.4}.td-price{text-align:right;font-size:13pt;font-weight:800;white-space:nowrap;padding:4mm 0 4mm 6mm;vertical-align:top;border-bottom:1px solid rgba(30,77,58,.1)}.total-bar{margin:0 22mm;padding:7mm 8mm;background:#1E4D3A;color:#F5ECD9;border-radius:5mm;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}.total-label{font-size:10pt;text-transform:uppercase;letter-spacing:.15em;font-weight:700;opacity:.8}.total-amount{font-size:28pt;font-weight:900}.notice{margin:6mm 22mm 0;padding:9mm 10mm;background:#E8A93B;color:#1E4D3A;border-radius:5mm;display:flex;align-items:center;gap:8mm;flex-shrink:0}.notice-title{font-size:16pt;font-weight:900;text-transform:uppercase;letter-spacing:.04em;line-height:1.2}.notice-sub{font-size:10pt;margin-top:2mm;opacity:.75}.footer{padding:5mm 22mm 7mm;display:flex;justify-content:space-between;align-items:center;margin-top:auto;flex-shrink:0}.footer-brand{font-size:9pt;font-weight:900;letter-spacing:.08em;opacity:.35}.footer-info{font-size:8.5pt;opacity:.35;text-align:right}
-</style></head><body><div class="page">
-<div class="header"><div class="header-inner"><div><div class="logo">CHEZ RAMO</div><div class="tagline">Kebab · Tacos · Burgers · Plats maison</div></div><div style="text-align:right"><div class="order-badge">COMMANDE EN LIGNE</div><div class="order-num">RMO-${orderId}</div></div></div></div>
-<div class="meta"><div><div class="meta-label">Date</div><div class="meta-val">${dateStr}</div></div><div style="text-align:right"><div class="meta-label">Heure</div><div class="meta-val">${timeStr}</div></div></div>
-<div class="items"><div class="section-label">Détail de la commande</div><table>${rows}</table></div>
-<div class="total-bar"><span class="total-label">Total payé</span><span class="total-amount">${money(total)}</span></div>
-<div class="notice"><div style="flex-shrink:0"><svg width="52" height="52" fill="none" stroke="#1E4D3A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-4a3 3 0 0 1 6 0v4"/></svg></div><div><div class="notice-title">À récupérer sur place</div><div class="notice-sub">Présentez ce document lors de votre retrait — Merci !</div></div></div>
-<div class="footer"><div class="footer-brand">CHEZ RAMO · LAGNIEU</div><div class="footer-info">Paiement sécurisé Stripe · ${dateStr}</div></div>
-</div></body></html>`
+function generateTicketHTML(orderId: number, cart: SavedTicket['cart'], total: number): string {
+  const now = new Date()
+  const dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  const rows = cart.map(i => `<tr><td class="td-qty">${i.qty}×</td><td class="td-name">${i.name}</td><td class="td-price">${money(i.price * i.qty)}</td></tr>`).join('')
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Ticket RMO-${orderId}</title><style>*{box-sizing:border-box;margin:0;padding:0}@page{size:A4 portrait;margin:0}html,body{width:210mm;height:297mm;font-family:'Helvetica Neue',Arial,sans-serif;background:#F5ECD9;color:#1E4D3A}.page{width:210mm;height:297mm;display:flex;flex-direction:column}.header{background:#1E4D3A;color:#F5ECD9;padding:18mm 22mm 14mm;flex-shrink:0}.logo{font-size:36pt;font-weight:900;letter-spacing:.06em}.tagline{font-size:9pt;letter-spacing:.18em;text-transform:uppercase;opacity:.6;margin-top:3mm}.order-badge{display:inline-block;background:rgba(245,236,217,.15);border:2px solid rgba(245,236,217,.3);color:#F5ECD9;font-size:9pt;font-weight:800;letter-spacing:.12em;padding:3mm 6mm;border-radius:99mm}.order-num{font-size:22pt;font-weight:900;margin-top:3mm}.meta{padding:7mm 22mm;display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px dashed rgba(30,77,58,.25);flex-shrink:0}.meta-label{font-size:8pt;text-transform:uppercase;letter-spacing:.15em;opacity:.45;margin-bottom:1.5mm}.meta-val{font-size:11pt;font-weight:700}.items{padding:6mm 22mm;flex:1;display:flex;flex-direction:column}.section-label{font-size:8pt;text-transform:uppercase;letter-spacing:.15em;opacity:.4;margin-bottom:4mm}table{width:100%;border-collapse:collapse}.td-qty{width:14mm;font-size:11pt;font-weight:700;color:rgba(30,77,58,.45);padding:4mm 4mm 4mm 0;vertical-align:top;border-bottom:1px solid rgba(30,77,58,.1)}.td-name{font-size:12pt;padding:4mm;vertical-align:top;border-bottom:1px solid rgba(30,77,58,.1);line-height:1.4}.td-price{text-align:right;font-size:13pt;font-weight:800;white-space:nowrap;padding:4mm 0 4mm 6mm;vertical-align:top;border-bottom:1px solid rgba(30,77,58,.1)}.total-bar{margin:0 22mm;padding:7mm 8mm;background:#1E4D3A;color:#F5ECD9;border-radius:5mm;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}.total-amount{font-size:28pt;font-weight:900}.notice{margin:6mm 22mm 0;padding:9mm 10mm;background:#E8A93B;color:#1E4D3A;border-radius:5mm;display:flex;align-items:center;gap:8mm;flex-shrink:0}.notice-title{font-size:16pt;font-weight:900;text-transform:uppercase}.footer{padding:5mm 22mm 7mm;display:flex;justify-content:space-between;margin-top:auto;flex-shrink:0;font-size:8.5pt;opacity:.35}</style></head><body><div class="page"><div class="header"><div style="display:flex;align-items:center;justify-content:space-between"><div><div class="logo">CHEZ RAMO</div><div class="tagline">Kebab · Tacos · Burgers · Plats maison</div></div><div style="text-align:right"><div class="order-badge">COMMANDE EN LIGNE</div><div class="order-num">RMO-${orderId}</div></div></div></div><div class="meta"><div><div class="meta-label">Date</div><div class="meta-val">${dateStr}</div></div><div style="text-align:right"><div class="meta-label">Heure</div><div class="meta-val">${timeStr}</div></div></div><div class="items"><div class="section-label">Détail de la commande</div><table>${rows}</table></div><div class="total-bar"><span style="font-size:10pt;text-transform:uppercase;letter-spacing:.15em;font-weight:700;opacity:.8">Total payé</span><span class="total-amount">${money(total)}</span></div><div class="notice"><svg width="52" height="52" fill="none" stroke="#1E4D3A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-4a3 3 0 0 1 6 0v4"/></svg><div><div class="notice-title">À récupérer sur place</div><div style="font-size:10pt;margin-top:2mm;opacity:.75">Présentez ce document lors de votre retrait — Merci !</div></div></div><div class="footer"><span>CHEZ RAMO · LAGNIEU</span><span>Paiement sécurisé Stripe · ${dateStr}</span></div></div></body></html>`
+}
+
+function TicketPopup({ ticket, onClose }: { ticket: SavedTicket; onClose: () => void }) {
+  const d = new Date(ticket.date)
+  const dateStr = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+
+  const download = async () => {
+    const { jsPDF } = await import('jspdf')
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+
+    const W = 210, margin = 20, cW = 170
+    const green: [number,number,number] = [30, 77, 58]
+    const cream: [number,number,number] = [245, 236, 217]
+    const accent: [number,number,number] = [232, 169, 59]
+    const gray: [number,number,number] = [120, 120, 120]
+    const dark: [number,number,number] = [20, 20, 20]
+    const light: [number,number,number] = [240, 240, 240]
+
+    // ── Header vert ──
+    doc.setFillColor(...green)
+    doc.rect(0, 0, W, 48, 'F')
+
+    doc.setTextColor(...cream)
+    doc.setFontSize(28); doc.setFont('helvetica', 'bold')
+    doc.text('CHEZ RAMO', margin, 20)
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal')
+    doc.setTextColor(200, 185, 160)
+    doc.text('Kebab · Tacos · Burgers · Plats maison', margin, 28)
+
+    doc.setTextColor(180, 170, 150); doc.setFontSize(8)
+    doc.text('COMMANDE EN LIGNE', W - margin, 17, { align: 'right' })
+    doc.setTextColor(...cream); doc.setFontSize(20); doc.setFont('helvetica', 'bold')
+    doc.text(`RMO-${ticket.orderId}`, W - margin, 27, { align: 'right' })
+
+    // ── Date / heure ──
+    let y = 48
+    doc.setFillColor(255, 255, 255)
+    doc.rect(0, y, W, 18, 'F')
+    doc.setTextColor(...gray); doc.setFontSize(8); doc.setFont('helvetica', 'normal')
+    doc.text('DATE', margin, y + 6)
+    doc.setTextColor(...dark); doc.setFontSize(10); doc.setFont('helvetica', 'bold')
+    doc.text(dateStr, margin, y + 13)
+    doc.setTextColor(...gray); doc.setFontSize(8); doc.setFont('helvetica', 'normal')
+    doc.text('HEURE', W - margin, y + 6, { align: 'right' })
+    doc.setTextColor(...dark); doc.setFontSize(10); doc.setFont('helvetica', 'bold')
+    doc.text(timeStr, W - margin, y + 13, { align: 'right' })
+
+    // ── Tirets séparateur ──
+    y = 66
+    doc.setDrawColor(...light)
+    doc.setLineDashPattern([2, 2], 0)
+    doc.line(margin, y, W - margin, y)
+    doc.setLineDashPattern([], 0)
+
+    // ── Articles ──
+    y += 8
+    doc.setFillColor(255, 255, 255)
+    doc.rect(0, 67, W, 200, 'F')
+
+    doc.setTextColor(...gray); doc.setFontSize(8); doc.setFont('helvetica', 'normal')
+    doc.text('DÉTAIL DE LA COMMANDE', margin, y)
+    y += 7
+
+    for (const item of ticket.cart) {
+      doc.setTextColor(...gray); doc.setFontSize(10); doc.setFont('helvetica', 'bold')
+      doc.text(`${item.qty}×`, margin, y)
+      doc.setTextColor(...dark); doc.setFont('helvetica', 'normal')
+      const name = item.name.length > 52 ? item.name.slice(0, 50) + '…' : item.name
+      doc.text(name, margin + 10, y)
+      doc.setFont('helvetica', 'bold')
+      doc.text(money(item.price * item.qty), W - margin, y, { align: 'right' })
+      y += 3
+      doc.setDrawColor(...light)
+      doc.line(margin, y, W - margin, y)
+      y += 7
+    }
+
+    y += 4
+
+    // ── Barre total ──
+    doc.setFillColor(...green)
+    doc.roundedRect(margin, y, cW, 18, 3, 3, 'F')
+    doc.setTextColor(...cream); doc.setFontSize(9); doc.setFont('helvetica', 'normal')
+    doc.text('TOTAL PAYÉ', margin + 7, y + 7)
+    doc.setFontSize(22); doc.setFont('helvetica', 'bold')
+    doc.text(money(ticket.total), W - margin - 7, y + 13, { align: 'right' })
+
+    y += 26
+
+    // ── Notice récupération ──
+    doc.setFillColor(...accent)
+    doc.roundedRect(margin, y, cW, 18, 3, 3, 'F')
+    doc.setTextColor(...green); doc.setFontSize(13); doc.setFont('helvetica', 'bold')
+    doc.text('À RÉCUPÉRER SUR PLACE', margin + 7, y + 8)
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal')
+    doc.text('Présentez ce ticket lors de votre retrait — Merci !', margin + 7, y + 14)
+
+    y += 26
+
+    // ── Pied de page ──
+    doc.setTextColor(180, 180, 180); doc.setFontSize(8); doc.setFont('helvetica', 'normal')
+    doc.text('CHEZ RAMO · 32 RUE PASTEUR · 01150 LAGNIEU · 04 27 50 00 62', W / 2, y + 4, { align: 'center' })
+    doc.text(`Paiement sécurisé Stripe · ${dateStr}`, W / 2, y + 9, { align: 'center' })
+
+    doc.save(`ticket-RMO-${ticket.orderId}.pdf`)
+  }
+
+  return (
+    <div className="absolute inset-0 z-10 bg-[#F5ECD9] flex flex-col overflow-y-auto" style={{ touchAction: 'pan-y' }}>
+      {/* Header */}
+      <div className="bg-brand px-6 pt-8 pb-6 shrink-0">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-extrabold text-2xl text-cream" style={{ fontFamily: 'var(--font-baloo)', letterSpacing: '.04em' }}>CHEZ RAMO</p>
+            <p className="text-cream/50 text-[10px] tracking-[.2em] uppercase mt-0.5">Kebab · Tacos · Burgers</p>
+          </div>
+          <div className="text-right">
+            <p className="text-cream/50 text-[10px] uppercase tracking-wider">Commande</p>
+            <p className="text-cream font-extrabold text-xl" style={{ fontFamily: 'var(--font-baloo)' }}>RMO-{ticket.orderId}</p>
+          </div>
+        </div>
+        <div className="flex justify-between mt-4 text-cream/50 text-xs">
+          <span>{dateStr}</span>
+          <span>{timeStr}</span>
+        </div>
+      </div>
+
+      <div className="px-6"><div className="border-t-2 border-dashed border-brand/20" /></div>
+
+      {/* Items */}
+      <div className="px-6 py-5 flex-1 space-y-3">
+        {ticket.cart.map((item, i) => (
+          <div key={i} className="flex items-start justify-between gap-3">
+            <div className="flex gap-2.5 min-w-0">
+              <span className="text-brand/40 font-bold text-sm w-6 shrink-0">{item.qty}×</span>
+              <span className="text-brand text-sm font-medium leading-tight">{item.name}</span>
+            </div>
+            <span className="text-brand font-bold text-sm shrink-0 tabular-nums">{money(item.price * item.qty)}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="px-6"><div className="border-t border-brand/10" /></div>
+
+      {/* Total */}
+      <div className="mx-5 mt-4 px-5 py-4 bg-brand rounded-2xl flex items-center justify-between shrink-0">
+        <span className="text-cream/70 text-xs font-bold uppercase tracking-wider">Total payé</span>
+        <span className="text-cream font-extrabold text-2xl tabular-nums" style={{ fontFamily: 'var(--font-baloo)' }}>{money(ticket.total)}</span>
+      </div>
+
+      {/* Notice */}
+      <div className="mx-5 mt-3 px-4 py-3.5 bg-accent rounded-2xl flex items-center gap-3 shrink-0">
+        <svg className="w-8 h-8 shrink-0 text-brand" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-4a3 3 0 0 1 6 0v4"/></svg>
+        <div>
+          <p className="text-brand font-extrabold text-sm uppercase" style={{ fontFamily: 'var(--font-baloo)' }}>À récupérer sur place</p>
+          <p className="text-brand/60 text-xs mt-0.5">Présentez ce ticket lors du retrait</p>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="px-5 py-5 space-y-2.5 shrink-0">
+        <button onClick={download} className="w-full py-3 rounded-2xl border-2 border-brand/30 text-brand font-bold text-sm flex items-center justify-center gap-2 hover:border-brand transition">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Télécharger PDF
+        </button>
+        <button onClick={onClose} className="w-full py-3.5 rounded-2xl bg-brand text-cream font-extrabold text-sm tracking-wide hover:bg-[#163d2e] transition" style={{ fontFamily: 'var(--font-baloo)' }}>
+          Fermer
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export default function CheckoutModal() {
   const {
     cart, checkoutOpen, checkoutStep, paymentPhase, paymentError,
-    orderId, confirmedCart, confirmedTotal, total,
+    orderId, total,
     closeCheckout, goToStep, setPaymentPhase, setPaymentError, finishPayment,
     stepItem, cartCount,
   } = useStore()
 
-  const stripeRefs = useRef<{ elements?: any; cardElement?: any; clientSecret?: string }>({})
-
+  const stripeRefs = useRef<{ stripe?: any; cardElement?: any; clientSecret?: string }>({})
+  const cardMountedRef = useRef(false)
   const count = cartCount()
+
+  const [cardholderName, setCardholderName] = useState('')
+  const [showTicket, setShowTicket] = useState(false)
+  const [currentTicket, setCurrentTicket] = useState<SavedTicket | null>(null)
+  const [cardReady, setCardReady] = useState(false)
+
+  // Callback ref : React l'appelle exactement quand le div entre dans le DOM
+  // C'est le seul moyen fiable de monter un élément Stripe sans timing aléatoire
+  const cardDivCallback = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return
+    const { cardElement } = stripeRefs.current
+    if (!cardElement || cardMountedRef.current) return
+    cardMountedRef.current = true
+    cardElement.mount(node)
+    cardElement.on('ready', () => setCardReady(true))
+  }, [])
+
+  // Load saved cardholder name
+  useEffect(() => {
+    setCardholderName(localStorage.getItem('ramo_cardholder') || '')
+  }, [])
+
+  // Cleanup Stripe elements when modal closes
+  useEffect(() => {
+    if (checkoutOpen) { setShowTicket(false); return }
+    stripeRefs.current.cardElement?.destroy()
+    stripeRefs.current = {}
+    cardMountedRef.current = false
+    setCardReady(false)
+  }, [checkoutOpen])
 
   const handleGoToPayment = async () => {
     if (cart.length === 0) return
     goToStep(2)
     setPaymentPhase('loading')
     setPaymentError(null)
+    setCardReady(false)
+    cardMountedRef.current = false
+    // Détruire l'ancien élément si retry
+    stripeRefs.current.cardElement?.destroy()
+    stripeRefs.current = {}
 
     try {
       const res = await fetch('/api/create-payment-intent', {
@@ -60,14 +262,8 @@ export default function CheckoutModal() {
       const stripe = await loadStripe(pk) as any
       if (!stripe) throw new Error('Stripe non disponible.')
 
-      const elements = stripe.elements({ clientSecret: data.clientSecret })
-      const expressEl = elements.create('expressCheckout', {
-        buttonHeight: 52,
-        buttonType: { applePay: 'buy', googlePay: 'buy' },
-        buttonTheme: { applePay: 'black', googlePay: 'black' },
-        layout: { maxColumns: 1, maxRows: 2 },
-      })
-      const cardEl = stripe.elements().create('card', {
+      const elements = stripe.elements()
+      const cardEl = elements.create('card', {
         hidePostalCode: true,
         style: {
           base: { color: '#1E4D3A', fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '16px', fontSmoothing: 'antialiased', '::placeholder': { color: 'rgba(30,77,58,0.38)' }, iconColor: '#1E4D3A' },
@@ -75,33 +271,10 @@ export default function CheckoutModal() {
         },
       })
 
-      stripeRefs.current = { elements, cardElement: cardEl, clientSecret: data.clientSecret }
+      // Stocker stripe + cardElement + secret, PUIS changer la phase
+      // Le callback ref (cardDivCallback) sera appelé par React dès que le div apparaît
+      stripeRefs.current = { stripe, cardElement: cardEl, clientSecret: data.clientSecret }
       setPaymentPhase('form')
-
-      await new Promise(r => setTimeout(r, 50))
-      expressEl.mount('#express-checkout-element')
-      cardEl.mount('#stripe-card-element')
-
-      expressEl.on('confirm', async () => {
-        setPaymentPhase('paying')
-        const { error } = await stripe.confirmPayment({
-          elements,
-          confirmParams: { return_url: `${window.location.origin}/?payment=success` },
-          redirect: 'if_required',
-        })
-        if (error) { setPaymentError(error.message ?? 'Erreur'); setPaymentPhase('error') }
-        else {
-          const snapCart = cart.map(i => ({ name: i.name, qty: i.qty, price: i.price }))
-          const snapTotal = total()
-          finishPayment()
-          const newId = useStore.getState().orderId
-          fetch('/api/orders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId: newId, cart: snapCart, total: snapTotal }),
-          }).catch(console.error)
-        }
-      })
     } catch (err) {
       setPaymentError(err instanceof Error ? err.message : 'Erreur')
       setPaymentPhase('error')
@@ -110,32 +283,77 @@ export default function CheckoutModal() {
 
   const handleCardPayment = async (e: React.FormEvent) => {
     e.preventDefault()
-    const { cardElement, clientSecret } = stripeRefs.current
-    if (!cardElement || !clientSecret) return
+    if (!cardReady) return
+    const { stripe, cardElement, clientSecret } = stripeRefs.current
+    if (!stripe || !cardElement || !clientSecret) return
     setPaymentPhase('paying')
-    const { loadStripe } = await import('@stripe/stripe-js')
-    const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-    const stripe = await loadStripe(pk) as any
-    if (!stripe) return
-    const { error } = await stripe.confirmCardPayment(clientSecret, { payment_method: { card: cardElement } })
-    if (error) { setPaymentError(error.message ?? 'Erreur'); setPaymentPhase('error') }
-    else {
-      const snapCart = cart.map(i => ({ name: i.name, qty: i.qty, price: i.price }))
-      const snapTotal = total()
-      finishPayment()
-      const newId = useStore.getState().orderId
-      fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: newId, cart: snapCart, total: snapTotal }),
-      }).catch(console.error)
-    }
-  }
 
-  const downloadTicket = () => {
-    const html = generateTicketHTML(orderId, confirmedCart, confirmedTotal)
-    const w = window.open('', '_blank')
-    if (w) { w.document.write(html); w.document.close() }
+    try {
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: { name: cardholderName || undefined },
+        },
+      })
+
+      if (error) {
+        setPaymentError(error.message ?? 'Paiement refusé.')
+        setPaymentPhase('error')
+        return
+      }
+
+      if (paymentIntent?.status !== 'succeeded') {
+        setPaymentError('Paiement non finalisé, réessayez.')
+        setPaymentPhase('error')
+        return
+      }
+    } catch (err) {
+      // Attrape les IntegrationError Stripe et autres erreurs inattendues
+      setPaymentError(err instanceof Error ? err.message : 'Erreur lors du paiement.')
+      setPaymentPhase('error')
+      return
+    }
+
+    // Succès — on arrive ici seulement si confirmCardPayment a réussi
+    const snapCart = cart.map(i => ({ name: i.name, qty: i.qty, price: i.price }))
+    const snapTotal = total()
+    finishPayment()
+    const newId = useStore.getState().orderId
+
+    if (cardholderName.trim()) localStorage.setItem('ramo_cardholder', cardholderName.trim())
+
+    // Générer ou récupérer le token client (UUID persistant, jamais partagé)
+    let customerToken = localStorage.getItem('ramo_customer_token')
+    if (!customerToken) {
+      customerToken = crypto.randomUUID()
+      localStorage.setItem('ramo_customer_token', customerToken)
+      window.dispatchEvent(new CustomEvent('ramo-customer-token'))
+    }
+
+    const ticket: SavedTicket = {
+      id: Date.now(),
+      orderId: newId,
+      cart: snapCart,
+      total: snapTotal,
+      date: new Date().toISOString(),
+    }
+    const tickets: SavedTicket[] = JSON.parse(localStorage.getItem('ramo_tickets') || '[]')
+    tickets.unshift(ticket)
+    localStorage.setItem('ramo_tickets', JSON.stringify(tickets.slice(0, 10)))
+    window.dispatchEvent(new CustomEvent('ramo-tickets-updated'))
+    setCurrentTicket(ticket)
+
+    fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: newId,
+        cart: snapCart,
+        total: snapTotal,
+        customerToken,
+        customerName: cardholderName.trim() || null,
+      }),
+    }).catch(console.error)
   }
 
   if (!checkoutOpen) return null
@@ -148,20 +366,23 @@ export default function CheckoutModal() {
       />
 
       <div className="relative bg-white w-full sm:max-w-4xl rounded-t-[1.5rem] sm:rounded-3xl overflow-hidden flex flex-col" style={{ maxHeight: '96vh', boxShadow: '0 32px 80px rgba(0,0,0,0.35)' }}>
+
+        {/* Ticket popup overlay */}
+        {showTicket && currentTicket && (
+          <TicketPopup ticket={currentTicket} onClose={() => setShowTicket(false)} />
+        )}
+
         {/* Top bar */}
         <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand rounded-xl flex items-center justify-center shrink-0">
-              <span className="font-extrabold text-accent text-sm leading-none" style={{ fontFamily: 'var(--font-baloo)' }}>R</span>
-            </div>
             <span className="font-extrabold text-brand text-base" style={{ fontFamily: 'var(--font-baloo)' }}>Chez Ramo</span>
           </div>
           <div className="hidden sm:flex items-center gap-2 bg-gray-100 rounded-2xl p-1.5">
-            {['1. Panier','2. Paiement','3. Confirmation'].map((label, i) => (
-              <span key={i} className={`px-4 py-1.5 text-xs font-bold rounded-xl transition-all cursor-default ${checkoutStep === i+1 ? 'bg-brand text-white shadow-sm' : 'text-gray-400'}`}>{label}</span>
+            {['1. Panier', '2. Paiement', '3. Confirmation'].map((label, i) => (
+              <span key={i} className={`px-4 py-1.5 text-xs font-bold rounded-xl transition-all cursor-default ${checkoutStep === i + 1 ? 'bg-brand text-white shadow-sm' : 'text-gray-400'}`}>{label}</span>
             ))}
           </div>
-          {paymentPhase !== 'paying' && (
+          {paymentPhase !== 'paying' && checkoutStep < 3 && (
             <button onClick={() => closeCheckout()} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition shrink-0">
               <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -170,7 +391,7 @@ export default function CheckoutModal() {
 
         {/* Étape 1 : Panier */}
         {checkoutStep === 1 && (
-          <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="flex-1 overflow-y-auto overscroll-contain" style={{ touchAction: 'pan-y' }}>
             <div className="p-5 sm:p-7 grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
               <div className="lg:col-span-2">
                 <div className="flex items-center justify-between mb-4">
@@ -200,7 +421,7 @@ export default function CheckoutModal() {
                 </div>
               </div>
               <div className="bg-gray-50 rounded-2xl border border-gray-100 p-5 flex flex-col gap-4">
-                <h3 className="text-sm font-bold text-gray-900">Résumé de commande</h3>
+                <h3 className="text-sm font-bold text-gray-900">Résumé</h3>
                 <div className="space-y-2.5 pb-3 border-b border-gray-200 text-sm">
                   <div className="flex justify-between text-gray-500"><span>Sous-total</span><span className="font-bold text-gray-900 tabular-nums">{money(total())}</span></div>
                   <div className="flex justify-between text-gray-500"><span>Frais de service</span><span className="font-bold text-green-600 text-xs">Gratuit</span></div>
@@ -213,10 +434,16 @@ export default function CheckoutModal() {
                 <button onClick={handleGoToPayment} disabled={cart.length === 0} className="w-full py-4 rounded-2xl bg-brand text-white font-extrabold text-sm tracking-wide hover:bg-[#163d2e] active:scale-[.98] transition-all disabled:opacity-40 flex items-center justify-center gap-2" style={{ boxShadow: '0 8px 28px rgba(30,77,58,0.22)', fontFamily: 'var(--font-baloo)' }}>
                   Passer au paiement <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </button>
-                <p className="flex items-center justify-center gap-1.5 text-[10px] text-gray-400">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  Chiffré TLS · Stripe
-                </p>
+                <div className="space-y-1.5 pt-1">
+                  <p className="flex items-center justify-center gap-1.5 text-[10px] text-gray-400">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Paiement 100% sécurisé · Chiffrement SSL
+                  </p>
+                  <p className="flex items-center justify-center gap-1.5 text-[10px] text-gray-400">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Carte bancaire traitée par Stripe · Jamais stockée
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -224,7 +451,7 @@ export default function CheckoutModal() {
 
         {/* Étape 2 : Paiement */}
         {checkoutStep === 2 && (
-          <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="flex-1 overflow-y-auto overscroll-contain" style={{ touchAction: 'pan-y' }}>
             <div className="p-5 sm:p-8 w-full max-w-lg mx-auto">
               {paymentPhase !== 'paying' && (
                 <div className="flex items-center gap-3 mb-6">
@@ -252,28 +479,41 @@ export default function CheckoutModal() {
                 </div>
               )}
 
-              {paymentPhase === 'form' && (
-                <div className="space-y-4">
-                  <div id="express-checkout-element" />
-                  <div id="co-divider" className="hidden items-center gap-3">
-                    <div className="flex-1 h-px bg-gray-200" />
-                    <span className="text-[10px] text-gray-400 tracking-[.12em] uppercase font-bold shrink-0">ou carte</span>
-                    <div className="flex-1 h-px bg-gray-200" />
-                  </div>
+              {/* Le formulaire reste dans le DOM pendant 'paying' pour que l'élément Stripe reste monté */}
+              {(paymentPhase === 'form' || paymentPhase === 'paying') && (
+                <div className="relative">
                   <form onSubmit={handleCardPayment} className="space-y-3">
-                    <div id="stripe-card-element" className="px-4 py-4 rounded-2xl border-2 border-brand/15 bg-white" style={{ minHeight: '44px' }} />
-                    <button type="submit" className="w-full py-4 rounded-2xl bg-brand text-white font-extrabold text-base tracking-wide hover:bg-[#163d2e] active:scale-[0.98] transition-all" style={{ boxShadow: '0 8px 28px rgba(30,77,58,0.28)', fontFamily: 'var(--font-baloo)' }}>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Nom sur la carte</label>
+                      <input
+                        type="text"
+                        value={cardholderName}
+                        onChange={e => setCardholderName(e.target.value)}
+                        placeholder="Jean Dupont"
+                        className="w-full px-4 py-3.5 rounded-2xl border-2 border-brand/15 bg-white text-brand text-sm font-medium placeholder:text-gray-300 focus:outline-none focus:border-brand/40 transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Numéro de carte</label>
+                      <div
+                        ref={cardDivCallback}
+                        className="px-4 py-4 rounded-2xl border-2 border-brand/15 bg-white transition-opacity"
+                        style={{ minHeight: '52px', opacity: cardReady ? 1 : 0.4 }}
+                      />
+                    </div>
+                    <button type="submit" disabled={!cardReady || paymentPhase === 'paying'} className="w-full py-4 rounded-2xl bg-brand text-white font-extrabold text-base tracking-wide hover:bg-[#163d2e] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed" style={{ boxShadow: '0 8px 28px rgba(30,77,58,0.28)', fontFamily: 'var(--font-baloo)' }}>
                       Payer · {money(total())}
                     </button>
                   </form>
-                </div>
-              )}
 
-              {paymentPhase === 'paying' && (
-                <div className="py-16 text-center">
-                  <div className="w-12 h-12 mx-auto border-[3px] border-brand/15 border-t-brand rounded-full animate-spin-slow" />
-                  <p className="mt-4 text-sm text-gray-500 font-medium">Autorisation en cours…</p>
-                  <p className="text-xs text-gray-400 mt-1">Ne fermez pas cette page</p>
+                  {/* Spinner superposé — le formulaire reste dans le DOM */}
+                  {paymentPhase === 'paying' && (
+                    <div className="absolute inset-0 bg-white/90 rounded-2xl flex flex-col items-center justify-center gap-3">
+                      <div className="w-12 h-12 border-[3px] border-brand/15 border-t-brand rounded-full animate-spin-slow" />
+                      <p className="text-sm text-gray-500 font-medium">Autorisation en cours…</p>
+                      <p className="text-xs text-gray-400">Ne fermez pas cette page</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -285,7 +525,7 @@ export default function CheckoutModal() {
                     </div>
                     <p className="text-sm font-semibold text-red-600">{paymentError || 'Paiement refusé.'}</p>
                   </div>
-                  <button onClick={() => { closeCheckout(); setTimeout(() => useStore.getState().openCheckout(), 50) }} className="w-full py-3.5 rounded-2xl bg-brand text-white font-semibold text-sm tracking-wide hover:bg-[#163d2e] transition">Réessayer</button>
+                  <button onClick={handleGoToPayment} className="w-full py-3.5 rounded-2xl bg-brand text-white font-semibold text-sm tracking-wide hover:bg-[#163d2e] transition">Réessayer</button>
                   <button onClick={() => closeCheckout()} className="w-full py-2.5 text-gray-400 text-sm hover:text-gray-600 transition-colors">Annuler</button>
                 </div>
               )}
@@ -312,11 +552,21 @@ export default function CheckoutModal() {
             </div>
 
             <div className="w-full max-w-xs space-y-3">
-              <button onClick={downloadTicket} className="w-full py-3.5 rounded-2xl border-2 border-brand text-brand font-extrabold text-sm tracking-wide hover:bg-brand hover:text-white transition active:scale-[.98] flex items-center justify-center gap-2" style={{ fontFamily: 'var(--font-baloo)' }}>
-                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Télécharger mon ticket
+              {currentTicket && (
+                <button onClick={() => setShowTicket(true)} className="w-full py-3.5 rounded-2xl bg-brand text-white font-extrabold text-sm tracking-wide hover:bg-[#163d2e] transition active:scale-[.98] flex items-center justify-center gap-2" style={{ boxShadow: '0 8px 28px rgba(30,77,58,0.28)', fontFamily: 'var(--font-baloo)' }}>
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  Voir mon ticket
+                </button>
+              )}
+              <button
+                onClick={() => { closeCheckout(); window.dispatchEvent(new CustomEvent('open-tickets')) }}
+                className="w-full py-3.5 rounded-2xl border-2 border-brand/20 text-brand font-extrabold text-sm tracking-wide hover:bg-brand/5 transition active:scale-[.98] flex items-center justify-center gap-2"
+                style={{ fontFamily: 'var(--font-baloo)' }}
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Suivre ma commande
               </button>
-              <button onClick={() => closeCheckout()} className="w-full py-4 rounded-2xl bg-brand text-white font-extrabold text-sm tracking-wide hover:bg-[#163d2e] transition active:scale-[.98]" style={{ boxShadow: '0 8px 28px rgba(30,77,58,0.28)', fontFamily: 'var(--font-baloo)' }}>
+              <button onClick={() => closeCheckout()} className="w-full py-2 text-gray-400 text-sm hover:text-gray-600 transition-colors">
                 Retour à l'accueil
               </button>
             </div>

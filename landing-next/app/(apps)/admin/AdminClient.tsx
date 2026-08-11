@@ -10,13 +10,11 @@ type Order = {
   order_id: number
   items: OrderItem[]
   total: number
-  status: 'pending' | 'done' | 'cancelled'
+  status: 'pending' | 'preparing' | 'done' | 'cancelled' | 'collected'
   created_at: string
 }
 type Tab = 'dashboard' | 'commandes' | 'menu' | 'tvs' | 'settings'
 
-const PASS = 'ramo2024'
-const ADMIN_USER = 'ramo'
 const HERO_IMG = 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1400&q=80'
 const MAX_ATTEMPTS = 4
 const LOCK_SECONDS = 30
@@ -29,30 +27,29 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
 }
 
-/* ─── notification sound (Web Audio API) ─────────────────────── */
+/* ─── notification sound ─────────────────────────────────────── */
+// On utilise un élément <audio> HTML plutôt que Web Audio API.
+// L'<audio> fonctionne dans les onglets en arrière-plan sans restriction
+// d'autoplay une fois débloqué par un geste utilisateur (le login).
+let _audio: HTMLAudioElement | null = null
+export function warmupAudio() {
+  // Appelé au login (geste utilisateur) pour débloquer l'audio du navigateur
+  if (typeof window === 'undefined') return
+  if (!_audio) {
+    _audio = new Audio('/ding.wav')
+    _audio.volume = 1
+  }
+  // Lecture silencieuse à volume 0 pour débloquer l'autoplay policy
+  const tmp = _audio.cloneNode() as HTMLAudioElement
+  tmp.volume = 0
+  tmp.play().catch(() => {})
+}
 function playNotificationSound() {
   try {
-    type WAC = typeof AudioContext
-    const Ctx: WAC = window.AudioContext ?? (window as unknown as { webkitAudioContext: WAC }).webkitAudioContext
-    const ctx = new Ctx()
-    const now = ctx.currentTime
-
-    const bell = (freq: number, delay: number, dur: number, vol: number) => {
-      const o = ctx.createOscillator()
-      const g = ctx.createGain()
-      o.connect(g); g.connect(ctx.destination)
-      o.type = 'sine'; o.frequency.value = freq
-      g.gain.setValueAtTime(0, now + delay)
-      g.gain.linearRampToValueAtTime(vol, now + delay + 0.02)
-      g.gain.exponentialRampToValueAtTime(0.001, now + delay + dur)
-      o.start(now + delay); o.stop(now + delay + dur)
-    }
-
-    bell(880,  0,    0.55, 0.32)   // A5
-    bell(1108, 0.12, 0.80, 0.22)   // C#6
-    bell(1318, 0.26, 0.60, 0.14)   // E6
-
-    setTimeout(() => ctx.close(), 1400)
+    if (!_audio) _audio = new Audio('/ding.wav')
+    _audio.currentTime = 0
+    _audio.volume = 1
+    _audio.play().catch(() => {})
   } catch { /* silent */ }
 }
 
@@ -80,11 +77,12 @@ function ShieldIcon() {
 }
 
 /* ─── login screen ───────────────────────────────────────────── */
-function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => boolean }) {
+function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => Promise<boolean> }) {
   const [user, setUser] = useState('')
   const [pw, setPw] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [err, setErr] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [attempts, setAttempts] = useState(0)
   const [lockUntil, setLockUntil] = useState<number | null>(null)
   const [remaining, setRemaining] = useState(0)
@@ -102,9 +100,12 @@ function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => boole
 
   const isLocked = lockUntil !== null
 
-  const submit = () => {
-    if (isLocked) return
-    if (!onLogin(user, pw)) {
+  const submit = async () => {
+    if (isLocked || loading) return
+    setLoading(true)
+    const ok = await onLogin(user, pw)
+    setLoading(false)
+    if (!ok) {
       const next = attempts + 1
       setAttempts(next)
       setErr(true)
@@ -188,17 +189,17 @@ function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => boole
             </p>
           ) : <div style={{ marginBottom: 14 }} />}
 
-          <button onClick={submit} disabled={isLocked || !user || !pw}
+          <button onClick={submit} disabled={isLocked || !user || !pw || loading}
             style={{
               width: '100%', padding: '15px', borderRadius: 14, border: 'none',
-              cursor: isLocked || !user || !pw ? 'not-allowed' : 'pointer',
-              background: isLocked || !user || !pw ? '#E2E8F0' : '#1E4D3A',
-              color: isLocked || !user || !pw ? '#94A3B8' : 'white',
+              cursor: isLocked || !user || !pw || loading ? 'not-allowed' : 'pointer',
+              background: isLocked || !user || !pw || loading ? '#E2E8F0' : '#1E4D3A',
+              color: isLocked || !user || !pw || loading ? '#94A3B8' : 'white',
               fontSize: 15, fontWeight: 700, letterSpacing: '.03em',
-              boxShadow: isLocked || !user || !pw ? 'none' : '0 8px 28px rgba(30,77,58,.28)',
+              boxShadow: isLocked || !user || !pw || loading ? 'none' : '0 8px 28px rgba(30,77,58,.28)',
               transition: 'all .2s',
             }}>
-            {isLocked ? `Réessayez dans ${remaining}s` : 'Se connecter'}
+            {isLocked ? `Réessayez dans ${remaining}s` : loading ? 'Connexion…' : 'Se connecter'}
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', margin: '28px 0 0' }}>
@@ -390,7 +391,7 @@ function CardIconRevenue() {
 function StatCard({ icon, iconBg, iconColor, label, value, badge, badgeGreen, footer, onAction, actionLabel }: {
   icon: React.ReactNode; iconBg: string; iconColor: string
   label: string; value: string | number
-  badge?: string; badgeGreen?: boolean; footer?: string
+  badge?: string; badgeGreen?: boolean; footer?: React.ReactNode
   onAction?: () => void; actionLabel?: string
 }) {
   return (
@@ -413,8 +414,9 @@ function StatCard({ icon, iconBg, iconColor, label, value, badge, badgeGreen, fo
         )}
       </div>
       {footer && (
-        <div style={{ borderTop: '1px solid #F9FAFB', paddingTop: 10, marginTop: 4, fontSize: 11, color: '#9CA3AF' }}
-          dangerouslySetInnerHTML={{ __html: footer }} />
+        <div style={{ borderTop: '1px solid #F9FAFB', paddingTop: 10, marginTop: 4, fontSize: 11, color: '#9CA3AF' }}>
+          {footer}
+        </div>
       )}
     </div>
   )
@@ -422,16 +424,78 @@ function StatCard({ icon, iconBg, iconColor, label, value, badge, badgeGreen, fo
 
 /* ─── status badge ───────────────────────────────────────────── */
 const STATUS_CFG = {
-  pending:   { bg: '#FEF3C7', color: '#D97706', label: 'En attente' },
-  done:      { bg: '#D1FAE5', color: '#059669', label: 'Terminée'   },
-  cancelled: { bg: '#FEE2E2', color: '#DC2626', label: 'Annulée'    },
+  pending:   { bg: '#FEF3C7', color: '#D97706', dot: '#F59E0B', label: 'En attente'    },
+  preparing: { bg: '#FEE4CE', color: '#EA580C', dot: '#F97316', label: 'En préparation' },
+  done:      { bg: '#D1FAE5', color: '#059669', dot: '#10B981', label: 'Prête'         },
+  cancelled: { bg: '#FEE2E2', color: '#DC2626', dot: '#EF4444', label: 'Annulée'       },
+  collected: { bg: '#EDE9FE', color: '#7C3AED', dot: '#8B5CF6', label: 'Récupérée'    },
 }
 function StatusBadge({ status }: { status: Order['status'] }) {
   const cfg = STATUS_CFG[status] ?? STATUS_CFG.pending
+  const pulse = status === 'pending' || status === 'preparing'
   return (
-    <span style={{ background: cfg.bg, color: cfg.color, borderRadius: 99, fontSize: 11, fontWeight: 700, padding: '3px 10px', whiteSpace: 'nowrap' }}>
+    <span style={{ background: cfg.bg, color: cfg.color, borderRadius: 99, fontSize: 11, fontWeight: 700, padding: '4px 10px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.dot, display: 'inline-block', flexShrink: 0, animation: pulse ? 'ping 1.4s ease-in-out infinite' : 'none' }} />
       {cfg.label}
     </span>
+  )
+}
+
+/* ─── action buttons ─────────────────────────────────────────── */
+function BtnPrepare({ onClick }: { onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', background: '#EA580C', color: 'white', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/></svg>
+      Préparer
+    </button>
+  )
+}
+function BtnReady({ onClick }: { onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', background: '#059669', color: 'white', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      Prête
+    </button>
+  )
+}
+function BtnCollected({ onClick }: { onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', background: '#7C3AED', color: 'white', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+      Récupérée
+    </button>
+  )
+}
+function BtnCancel({ onClick }: { onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      Annuler
+    </button>
+  )
+}
+function BtnReopen({ onClick }: { onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', background: 'white', color: '#6B7280', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+      Réouvrir
+    </button>
+  )
+}
+function ActionButtons({ id, status, updateStatus }: { id: number; status: Order['status']; updateStatus: (id: number, s: string) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      {status === 'pending' && <>
+        <BtnPrepare onClick={() => updateStatus(id, 'preparing')} />
+        <BtnCancel  onClick={() => updateStatus(id, 'cancelled')} />
+      </>}
+      {status === 'preparing' && <>
+        <BtnReady  onClick={() => updateStatus(id, 'done')} />
+        <BtnCancel onClick={() => updateStatus(id, 'cancelled')} />
+      </>}
+      {status === 'done' && <BtnCollected onClick={() => updateStatus(id, 'collected')} />}
+      {(status === 'cancelled' || status === 'collected') && <BtnReopen onClick={() => updateStatus(id, 'pending')} />}
+    </div>
   )
 }
 
@@ -471,14 +535,7 @@ function OrdersTable({ orders, updateStatus, compact, emptyMsg }: {
                 <td style={{ padding: compact ? '10px 8px' : '14px 8px', fontWeight: 800, fontSize: 14, color: '#1E293B', whiteSpace: 'nowrap' }}>{money(Number(o.total))}</td>
                 <td style={{ padding: compact ? '10px 8px' : '14px 8px' }}><StatusBadge status={o.status} /></td>
                 <td style={{ padding: compact ? '10px 12px' : '14px 16px' }}>
-                  {o.status === 'pending' && (
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => updateStatus(o.id, 'done')}
-                        style={{ padding: '4px 10px', background: '#1E4D3A', color: 'white', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>✓ Fait</button>
-                      <button onClick={() => updateStatus(o.id, 'cancelled')}
-                        style={{ padding: '4px 10px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>✕</button>
-                    </div>
-                  )}
+                  <ActionButtons id={o.id} status={o.status} updateStatus={updateStatus} />
                 </td>
               </tr>
             )
@@ -490,7 +547,11 @@ function OrdersTable({ orders, updateStatus, compact, emptyMsg }: {
 }
 
 /* ─── settings tab ──────────────────────────────────────────── */
-function SettingsTab({ soundEnabled, onSoundChange }: { soundEnabled: boolean; onSoundChange: (v: boolean) => void }) {
+function SettingsTab({ soundEnabled, onSoundChange, notifEnabled, notifPermission, onNotifChange, onRequestNotif }: {
+  soundEnabled: boolean; onSoundChange: (v: boolean) => void
+  notifEnabled: boolean; notifPermission: NotificationPermission
+  onNotifChange: (v: boolean) => void; onRequestNotif: () => void
+}) {
   const row = (label: string, value: string) => (
     <div key={label} style={{ padding: '13px 20px', borderBottom: '1px solid #F9FAFB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{label}</span>
@@ -523,6 +584,47 @@ function SettingsTab({ soundEnabled, onSoundChange }: { soundEnabled: boolean; o
                 boxShadow: '0 1px 4px rgba(0,0,0,.2)' }} />
             </button>
           </div>
+          <div style={{ padding: '12px 20px', borderTop: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 12, color: '#6B7280' }}>Tester — le navigateur bloque l&apos;audio sans interaction préalable</span>
+            <button onClick={() => playNotificationSound()}
+              style={{ fontSize: 12, fontWeight: 600, color: '#1E4D3A', border: '1px solid #D1D5DB', padding: '6px 14px', borderRadius: 8, background: 'white', cursor: 'pointer' }}>
+              🔔 Tester le son
+            </button>
+          </div>
+        </div>
+
+        {/* Notifications web (browser) */}
+        <div style={{ background: 'white', borderRadius: 16, border: '1px solid #F3F4F6', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.05)' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid #F3F4F6', background: '#F8FAFC' }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.1em', margin: 0 }}>Notifications web</p>
+          </div>
+          <div style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Alerte navigateur</div>
+              <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 3 }}>Popup système même si l&apos;onglet est en arrière-plan</div>
+            </div>
+            {notifPermission === 'denied' ? (
+              <span style={{ fontSize: 11, color: '#EF4444', fontWeight: 600, background: '#FEF2F2', padding: '4px 10px', borderRadius: 8, flexShrink: 0 }}>Bloqué dans le navigateur</span>
+            ) : notifPermission === 'granted' ? (
+              <button onClick={() => onNotifChange(!notifEnabled)}
+                style={{ width: 44, height: 24, borderRadius: 99, border: 'none', cursor: 'pointer',
+                  background: notifEnabled ? '#1E4D3A' : '#D1D5DB', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+                <span style={{ position: 'absolute', top: 2, left: notifEnabled ? 22 : 2, width: 20, height: 20,
+                  background: 'white', borderRadius: '50%', transition: 'left .2s', display: 'block',
+                  boxShadow: '0 1px 4px rgba(0,0,0,.2)' }} />
+              </button>
+            ) : (
+              <button onClick={onRequestNotif}
+                style={{ fontSize: 12, fontWeight: 700, color: 'white', background: '#1E4D3A', border: 'none', padding: '7px 14px', borderRadius: 8, cursor: 'pointer', flexShrink: 0 }}>
+                Activer
+              </button>
+            )}
+          </div>
+          {notifPermission === 'denied' && (
+            <div style={{ padding: '10px 20px', borderTop: '1px solid #F3F4F6', fontSize: 12, color: '#6B7280' }}>
+              Pour réactiver : Paramètres navigateur → Confidentialité → Notifications → chezramo.fr
+            </div>
+          )}
         </div>
 
         {/* Système */}
@@ -603,9 +705,10 @@ function DashboardTab({ orders, updateStatus, onGoToCommandes }: {
           <p style={{ fontSize: 16, fontWeight: 600, color: '#374151', margin: '0 0 2px' }}>
             Bonjour, <span style={{ color: '#1E4D3A', fontWeight: 700 }}>Admin</span> 👋
           </p>
-          <h1 className="dash-hero-title" style={{ fontWeight: 900, color: '#111827', margin: 0, fontFamily: "'Baloo 2', system-ui", letterSpacing: '-.01em', lineHeight: 1.1 }}>
+          <h1 className="dash-hero-title" style={{ fontWeight: 900, color: '#111827', margin: '0 0 10px', fontFamily: "'Baloo 2', system-ui", letterSpacing: '-.01em', lineHeight: 1.1 }}>
             Bienvenue chez Ramo
           </h1>
+          <LiveIndicator />
         </div>
         <svg className="dash-hero-deco" width="340" height="110" viewBox="0 0 380 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute', right: 24, top: 0, bottom: 0, opacity: .8, flexShrink: 0 }}>
           <path d="M60 45 Q110 15, 170 45 T250 28" stroke="#1E4D3A" strokeWidth="5" fill="none" strokeLinecap="round"/>
@@ -633,7 +736,7 @@ function DashboardTab({ orders, updateStatus, onGoToCommandes }: {
                   icon={<CardIconOrders />} iconBg="#EEF6F1" iconColor="#1E4D3A"
                   label="Commandes aujourd'hui" value={todayOrders.length}
                   badge={done.length > 0 ? `+${done.length} livrées` : undefined} badgeGreen
-                  footer={`Total&nbsp;: <strong style="color:#111827">${orders.length}</strong> commandes`}
+                  footer={<>Total : <strong style={{color:'#111827'}}>{orders.length}</strong> commandes</>}
                 />
                 <StatCard
                   icon={<CardIconPending />} iconBg="#FFF7ED" iconColor="#EA580C"
@@ -673,7 +776,6 @@ function DashboardTab({ orders, updateStatus, onGoToCommandes }: {
                       <tbody>
                         {recentOrders.map(o => {
                           const summary = (o.items ?? []).slice(0, 2).map(i => `${i.qty}× ${i.name}`).join(', ') + ((o.items?.length ?? 0) > 2 ? ` +${o.items.length - 2}` : '')
-                          const cfg = STATUS_CFG[o.status] ?? STATUS_CFG.pending
                           return (
                             <tr key={o.id} style={{ borderBottom: '1px solid #F9FAFB' }}>
                               <td style={{ padding: '12px 14px', fontWeight: 700, color: '#1E4D3A', fontSize: 13, whiteSpace: 'nowrap' }}>RMO-{o.order_id}</td>
@@ -683,17 +785,10 @@ function DashboardTab({ orders, updateStatus, onGoToCommandes }: {
                               </td>
                               <td style={{ padding: '12px 14px', fontWeight: 700, fontSize: 13, color: '#111827', whiteSpace: 'nowrap' }}>{money(Number(o.total))}</td>
                               <td style={{ padding: '12px 14px' }}>
-                                <span style={{ background: cfg.bg, color: cfg.color, borderRadius: 99, fontSize: 11, fontWeight: 700, padding: '3px 10px' }}>{cfg.label}</span>
+                                <StatusBadge status={o.status} />
                               </td>
                               <td style={{ padding: '12px 14px' }}>
-                                {o.status === 'pending' && (
-                                  <div style={{ display: 'flex', gap: 6 }}>
-                                    <button onClick={() => updateStatus(o.id, 'done')}
-                                      style={{ padding: '4px 10px', background: '#1E4D3A', color: 'white', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>✓ Fait</button>
-                                    <button onClick={() => updateStatus(o.id, 'cancelled')}
-                                      style={{ padding: '4px 10px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>✕</button>
-                                  </div>
-                                )}
+                                <ActionButtons id={o.id} status={o.status} updateStatus={updateStatus} />
                               </td>
                             </tr>
                           )
@@ -730,11 +825,35 @@ function DashboardTab({ orders, updateStatus, onGoToCommandes }: {
   )
 }
 
+/* ─── live sync indicator ────────────────────────────────────── */
+function LiveIndicator() {
+  const [tick, setTick] = useState(0)
+  const [lastSync, setLastSync] = useState(new Date())
+  useEffect(() => {
+    const iv = setInterval(() => { setTick(t => t + 1); setLastSync(new Date()) }, 5000)
+    return () => clearInterval(iv)
+  }, [])
+  void tick
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 99, padding: '4px 12px', fontSize: 11, color: '#059669', fontWeight: 600 }}>
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22C55E', display: 'inline-block', animation: 'ping 1.4s ease-in-out infinite' }} />
+      En direct · MAJ {lastSync.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+    </div>
+  )
+}
+
 /* ─── commandes tab ──────────────────────────────────────────── */
 function CommandesTab({ orders, updateStatus }: { orders: Order[]; updateStatus: (id: number, s: string) => void }) {
-  const [filter, setFilter] = useState<'all' | 'pending' | 'done' | 'cancelled'>('all')
+  const [filter, setFilter] = useState<'all' | 'pending' | 'preparing' | 'done' | 'cancelled' | 'collected'>('all')
   const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter)
-  const counts = { all: orders.length, pending: orders.filter(o => o.status === 'pending').length, done: orders.filter(o => o.status === 'done').length, cancelled: orders.filter(o => o.status === 'cancelled').length }
+  const counts = {
+    all: orders.length,
+    pending: orders.filter(o => o.status === 'pending').length,
+    preparing: orders.filter(o => o.status === 'preparing').length,
+    done: orders.filter(o => o.status === 'done').length,
+    cancelled: orders.filter(o => o.status === 'cancelled').length,
+    collected: orders.filter(o => o.status === 'collected').length,
+  }
 
   return (
     <div className="commandes-padding">
@@ -743,8 +862,9 @@ function CommandesTab({ orders, updateStatus }: { orders: Order[]; updateStatus:
           <h1 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0 }}>Commandes</h1>
           <p style={{ color: '#94A3B8', fontSize: 13, marginTop: 2 }}>{orders.length} commande{orders.length !== 1 ? 's' : ''} au total</p>
         </div>
+        <LiveIndicator />
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {(['all', 'pending', 'done', 'cancelled'] as const).map(f => (
+          {(['all', 'pending', 'preparing', 'done', 'collected', 'cancelled'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               style={{
                 padding: '7px 14px', borderRadius: 99, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
@@ -752,7 +872,7 @@ function CommandesTab({ orders, updateStatus }: { orders: Order[]; updateStatus:
                 color: filter === f ? 'white' : '#64748B',
                 transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5,
               }}>
-              {{ all: 'Toutes', pending: 'En attente', done: 'Terminées', cancelled: 'Annulées' }[f]}
+              {{ all: 'Toutes', pending: 'En attente', preparing: 'En préparation', done: 'Prêtes', collected: 'Récupérées', cancelled: 'Annulées' }[f]}
               <span style={{ opacity: .65, fontSize: 11 }}>({counts[f]})</span>
             </button>
           ))}
@@ -803,13 +923,48 @@ export default function AdminClient() {
   const [newOrderCount, setNewOrderCount] = useState(0)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const soundEnabledRef = useRef(true)
+  const [notifEnabled, setNotifEnabled] = useState(true)
+  const notifEnabledRef = useRef(true)
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default')
   const lastMaxId = useRef<number>(0)
   const isFirst = useRef(true)
 
   useEffect(() => {
-    if (localStorage.getItem('admin_auth') === 'ramo_ok') setAuthed(true)
+    fetch('/api/admin/verify').then(r => { if (r.ok) setAuthed(true) }).catch(() => {})
     const v = localStorage.getItem('sound_enabled')
     if (v !== null) { const e = v !== 'false'; setSoundEnabled(e); soundEnabledRef.current = e }
+    const n = localStorage.getItem('notif_enabled')
+    if (n !== null) { const e = n !== 'false'; setNotifEnabled(e); notifEnabledRef.current = e }
+
+    // Lire la permission au montage ET à chaque fois que la fenêtre reprend le focus
+    // (l'utilisateur peut changer la permission dans les réglages du navigateur)
+    const checkPerm = () => {
+      if (typeof Notification !== 'undefined') setNotifPermission(Notification.permission)
+    }
+    checkPerm()
+    window.addEventListener('focus', checkPerm)
+    return () => window.removeEventListener('focus', checkPerm)
+  }, [])
+
+  const requestNotifPermission = useCallback(async () => {
+    if (typeof Notification === 'undefined') return
+    const perm = await Notification.requestPermission()
+    setNotifPermission(perm)
+    return perm
+  }, [])
+
+  const showOrderNotif = useCallback((order: Order) => {
+    if (typeof Notification === 'undefined') return
+    if (Notification.permission !== 'granted') return
+    if (!notifEnabledRef.current) return
+    const n = new Notification('🛎️ Nouvelle commande !', {
+      body: `RMO-${order.order_id} · ${money(order.total)} · Voir dans l'admin`,
+      icon: '/favicon.svg',
+      badge: '/favicon.svg',
+      tag: `order-${order.id}`,
+      requireInteraction: true,
+    })
+    n.onclick = () => { window.focus(); n.close() }
   }, [])
 
   const fetchOrders = useCallback(async () => {
@@ -823,14 +978,16 @@ export default function AdminClient() {
       if (data.length > 0) {
         const maxId = Math.max(...data.map(o => o.id))
         if (!isFirst.current && maxId > lastMaxId.current) {
-          setNewOrderCount(n => n + (maxId - lastMaxId.current))
+          const newOrders = data.filter(o => o.id > lastMaxId.current)
+          setNewOrderCount(n => n + newOrders.length)
           if (soundEnabledRef.current) playNotificationSound()
+          newOrders.forEach(o => showOrderNotif(o))
         }
         lastMaxId.current = maxId
         isFirst.current = false
       }
     } catch { /* silent */ }
-  }, [])
+  }, [showOrderNotif])
 
   useEffect(() => {
     if (!authed) return
@@ -888,17 +1045,22 @@ export default function AdminClient() {
     }
   }, [tab, authed])
 
-  const login = (user: string, pw: string) => {
-    if (user === ADMIN_USER && pw === PASS) {
-      localStorage.setItem('admin_auth', 'ramo_ok')
+  const login = async (user: string, pw: string): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, pass: pw }),
+      })
+      if (!res.ok) return false
       setAuthed(true)
+      warmupAudio()
       return true
-    }
-    return false
+    } catch { return false }
   }
 
-  const logout = () => {
-    localStorage.removeItem('admin_auth')
+  const logout = async () => {
+    await fetch('/api/admin/logout', { method: 'POST' }).catch(() => {})
     setAuthed(false)
   }
 
@@ -906,6 +1068,12 @@ export default function AdminClient() {
     setSoundEnabled(v)
     soundEnabledRef.current = v
     localStorage.setItem('sound_enabled', v ? 'true' : 'false')
+  }
+
+  const handleNotifChange = (v: boolean) => {
+    setNotifEnabled(v)
+    notifEnabledRef.current = v
+    localStorage.setItem('notif_enabled', v ? 'true' : 'false')
   }
 
   const updateStatus = useCallback(async (id: number, status: string) => {
@@ -918,7 +1086,8 @@ export default function AdminClient() {
   }, [fetchOrders])
 
   const goToCommandes = useCallback(() => { setTab('commandes'); setNewOrderCount(0) }, [])
-  const pendingCount = orders.filter(o => o.status === 'pending').length
+  // Badge = toutes les commandes actives non finalisées (en attente + en préparation)
+  const pendingCount = orders.filter(o => o.status === 'pending' || o.status === 'preparing').length
   const isAdminJsTab = tab === 'menu' || tab === 'tvs'
 
   if (!authed) return <LoginScreen onLogin={login} />
@@ -1315,11 +1484,50 @@ export default function AdminClient() {
             )}
           </div>
 
+          {/* Bannière permission notifications — visible tant que pas accordée */}
+          {notifPermission !== 'granted' && notifPermission !== 'denied' && (
+            <div style={{ background: '#FFFBEB', borderBottom: '1px solid #FDE68A', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 18 }}>🔔</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#92400E' }}>
+                  Active les notifications pour être alerté dès qu&apos;une commande arrive
+                </span>
+              </div>
+              <button
+                onClick={requestNotifPermission}
+                style={{ flexShrink: 0, background: '#1E4D3A', color: 'white', border: 'none', borderRadius: 10, padding: '7px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                Activer
+              </button>
+            </div>
+          )}
+          {notifPermission === 'denied' && (
+            <div style={{ background: '#FEF2F2', borderBottom: '1px solid #FECACA', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#991B1B' }}>🚫 Notifications bloquées dans le navigateur</div>
+                <div style={{ fontSize: 12, color: '#B91C1C', marginTop: 3 }}>
+                  Chrome : barre d&apos;adresse → icône 🔒 → Notifications → Autoriser → recharge la page<br/>
+                  Safari : Préférences → Sites web → Notifications → localhost → Autoriser
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  const p = typeof Notification !== 'undefined' ? Notification.permission : 'denied'
+                  setNotifPermission(p)
+                  if (p === 'granted') return
+                  // Essayer quand même au cas où le navigateur l'a débloqué entre-temps
+                  Notification.requestPermission().then(r => setNotifPermission(r)).catch(() => {})
+                }}
+                style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#991B1B', border: '1px solid #FECACA', background: 'white', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                🔄 Re-tester
+              </button>
+            </div>
+          )}
+
           {/* Tab content */}
           <div style={{ flex: 1, overflow: 'auto' }} className="admin-tab-content">
             {tab === 'dashboard' && <DashboardTab orders={orders} updateStatus={updateStatus} onGoToCommandes={goToCommandes} />}
             {tab === 'commandes' && <CommandesTab orders={orders} updateStatus={updateStatus} />}
-            {tab === 'settings' && <SettingsTab soundEnabled={soundEnabled} onSoundChange={handleSoundChange} />}
+            {tab === 'settings' && <SettingsTab soundEnabled={soundEnabled} onSoundChange={handleSoundChange} notifEnabled={notifEnabled} notifPermission={notifPermission} onNotifChange={handleNotifChange} onRequestNotif={requestNotifPermission} />}
 
             <div id="admin-legacy-wrap" className={isAdminJsTab ? 'admin-legacy-active' : ''} style={{ display: isAdminJsTab ? 'block' : 'none', minHeight: '100%' }}>
               <div id="login-screen" style={{ display: 'none' }} />

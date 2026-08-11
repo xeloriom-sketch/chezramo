@@ -87,34 +87,67 @@ export default function ScrollEffects() {
       btn.addEventListener('mouseleave', onLeave)
     })
 
-    // lenis smooth scroll
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let lenis: any = null
-    import('lenis').then(({ default: Lenis }) => {
-      lenis = new Lenis({ duration: 1.2, smoothWheel: true })
-      const raf = (t: number) => { lenis.raf(t); requestAnimationFrame(raf) }
-      requestAnimationFrame(raf)
-      document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach(a => {
-        a.addEventListener('click', e => {
-          const id = a.getAttribute('href')!.slice(1)
-          e.preventDefault()
-          if (!id) { lenis.scrollTo(0); return }
-          const target = document.getElementById(id)
-          if (target) lenis.scrollTo(target, { offset: -72 })
-        })
+    // ── Smooth scroll maison (wheel uniquement, pas de touch) ──
+    let sy = window.scrollY        // position actuelle interpolée
+    let ty = window.scrollY        // position cible
+    let smoothRaf = 0
+
+    const maxScroll = () => document.documentElement.scrollHeight - window.innerHeight
+
+    const smoothTick = () => {
+      const diff = ty - sy
+      if (Math.abs(diff) < 0.5) { sy = ty; window.scrollTo(0, ty); smoothRaf = 0; return }
+      sy += diff * 0.1
+      window.scrollTo(0, sy)
+      smoothRaf = requestAnimationFrame(smoothTick)
+    }
+
+    // Ne pas intercepter si la cible est dans un div scrollable (popup, sidebar…)
+    const insideScrollable = (el: Element | null) => {
+      while (el && el !== document.documentElement) {
+        const oy = getComputedStyle(el).overflowY
+        if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight) return true
+        el = el.parentElement
+      }
+      return false
+    }
+
+    const onWheel = (e: WheelEvent) => {
+      if (insideScrollable(e.target as Element)) return
+      e.preventDefault()
+      ty = Math.max(0, Math.min(maxScroll(), ty + e.deltaY))
+      if (!smoothRaf) smoothRaf = requestAnimationFrame(smoothTick)
+    }
+
+    // Sync quand le scroll change par autre chose (clavier, programmatique)
+    const onScrollSync = () => { if (!smoothRaf) { sy = window.scrollY; ty = window.scrollY } }
+
+    window.addEventListener('wheel', onWheel, { passive: false })
+    window.addEventListener('scroll', onScrollSync, { passive: true })
+
+    // Anchor links
+    document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const id = a.getAttribute('href')!.slice(1)
+        e.preventDefault()
+        const dest = id ? (document.getElementById(id)?.getBoundingClientRect().top ?? 0) + window.scrollY - 72 : 0
+        ty = Math.max(0, Math.min(maxScroll(), dest))
+        if (!smoothRaf) smoothRaf = requestAnimationFrame(smoothTick)
       })
-    }).catch(() => {})
+    })
 
     return () => {
       bar.remove()
       glow.remove()
       cancelAnimationFrame(rafId)
+      if (smoothRaf) cancelAnimationFrame(smoothRaf)
+      window.removeEventListener('wheel', onWheel)
+      window.removeEventListener('scroll', onScrollSync)
       document.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('scroll', onScrollParallax)
       obs.disconnect()
       revObs.disconnect()
-      lenis?.destroy()
     }
   }, [])
 

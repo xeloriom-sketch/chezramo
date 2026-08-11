@@ -3,12 +3,42 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '@/lib/store'
 
+function loadTicketCount(): number {
+  try { return JSON.parse(localStorage.getItem('ramo_tickets') || '[]').length } catch { return 0 }
+}
+
+function hasOrders(): boolean {
+  try { return !!localStorage.getItem('ramo_customer_token') } catch { return false }
+}
+
 export default function Header() {
   const { cartCount, openCart, navMenuOpen, setNavMenuOpen } = useStore()
   const count = cartCount()
   const [scrolled, setScrolled] = useState(false)
   const [hidden, setHidden] = useState(false)
   const [lastY, setLastY] = useState(0)
+  const [ticketCount, setTicketCount] = useState(0)
+  const [showOrdersBtn, setShowOrdersBtn] = useState(false)
+  const [ordersReadyCount, setOrdersReadyCount] = useState(0)
+
+  useEffect(() => {
+    setTicketCount(loadTicketCount())
+    const handler = () => setTicketCount(loadTicketCount())
+    window.addEventListener('ramo-tickets-updated', handler)
+    return () => window.removeEventListener('ramo-tickets-updated', handler)
+  }, [])
+
+  useEffect(() => {
+    setShowOrdersBtn(hasOrders())
+    const onToken = () => setShowOrdersBtn(true)
+    const onReady = (e: Event) => setOrdersReadyCount((e as CustomEvent).detail ?? 0)
+    window.addEventListener('ramo-customer-token', onToken)
+    window.addEventListener('ramo-orders-ready', onReady)
+    return () => {
+      window.removeEventListener('ramo-customer-token', onToken)
+      window.removeEventListener('ramo-orders-ready', onReady)
+    }
+  }, [])
 
   useEffect(() => {
     const handler = () => {
@@ -69,6 +99,30 @@ export default function Header() {
               >
                 Commander
               </a>
+
+              {(ticketCount > 0 || showOrdersBtn) && (
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-tickets'))}
+                  className={`relative rounded-full flex items-center justify-center hover:bg-white/15 transition-all duration-200 ${scrolled ? 'w-8 h-8' : 'w-10 h-10'}`}
+                  aria-label="Mes commandes"
+                >
+                  <svg className={scrolled ? 'w-4 h-4' : 'w-5 h-5'} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                  </svg>
+                  {ordersReadyCount > 0 ? (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-green-500 text-white text-[9px] font-extrabold flex items-center justify-center badge-pulse">
+                      {ordersReadyCount}
+                    </span>
+                  ) : ticketCount > 0 ? (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[9px] font-extrabold flex items-center justify-center badge-pulse">
+                      {ticketCount}
+                    </span>
+                  ) : null}
+                </button>
+              )}
 
               <button
                 onClick={() => openCart()}
