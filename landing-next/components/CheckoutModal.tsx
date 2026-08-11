@@ -345,7 +345,7 @@ export default function CheckoutModal() {
     window.dispatchEvent(new CustomEvent('ramo-tickets-updated'))
     setCurrentTicket(ticket)
 
-    fetch('/api/orders', {
+    fetch(`${API_BASE}/admin-orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
