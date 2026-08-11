@@ -61,8 +61,6 @@ jobs:
             fi
           done
 
-      - name: og-image.png déjà inclus via public/ (rien à faire)
-
       - name: Copier uploads dans le dossier out
         run: |
           if [ -d "uploads" ]; then
