@@ -44,8 +44,9 @@ export default function TVPage() {
       {/* Service Worker registration */}
       <Script id="sw-init" strategy="afterInteractive">{`
         if ('serviceWorker' in navigator) {
+          var swPath = '${process.env.NEXT_PUBLIC_BASE_PATH || ''}/sw.js';
           window.addEventListener('load', function() {
-            navigator.serviceWorker.register('/sw.js').then(function(reg) {
+            navigator.serviceWorker.register(swPath).then(function(reg) {
               reg.addEventListener('updatefound', function() {
                 var newSW = reg.installing;
                 newSW.addEventListener('statechange', function() {

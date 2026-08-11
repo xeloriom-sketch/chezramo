@@ -24,22 +24,47 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: landing-next/package-lock.json
+
+      - name: Installer les dépendances
+        working-directory: landing-next
+        run: npm ci
+
+      - name: Build Next.js (export statique)
+        working-directory: landing-next
+        env:
+          STATIC_EXPORT: 'true'
+          NEXT_PUBLIC_BASE_PATH: '/chezramo'
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+        run: npm run build
+
       - name: Générer version.json
         run: |
-          echo '{"v":"'"$(date -u +%Y%m%d%H%M%S)"'","t":'"$(date -u +%s)"'}' > version.json
-          echo "Version générée : $(cat version.json)"
+          echo '{"v":"'"$(date -u +%Y%m%d%H%M%S)"'","t":'"$(date -u +%s)"'}' > landing-next/out/version.json
+          echo "Version : $(cat landing-next/out/version.json)"
 
       - name: Convertir images en WebP (nouvelles uniquement)
         run: |
           sudo apt-get install -y webp 2>/dev/null | tail -1
-          find uploads/ -maxdepth 1 \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) | while IFS= read -r f; do
+          find uploads/ -maxdepth 1 \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) 2>/dev/null | while IFS= read -r f; do
             base="${f%.*}"
             if [ ! -f "${base}.webp" ]; then
               echo "Conversion: $f"
               cwebp -q 82 -m 4 "$f" -o "${base}.webp" 2>/dev/null
             fi
           done
-          echo "WebP prêts : $(find uploads/ -name '*.webp' | wc -l) fichiers"
+
+      - name: Copier uploads dans le dossier out
+        run: |
+          if [ -d "uploads" ]; then
+            cp -r uploads landing-next/out/uploads
+            echo "Uploads copiés : $(find landing-next/out/uploads -type f | wc -l) fichiers"
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -47,7 +72,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: 'landing-next/out'
 
       - name: Deploy to GitHub Pages
         id: deployment

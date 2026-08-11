@@ -1,3 +1,4 @@
+import TVRedirect from '@/components/TVRedirect'
 import Header from '@/components/Header'
 import FloatingCartButton from '@/components/FloatingCartButton'
 import Hero from '@/components/Hero'
@@ -179,6 +180,7 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
+      <TVRedirect />
       <ScrollEffects />
       <FloatingCartButton />
       <Header />
