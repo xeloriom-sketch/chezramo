@@ -83,7 +83,8 @@ export default function ReviewsSection() {
       message:  fd.get('message')  as string,
     }
     try {
-      await fetch('/api/reservations', {
+      const API_BASE = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? '/api'
+      await fetch(API_BASE === '/api' ? '/api/reservations' : `${API_BASE}/admin-reservations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

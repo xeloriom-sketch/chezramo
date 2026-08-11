@@ -1,7 +1,7 @@
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'content-type, authorization',
-  'Access-Control-Allow-Methods': 'GET, PATCH, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
 }
 
 async function generateToken(): Promise<string> {
@@ -38,11 +38,57 @@ function sbHeaders() {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
 
+  const SB = Deno.env.get('SUPABASE_URL') ?? ''
+
+  // POST — public (formulaire de réservation client)
+  if (req.method === 'POST') {
+    try {
+      const body = await req.json()
+      const { fullname, email, phone, date, time, guests, message } = body
+
+      if (!fullname || !email || !date || !time) {
+        return Response.json({ error: 'Champs requis manquants.' }, { status: 400, headers: CORS })
+      }
+
+      const safeName    = String(fullname).trim().replace(/[<>"']/g, '').slice(0, 100)
+      const safeEmail   = String(email).trim().slice(0, 200)
+      const safePhone   = phone ? String(phone).trim().slice(0, 30) : null
+      const safeDate    = String(date).trim().slice(0, 10)
+      const safeTime    = String(time).trim().slice(0, 5)
+      const safeGuests  = Math.max(1, Math.min(50, parseInt(String(guests)) || 2))
+      const safeMessage = message ? String(message).trim().replace(/[<>"']/g, '').slice(0, 500) : null
+
+      const res = await fetch(`${SB}/rest/v1/reservations`, {
+        method: 'POST',
+        headers: { ...sbHeaders(), Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          fullname: safeName,
+          email: safeEmail,
+          phone: safePhone,
+          date: safeDate,
+          time: safeTime,
+          guests: safeGuests,
+          message: safeMessage,
+          status: 'pending',
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.text()
+        console.error('[reservations POST]', res.status, err)
+        return Response.json({ error: 'Erreur base de données.' }, { status: 500, headers: CORS })
+      }
+      return Response.json({ ok: true }, { headers: CORS })
+    } catch (e) {
+      console.error('[reservations POST]', e)
+      return Response.json({ error: 'Erreur serveur.' }, { status: 500, headers: CORS })
+    }
+  }
+
+  // GET et PATCH — admin uniquement
   if (!await isValidToken(req)) {
     return Response.json({ error: 'Non autorisé.' }, { status: 401, headers: CORS })
   }
-
-  const SB = Deno.env.get('SUPABASE_URL') ?? ''
 
   if (req.method === 'GET') {
     const res = await fetch(`${SB}/rest/v1/reservations?select=*&order=date.asc,time.asc&limit=200`, {
