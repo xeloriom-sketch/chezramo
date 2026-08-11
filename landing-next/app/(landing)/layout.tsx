@@ -80,9 +80,9 @@ export const metadata: Metadata = {
   },
 
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: `${BASE_PATH}/favicon.svg`,
+    shortcut: `${BASE_PATH}/favicon.svg`,
+    apple: `${BASE_PATH}/favicon.svg`,
   },
 
   category: 'restaurant',
@@ -113,6 +113,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* Language */}
         <meta httpEquiv="content-language" content="fr-FR" />
+
+        {/* Favicon — explicit avec base path pour GitHub Pages */}
+        <link rel="icon" href={`${BASE_PATH}/favicon.svg`} type="image/svg+xml" />
+        <link rel="shortcut icon" href={`${BASE_PATH}/favicon.svg`} />
       </head>
       <body style={{ fontFamily: 'var(--font-dm), system-ui, sans-serif' }}>
         {children}

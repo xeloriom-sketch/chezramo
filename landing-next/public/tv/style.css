@@ -15,7 +15,7 @@
 html, body {
   width: 100%;
   height: 100%;
-  background: #060606;
+  background: #0D2B1F;
   color: #ffffff;
   font-family: Arial, Helvetica, sans-serif;
   overflow: hidden;
@@ -61,14 +61,14 @@ html, body {
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  background: #060606;
+  background: #0D2B1F;
   overflow: hidden;
 }
 #app::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(ellipse 70% 50% at 50% 40%, rgba(224,16,16,0.055) 0%, transparent 70%);
+  background: radial-gradient(ellipse 70% 50% at 50% 40%, rgba(30,77,58,0.2) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -93,7 +93,7 @@ html, body {
   background: linear-gradient(to bottom, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0) 100%);
 }
 #brand {
-  font-family: Impact, 'Arial Black', 'Franklin Gothic Heavy', Arial, sans-serif;
+  font-family: 'Bebas Neue', Impact, 'Arial Black', 'Franklin Gothic Heavy', Arial, sans-serif;
   font-size: 5.5vw;
   letter-spacing: 0.35vw;
   color: #ffffff;
@@ -102,14 +102,14 @@ html, body {
   text-shadow: 0 2px 8px rgba(0,0,0,0.8);
 }
 #brand span {
-  color: #e01010;
-  text-shadow: 0 0 2vw rgba(224,16,16,0.6);
+  color: #E8A93B;
+  text-shadow: 0 0 2vw rgba(232,169,59,0.6);
   -webkit-animation: ramoPulse 4s ease-in-out infinite;
   animation: ramoPulse 4s ease-in-out infinite;
   will-change: opacity;
 }
 #clock {
-  font-family: Impact, 'Arial Black', 'Franklin Gothic Heavy', Arial, sans-serif;
+  font-family: 'Bebas Neue', Impact, 'Arial Black', 'Franklin Gothic Heavy', Arial, sans-serif;
   font-size: 3.8vw;
   letter-spacing: 0.15vw;
   color: rgba(255,255,255,0.85);
@@ -182,8 +182,8 @@ html, body {
   -webkit-flex: 1 1 auto;
   flex: 1 1 auto;
   height: 3px;
-  background: -webkit-linear-gradient(left, #e01010, transparent);
-  background: linear-gradient(to right, #e01010, transparent);
+  background: -webkit-linear-gradient(left, #E8A93B, transparent);
+  background: linear-gradient(to right, #E8A93B, transparent);
   -webkit-transform: scaleX(0);
   transform: scaleX(0);
   -webkit-transform-origin: left center;
@@ -196,7 +196,7 @@ html, body {
 /* Info catégorie — remonte et apparaît */
 .cat-info {
   font-size: 1.35vw;
-  color: #e01010;
+  color: #E8A93B;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08vw;
@@ -244,7 +244,7 @@ html, body {
 
 /* ── CARTES — montent avec décalage ─────────── */
 .card {
-  background: #141414;
+  background: #132E22;
   border-radius: 1.1vw;
   border: 1px solid rgba(255,255,255,0.07);
   display: -webkit-box;
@@ -274,7 +274,7 @@ html, body {
 .card-img {
   position: relative;
   overflow: hidden;
-  background: #1c1c1c;
+  background: #1B3D2E;
   -webkit-box-flex: 0;
   -webkit-flex: 0 0 50%;
   flex: 0 0 50%;
@@ -316,7 +316,7 @@ html, body {
 .badge {
   position: absolute;
   top: 0.8vw; right: 0.8vw;
-  background: #e01010;
+  background: #E8A93B;
   color: #ffffff;
   font-family: Impact, 'Arial Black', Arial, sans-serif;
   font-size: 1.3vw;
@@ -392,8 +392,8 @@ html, body {
   content: '';
   display: block;
   height: 1px;
-  background: -webkit-linear-gradient(left, rgba(224,16,16,0.5), rgba(224,16,16,0.1), transparent);
-  background: linear-gradient(to right, rgba(224,16,16,0.5), rgba(224,16,16,0.1), transparent);
+  background: -webkit-linear-gradient(left, rgba(232,169,59,0.5), rgba(232,169,59,0.1), transparent);
+  background: linear-gradient(to right, rgba(232,169,59,0.5), rgba(232,169,59,0.1), transparent);
   margin-bottom: 0.55vw;
 }
 .price-row + .price-row { margin-top: 0.08vw; }
@@ -422,9 +422,9 @@ html, body {
   line-height: 1;
   white-space: nowrap;
 }
-.pval sup { font-size: 52%; color: #e01010; vertical-align: super; }
-.price-row.menu .plabel { color: #e01010; }
-.price-row.menu .pval { color: #e01010; font-size: 4.5vw; }
+.pval sup { font-size: 52%; color: #E8A93B; vertical-align: super; }
+.price-row.menu .plabel { color: #E8A93B; }
+.price-row.menu .pval { color: #E8A93B; font-size: 4.5vw; }
 .price-row.supp .plabel { color: rgba(255,255,255,0.45); font-size: 1.05vw; }
 .price-row.supp .pval   { color: rgba(255,255,255,0.75); font-size: 3.0vw; }
 
@@ -454,12 +454,12 @@ html, body {
   -webkit-box-align: center;
   -webkit-align-items: center;
   align-items: center;
-  background: #0a0a0a;
+  background: #0D2B1F;
   padding: 0.5vw 2.2vw;
   gap: 1.2vw;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
-  border-bottom: 2px solid #1c1c1c;
+  border-bottom: 2px solid #1B3D2E;
 }
 .btop-brand {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
@@ -471,7 +471,7 @@ html, body {
   flex: 0 0 auto;
   color: #ffffff;
 }
-.btop-brand span { color: #e01010; }
+.btop-brand span { color: #E8A93B; }
 .btop-box {
   border: 2px solid #ffffff;
   border-radius: 0.4vw;
@@ -512,7 +512,7 @@ html, body {
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
   height: 6vw;
-  background: #c40000;
+  background: #1E4D3A;
   padding: 0;
   display: -webkit-box;
   display: -webkit-flex;
@@ -674,7 +674,7 @@ html, body {
   pointer-events: none;
   line-height: 1;
   padding-left: 1vw;
-  border-left: 0.35vw solid #e01010;
+  border-left: 0.35vw solid #E8A93B;
 }
 .bhero-label, .bhero-desc { margin-bottom: 0.4vw; }
 .bhero-name { margin-bottom: 0; }
@@ -733,14 +733,14 @@ html, body {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
   font-size: 2.2vw;
   line-height: 1;
-  color: #c40000;
+  color: #1E4D3A;
 }
 .bhero-pnum sup { font-size: 55%; vertical-align: super; }
 .bhero-plbl {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
   font-size: 0.75vw;
   letter-spacing: 0.12vw;
-  color: #c40000;
+  color: #1E4D3A;
   margin-top: 0.05vw;
 }
 
@@ -753,7 +753,7 @@ html, body {
   display: -webkit-box;
   display: -webkit-flex;
   display: flex;
-  background: #0a0a0a;
+  background: #0D2B1F;
   padding: 1.3vw 1.2vw 1.1vw;
   gap: 0;
   min-height: 0;
@@ -765,7 +765,7 @@ html, body {
   flex: 1 1 0%;
   min-width: 0;
   padding: 0 1.2vw;
-  border-right: 1px solid #2a2a2a;
+  border-right: 1px solid #1B3D2E;
   overflow: visible;
   display: -webkit-box;
   display: -webkit-flex;
@@ -939,17 +939,17 @@ html, body {
   color: #ffffff;
   line-height: 1;
 }
-.bip sup { font-size: 55%; color: #e01010; vertical-align: super; }
+.bip sup { font-size: 55%; color: #E8A93B; vertical-align: super; }
 .bipm {
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
   font-size: 1.7vw;
   font-weight: 700;
-  color: #e01010;
+  color: #E8A93B;
   letter-spacing: 0.08vw;
 }
 .bibadge {
   display: inline-block;
-  color: #e01010;
+  color: #E8A93B;
   font-family: 'Bebas Neue', Impact, 'Arial Black', Arial, sans-serif;
   font-size: 1.0vw;
   letter-spacing: 0.1vw;
@@ -966,7 +966,7 @@ html, body {
 #progress-bar {
   height: 100%;
   width: 0%;
-  background: #e01010;
+  background: #E8A93B;
   -webkit-animation: barGlow 2s ease-in-out infinite;
   animation: barGlow 2s ease-in-out infinite;
 }
@@ -1489,7 +1489,7 @@ html, body {
 #tv-loader {
   position: fixed;
   inset: 0;
-  background: #080810;
+  background: #0D2B1F;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1511,12 +1511,12 @@ html, body {
   color: #fff;
   line-height: 1;
 }
-.tvl-brand span { color: #e8a020; }
+.tvl-brand span { color: #E8A93B; }
 .tvl-dots { display: flex; gap: 0.8vw; }
 .tvl-dot {
   width: 0.65vw;
   height: 0.65vw;
-  background: #e8a020;
+  background: #E8A93B;
   border-radius: 50%;
   animation: tvl-pulse 1.2s ease-in-out infinite;
 }
