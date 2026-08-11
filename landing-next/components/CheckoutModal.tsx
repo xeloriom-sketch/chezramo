@@ -4,6 +4,8 @@
 import { useStore } from '@/lib/store'
 import { useRef, useEffect, useState, useCallback } from 'react'
 
+const API_BASE = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? '/api'
+
 function money(n: number) { return n.toFixed(2).replace('.', ',') + ' €' }
 
 export type SavedTicket = {
@@ -248,7 +250,7 @@ export default function CheckoutModal() {
     stripeRefs.current = {}
 
     try {
-      const res = await fetch('/api/create-payment-intent', {
+      const res = await fetch(`${API_BASE}/create-payment-intent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cart }),

@@ -45,6 +45,7 @@ jobs:
           NEXT_PUBLIC_BASE_PATH: '/chezramo'
           NEXT_PUBLIC_SITE_URL: 'https://xeloriom-sketch.github.io'
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL: https://hqfewokpvjmxezhnurbm.supabase.co/functions/v1
         run: npm run build
 
       - name: Générer version.json
