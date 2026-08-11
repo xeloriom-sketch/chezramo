@@ -130,29 +130,27 @@ export default function Footer() {
 
       {/* Carte Google Maps */}
       <div className="max-w-6xl mx-auto mt-12">
-        {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? (
+        <div className="relative rounded-[1.25rem] overflow-hidden shadow-lg">
           <iframe
             title="Chez Ramo — 32 Rue Pasteur, Lagnieu"
-            src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=32+Rue+Pasteur,+01150+Lagnieu,+France&zoom=16&language=fr`}
+            src="https://maps.google.com/maps?q=32+Rue+Pasteur,+01150+Lagnieu,+France&output=embed&hl=fr&z=16"
             width="100%"
-            height="280"
-            style={{ border: 0, borderRadius: '1.25rem' }}
+            height="300"
+            style={{ border: 0, display: 'block' }}
             allowFullScreen
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />
-        ) : (
-          /* Sans clé API : lien simple vers Google Maps */
           <a
             href="https://maps.google.com/?q=32+Rue+Pasteur+01150+Lagnieu"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-3 w-full h-[120px] rounded-[1.25rem] bg-brand/10 border-2 border-dashed border-brand/20 text-brand font-bold text-sm hover:bg-brand/15 transition"
+            className="absolute bottom-3 right-3 flex items-center gap-2 bg-white text-brand text-xs font-bold px-3 py-2 rounded-full shadow-md hover:bg-brand hover:text-white transition"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Voir sur Google Maps — 32 Rue Pasteur, Lagnieu
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Voir sur Google Maps
           </a>
-        )}
+        </div>
       </div>
 
       {/* Copyright + NAP repeat (Google aime voir les infos cohérentes) */}
