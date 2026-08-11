@@ -35,6 +35,9 @@ jobs:
         working-directory: landing-next
         run: npm ci
 
+      - name: Exclure les routes API (incompatibles avec output export)
+        run: mv landing-next/app/api /tmp/api_routes
+
       - name: Build Next.js (export statique)
         working-directory: landing-next
         env:
@@ -46,7 +49,6 @@ jobs:
       - name: Générer version.json
         run: |
           echo '{"v":"'"$(date -u +%Y%m%d%H%M%S)"'","t":'"$(date -u +%s)"'}' > landing-next/out/version.json
-          echo "Version : $(cat landing-next/out/version.json)"
 
       - name: Convertir images en WebP (nouvelles uniquement)
         run: |
@@ -54,7 +56,6 @@ jobs:
           find uploads/ -maxdepth 1 \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) 2>/dev/null | while IFS= read -r f; do
             base="${f%.*}"
             if [ ! -f "${base}.webp" ]; then
-              echo "Conversion: $f"
               cwebp -q 82 -m 4 "$f" -o "${base}.webp" 2>/dev/null
             fi
           done
@@ -63,7 +64,6 @@ jobs:
         run: |
           if [ -d "uploads" ]; then
             cp -r uploads landing-next/out/uploads
-            echo "Uploads copiés : $(find landing-next/out/uploads -type f | wc -l) fichiers"
           fi
 
       - name: Setup Pages
