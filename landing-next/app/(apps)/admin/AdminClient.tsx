@@ -690,7 +690,7 @@ function SettingsTab({ soundEnabled, onSoundChange, notifEnabled, notifPermissio
           <div style={{ padding: '14px 20px', borderBottom: '1px solid #F3F4F6', background: '#F8FAFC' }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.1em', margin: 0 }}>Accès admin</p>
           </div>
-          {row('Adresse mail', 'admin@chezramo.fr')}
+          {row('Adresse mail', 'chezramo@gmail.com')}
           <div style={{ padding: '13px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>Mot de passe</span>
             <span style={{ fontSize: 12, color: '#374151', fontFamily: 'monospace', background: '#F3F4F6', padding: '3px 10px', borderRadius: 8 }}>••••••••</span>
