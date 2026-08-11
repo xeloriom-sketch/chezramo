@@ -4,6 +4,14 @@ import { useEffect } from 'react'
 
 export default function ScrollEffects() {
   useEffect(() => {
+    // Injecter le basePath comme CSS variable pour les images de fond (pattern-bg, etc.)
+    const base = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+    const doodle = `${base}/uploads/depositphotos_107470690-stock-illustration-various-food-doodle-seamless-background`
+    document.documentElement.style.setProperty(
+      '--pattern-bg-img',
+      `image-set(url('${doodle}.webp') type('image/webp'), url('${doodle}.png') type('image/png'))`
+    )
+
     // scroll progress bar
     const bar = document.createElement('div')
     bar.className = 'scroll-progress'

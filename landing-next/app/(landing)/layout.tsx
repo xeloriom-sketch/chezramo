@@ -109,7 +109,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://maps.googleapis.com" />
 
         {/* Preload LCP image */}
-        <link rel="preload" as="image" href="/uploads/pasted-1785851492914-0.webp" type="image/webp" fetchPriority="high" />
+        <link rel="preload" as="image" href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/uploads/pasted-1785851492914-0.webp`} type="image/webp" fetchPriority="high" />
 
         {/* Geo meta — critical for local SEO */}
         <meta name="geo.region"    content="FR-01" />

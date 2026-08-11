@@ -192,11 +192,9 @@ body {
 }
 
 /* ── Pattern bg ── */
+/* L'URL est injectée via CSS variable par ScrollEffects.tsx (gère le basePath GitHub Pages) */
 .pattern-bg {
-  background-image: image-set(
-    url('/uploads/depositphotos_107470690-stock-illustration-various-food-doodle-seamless-background.webp') type('image/webp'),
-    url('/uploads/depositphotos_107470690-stock-illustration-various-food-doodle-seamless-background.png') type('image/png')
-  );
+  background-image: var(--pattern-bg-img);
   background-repeat: repeat;
   background-size: 600px 600px;
   opacity: 0.15;

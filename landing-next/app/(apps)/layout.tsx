@@ -8,7 +8,7 @@ export default function AppsLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Chez Ramo" />
-        <link rel="icon" href="/favicon.svg" />
+        <link rel="icon" href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/favicon.svg`} />
       </head>
       <body style={{ margin: 0, padding: 0 }}>{children}</body>
     </html>
