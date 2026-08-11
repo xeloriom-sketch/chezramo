@@ -43,6 +43,7 @@ jobs:
         env:
           STATIC_EXPORT: 'true'
           NEXT_PUBLIC_BASE_PATH: '/chezramo'
+          NEXT_PUBLIC_SITE_URL: 'https://xeloriom-sketch.github.io'
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
         run: npm run build
 
