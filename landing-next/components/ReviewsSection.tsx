@@ -196,7 +196,10 @@ export default function ReviewsSection() {
               )}
             </div>
             <div className="min-h-[280px] lg:min-h-full bg-[#EADFC0]">
-              <img src="https://images.unsplash.com/photo-1541529086526-db283c563270?w=800&q=80" alt="Groupe d'amis partageant des burgers" loading="lazy" className="w-full h-full object-cover" />
+              <picture>
+                <source srcSet={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/uploads/pasted-1777911777094-0.webp`} type="image/webp" />
+                <img src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/uploads/pasted-1777911777094-0.png`} alt="Devanture restaurant Chez Ramo Lagnieu — Tacos Kebab 100% Veau fait maison" loading="lazy" className="w-full h-full object-cover" />
+              </picture>
             </div>
           </div>
 
