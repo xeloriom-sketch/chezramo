@@ -14,6 +14,7 @@ export default function ReviewsSection() {
   const [dragDelta, setDragDelta] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [reservation, setReservation] = useState<string | null>(null)
+  const today = new Date().toISOString().split('T')[0]
   const trackRef = useRef<HTMLDivElement>(null)
   const counterRef = useRef<HTMLSpanElement>(null)
 
@@ -178,7 +179,7 @@ export default function ReviewsSection() {
                     <input type="email" name="email" placeholder="Adresse e-mail" required aria-label="Adresse e-mail" className="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent" />
                     <input type="tel" name="phone" placeholder="Téléphone" required aria-label="Numéro de téléphone" className="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent" />
                   </div>
-                  <input type="date" name="date" required aria-label="Date de réservation" className="w-full min-w-0 max-w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent appearance-none" style={{ boxSizing: 'border-box' }} />
+                  <input type="date" name="date" required aria-label="Date de réservation" defaultValue={today} min={today} className="w-full min-w-0 max-w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent appearance-none" style={{ boxSizing: 'border-box' }} />
                   <div className="grid grid-cols-2 gap-3">
                     <select name="time" required aria-label="Heure de réservation" className="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent">
                       <option value="" disabled>Heure</option>
