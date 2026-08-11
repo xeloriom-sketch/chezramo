@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+
 export default function Footer() {
   const [newsletterMsg, setNewsletterMsg] = useState('Inscrivez-vous pour recevoir nos promos et nouveautés Chez Ramo.')
 
@@ -157,7 +159,7 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto mt-12 pt-6 border-t border-brand/20 text-center text-xs tracking-[.1em] uppercase text-[#8A8A8A]">
         © 2026 Chez Ramo · 32 Rue Pasteur, 01150 Lagnieu · 04 27 50 00 62
         <span className="mx-2">·</span>
-        <a href="/mentions-legales" className="hover:text-brand transition">Mentions légales</a>
+        <a href={`${BASE}/mentions-legales`} className="hover:text-brand transition">Mentions légales</a>
       </div>
     </footer>
   )

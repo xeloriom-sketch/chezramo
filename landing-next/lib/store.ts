@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 import type { CartItem, CustomizerState, MenuItem } from './types'
-import { MENU_DATA, SAUCES, NO_SAUCE_CATEGORIES } from './constants'
+import { MENU_DATA, SAUCES, NO_SAUCE_CATEGORIES, REVIEWS } from './constants'
 
 function money(n: number): string {
   return n.toFixed(2).replace('.', ',') + ' €'
@@ -89,7 +89,7 @@ export const useStore = create<AppState>((set, get) => ({
   confirmedCart: [],
   confirmedTotal: 0,
   navMenuOpen: false,
-  openCategory: 'burgers',
+  openCategory: null,
   menuData: MENU_DATA,
   customizer: null,
   custMode: 'seul',
@@ -213,7 +213,7 @@ export const useStore = create<AppState>((set, get) => ({
   setCustQty: (qty) => set({ custQty: qty }),
 
   setReviewIndex: (i) => set({ reviewIndex: i }),
-  nextReview: () => set(s => ({ reviewIndex: (s.reviewIndex + 1) % 8 })),
+  nextReview: () => set(s => ({ reviewIndex: (s.reviewIndex + 1) % REVIEWS.length })),
 
   setReservation: (text) => set({ reservation: text }),
   setNewsletterMsg: (msg) => set({ newsletterMsg: msg }),

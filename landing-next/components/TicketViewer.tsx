@@ -6,6 +6,9 @@ import { type SavedTicket } from './CheckoutModal'
 type OrderStatus = 'pending' | 'preparing' | 'done' | 'cancelled' | 'collected'
 type LiveOrder   = { order_id: number; status: OrderStatus }
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+const FUNCTIONS_BASE = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? ''
+
 function money(n: number) { return n.toFixed(2).replace('.', ',') + ' €' }
 
 function loadTickets(): SavedTicket[] {
@@ -315,7 +318,8 @@ export default function TicketViewer() {
     if (!token) return
     setRefreshing(true)
     try {
-      const res = await fetch(`/api/customer/orders?token=${encodeURIComponent(token)}`, { cache: 'no-store' })
+      const ordersUrl = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/customer-orders` : '/api/customer/orders'
+      const res = await fetch(`${ordersUrl}?token=${encodeURIComponent(token)}`, { cache: 'no-store' })
       if (!res.ok) return
       const data: LiveOrder[] = await res.json()
       const map: Record<number, OrderStatus> = {}
@@ -323,7 +327,7 @@ export default function TicketViewer() {
         const prev = prevStatuses.current[o.order_id]
         if (prev && prev !== o.status && o.status === 'done') {
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            try { new Notification('Chez Ramo 🎉', { body: `Commande RMO-${o.order_id} prête !`, icon: '/favicon.svg', tag: `ramo-${o.order_id}` }) } catch {}
+            try { new Notification('Chez Ramo 🎉', { body: `Commande RMO-${o.order_id} prête !`, icon: `${BASE}/favicon.svg`, tag: `ramo-${o.order_id}` }) } catch {}
           }
         }
         prevStatuses.current[o.order_id] = o.status
@@ -364,7 +368,8 @@ export default function TicketViewer() {
     const token = getToken()
     if (token) {
       try {
-        await fetch('/api/customer/orders', {
+        const patchUrl = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/customer-orders` : '/api/customer/orders'
+        await fetch(patchUrl, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token, order_id: ticket.orderId }),

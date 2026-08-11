@@ -11,6 +11,8 @@ type Order = {
 }
 
 const POLL_INTERVAL = 30
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+const FUNCTIONS_BASE = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? ''
 
 function money(n: number) { return n.toFixed(2).replace('.', ',') + ' €' }
 
@@ -119,7 +121,8 @@ export default function CustomerOrdersModal({ open, onClose }: { open: boolean; 
     if (!silent) setRefreshing(true)
     const token = getOrCreateToken()
     try {
-      const res = await fetch(`/api/customer/orders?token=${encodeURIComponent(token)}`, { cache: 'no-store' })
+      const ordersUrl = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/customer-orders` : '/api/customer/orders'
+      const res = await fetch(`${ordersUrl}?token=${encodeURIComponent(token)}`, { cache: 'no-store' })
       if (!res.ok) return
       const data: Order[] = await res.json()
 
@@ -146,7 +149,7 @@ export default function CustomerOrdersModal({ open, onClose }: { open: boolean; 
     try {
       new Notification('Chez Ramo — Commande prête ! 🎉', {
         body: `Votre commande RMO-${orderId} est prête. Venez la récupérer !`,
-        icon: '/favicon.svg',
+        icon: `${BASE}/favicon.svg`,
         tag: `ramo-order-${orderId}`,
       })
     } catch { /* unavailable */ }

@@ -689,7 +689,7 @@ function SettingsTab({ soundEnabled, onSoundChange, notifEnabled, notifPermissio
             <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>TVs client</span>
             <div style={{ display: 'flex', gap: 6 }}>
               {[1,2,3].map(n => (
-                <a key={n} href={`/tv?tv=${n}`} target="_blank" rel="noreferrer"
+                <a key={n} href={`${BASE}/tv?tv=${n}`} target="_blank" rel="noreferrer"
                   style={{ fontSize: 11, color: '#1E4D3A', background: '#EEF6F1', padding: '3px 10px', borderRadius: 8, textDecoration: 'none', fontWeight: 600 }}>
                   TV {n} ↗
                 </a>
@@ -717,8 +717,8 @@ function SettingsTab({ soundEnabled, onSoundChange, notifEnabled, notifPermissio
           </div>
           <div style={{ padding: '16px 20px', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {[
-              { label: 'Menu QR client', href: '/menu-qr', desc: 'Page menu sur table' },
-              { label: 'Menu carte', href: '/menu-qr', desc: 'Affichage menu' },
+              { label: 'Menu QR client', href: `${BASE}/menu-qr`, desc: 'Page menu sur table' },
+              { label: 'Menu carte', href: `${BASE}/menu-qr`, desc: 'Affichage menu' },
             ].map(l => (
               <a key={l.label} href={l.href} target="_blank" rel="noreferrer"
                 style={{ flex: 1, minWidth: 140, background: '#F8F9FB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '12px 14px', textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -863,7 +863,7 @@ function DashboardTab({ orders, updateStatus, onGoToCommandes }: {
                 Notre Menu<br />Kebab & Tacos
               </h3>
             </div>
-            <a href="/menu-qr" target="_blank" rel="noreferrer"
+            <a href={`${BASE}/menu-qr`} target="_blank" rel="noreferrer"
               style={{ display: 'block', width: '100%', background: '#1E4D3A', color: 'white', borderRadius: 14, padding: '13px', textAlign: 'center', fontWeight: 600, fontSize: 14, cursor: 'pointer', boxShadow: '0 4px 16px rgba(30,77,58,.3)', textDecoration: 'none', marginTop: 'auto' }}>
               Voir la carte →
             </a>
@@ -1139,8 +1139,8 @@ export default function AdminClient() {
     if (!notifEnabledRef.current) return
     const n = new Notification('🛎️ Nouvelle commande !', {
       body: `RMO-${order.order_id} · ${money(order.total)} · Voir dans l'admin`,
-      icon: '/favicon.svg',
-      badge: '/favicon.svg',
+      icon: `${BASE}/favicon.svg`,
+      badge: `${BASE}/favicon.svg`,
       tag: `order-${order.id}`,
       requireInteraction: true,
     })
@@ -1208,7 +1208,7 @@ export default function AdminClient() {
       reloading = true
       window.location.reload()
     })
-    navigator.serviceWorker.getRegistration('/').then(reg => {
+    navigator.serviceWorker.getRegistration(BASE + '/').then(reg => {
       if (!reg) return
       const forceSkip = (sw: ServiceWorker | null) => {
         if (!sw) return
