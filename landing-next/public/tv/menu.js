@@ -25,6 +25,24 @@ var SLOW_DURATION  = 9000;  /* durée en connexion faible (temps de charger) */
 var SLIDE_DURATION = BASE_DURATION;
 var loadedSlides   = {};
 
+/* Détecte le base path depuis l'URL (ex: /chezramo/tv → BASE_PATH = '/chezramo') */
+var BASE_PATH = (function() {
+  try {
+    var parts = location.pathname.replace(/\/$/, '').split('/');
+    /* parts = ['','chezramo','tv'] → BASE_PATH = '/chezramo' */
+    if (parts.length >= 3 && parts[1]) return '/' + parts[1];
+    return '';
+  } catch(e) { return ''; }
+})();
+
+/* Préfixe les URL relatives /uploads/… avec BASE_PATH */
+function prefixImg(url) {
+  if (!url) return url;
+  if (url.indexOf('://') !== -1 || url.indexOf('//') === 0) return url; /* absolu */
+  if (BASE_PATH && url.indexOf(BASE_PATH) !== 0 && url.charAt(0) === '/') return BASE_PATH + url;
+  return url;
+}
+
 /* ════════════════════════════════════════════════
    MODE 2 TV : chaque écran affiche la moitié du menu
    ────────────────────────────────────────────────
@@ -280,8 +298,9 @@ function toWebp(url) {
    uploads/X.png → uploads/cut/X.png (générées par IA, dans le repo) */
 function cutUrl(url) {
   if (!url || url.indexOf('uploads/') === -1) return null;
-  return url.replace('uploads/', 'uploads/cut/')
-            .replace(/\.(jpg|jpeg|webp)(\?.*)?$/i, '.png$2');
+  var prefixed = prefixImg(url);
+  return prefixed.replace('uploads/', 'uploads/cut/')
+                 .replace(/\.(jpg|jpeg|webp)(\?.*)?$/i, '.png$2');
 }
 
 /* Vignette panneau : détourée en priorité, fallback photo originale */
@@ -363,6 +382,7 @@ function loadThumb(img, src) {
 /* Charge une image : WebP en priorité, fallback sur original */
 function loadImg(img, src) {
   if (!src) { img.style.display = 'none'; return; }
+  src = prefixImg(src);
   detectWebp(function(ok) {
     var primary  = ok ? toWebp(src) : src;
     var fallback = src;

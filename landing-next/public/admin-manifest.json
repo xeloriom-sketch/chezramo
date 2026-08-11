@@ -1,0 +1,26 @@
+{
+  "name": "Chez Ramo — Admin",
+  "short_name": "Ramo Admin",
+  "description": "Panneau d'administration du restaurant Chez Ramo",
+  "start_url": "/chezramo/admin",
+  "scope": "/chezramo/admin",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1E4D3A",
+  "background_color": "#ffffff",
+  "categories": ["food", "business"],
+  "icons": [
+    {
+      "src": "/chezramo/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/chezramo/og-image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

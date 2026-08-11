@@ -57,7 +57,7 @@ export default function Footer() {
 
           {/* Horaires */}
           <div className="mt-4 text-sm text-[#4C7A63] space-y-1">
-            <p className="font-bold text-brand text-xs uppercase tracking-wider mb-2">Horaires · Ouvert 7j/7</p>
+            <p className="font-bold text-brand text-xs uppercase tracking-wider mb-2">Horaires · Lun – Sam</p>
             <p className="flex items-center gap-2">
               <svg className="w-4 h-4 shrink-0 text-brand" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               Midi : <strong>11h00 – 14h30</strong>

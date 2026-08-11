@@ -24,6 +24,13 @@ export default function Hero() {
           Kebab · Tacos · Burgers — Lagnieu, Ain
         </p>
 
+        <div className="mt-6 flex justify-center sm:hidden">
+          <a href="#menu" className="inline-flex items-center gap-2 bg-accent text-brand font-extrabold uppercase tracking-widest px-7 py-4 rounded-full text-sm shadow-lg hover:brightness-95 transition" style={{ fontFamily: 'var(--font-baloo)' }}>
+            Commander maintenant
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        </div>
+
         <div className="relative max-w-3xl mx-auto -mt-[3vw] z-20">
           <picture>
             <source srcSet={`${BASE}/uploads/pasted-1785851492914-0.webp`} type="image/webp" />

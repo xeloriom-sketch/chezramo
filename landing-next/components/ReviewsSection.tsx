@@ -1,8 +1,32 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useStore } from '@/lib/store'
 import { REVIEWS } from '@/lib/constants'
+
+const FUNCTIONS_BASE = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? ''
+const RES_STORAGE_KEY = 'ramo_res_tracking'
+
+type TrackedRes = {
+  id: number | null
+  fullname: string
+  date: string
+  time: string
+  guests: string
+  status: 'pending' | 'confirmed' | 'cancelled'
+  savedAt: number
+}
+
+function loadTrackedRes(): TrackedRes[] {
+  try { return JSON.parse(localStorage.getItem(RES_STORAGE_KEY) ?? '[]') } catch { return [] }
+}
+function saveTrackedRes(list: TrackedRes[]) {
+  try { localStorage.setItem(RES_STORAGE_KEY, JSON.stringify(list.slice(0, 10))) } catch { /* silent */ }
+}
+function formatResDate(d: string) {
+  try { return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) }
+  catch { return d }
+}
 
 function StarIcon() {
   return <svg className="w-4 h-4 fill-current inline-block" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -13,8 +37,9 @@ export default function ReviewsSection() {
   const [dragStart, setDragStart] = useState(0)
   const [dragDelta, setDragDelta] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
-  const [reservation, setReservation] = useState<string | null>(null)
+  const [activeRes, setActiveRes] = useState<TrackedRes | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [checkingStatus, setCheckingStatus] = useState(false)
   const today = new Date().toISOString().split('T')[0]
   const trackRef = useRef<HTMLDivElement>(null)
   const counterRef = useRef<HTMLSpanElement>(null)
@@ -69,6 +94,39 @@ export default function ReviewsSection() {
 
   const trackStyle = `translateX(calc(-${reviewIndex} * (min(480px,88vw) + clamp(16px,4vw,20px)) + 50vw - min(240px,44vw) + ${isDragging ? dragDelta : 0}px))`
 
+  // Poll réservation active toutes les 30s si statut encore "pending"
+  const pollStatus = useCallback(async (res: TrackedRes) => {
+    if (!res.id || res.status !== 'pending') return
+    try {
+      const url = FUNCTIONS_BASE
+        ? `${FUNCTIONS_BASE}/admin-reservations?id=${res.id}`
+        : `/api/reservations?id=${res.id}`
+      const r = await fetch(url)
+      if (!r.ok) return
+      const data = await r.json()
+      if (data.status && data.status !== res.status) {
+        const updated = { ...res, status: data.status as TrackedRes['status'] }
+        setActiveRes(updated)
+        const list = loadTrackedRes()
+        const idx = list.findIndex(r => r.id === res.id)
+        if (idx >= 0) { list[idx].status = data.status; saveTrackedRes(list) }
+      }
+    } catch { /* silent */ }
+  }, [])
+
+  useEffect(() => {
+    if (!activeRes?.id || activeRes.status !== 'pending') return
+    const iv = setInterval(() => pollStatus(activeRes), 30000)
+    return () => clearInterval(iv)
+  }, [activeRes, pollStatus])
+
+  const checkStatusManual = async () => {
+    if (!activeRes?.id) return
+    setCheckingStatus(true)
+    await pollStatus(activeRes)
+    setCheckingStatus(false)
+  }
+
   const handleReservation = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSubmitting(true)
@@ -82,19 +140,34 @@ export default function ReviewsSection() {
       guests:   fd.get('guests')   as string,
       message:  fd.get('message')  as string,
     }
+    let resId: number | null = null
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? '/api'
-      await fetch(API_BASE === '/api' ? '/api/reservations' : `${API_BASE}/admin-reservations`, {
+      const url = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/admin-reservations` : '/api/reservations'
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-    } catch { /* API non dispo (export statique GitHub Pages) — on affiche quand même la confirmation */ }
-    const dateStr = body.date
-      ? new Date(body.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
-      : body.date
+      if (res.ok) {
+        const data = await res.json()
+        if (typeof data.id === 'number') resId = data.id
+      }
+    } catch { /* API non dispo — on affiche quand même la confirmation */ }
+
+    const tracked: TrackedRes = {
+      id: resId,
+      fullname: body.fullname,
+      date: body.date,
+      time: body.time,
+      guests: body.guests,
+      status: 'pending',
+      savedAt: Date.now(),
+    }
+    const list = loadTrackedRes()
+    list.unshift(tracked)
+    saveTrackedRes(list)
+    setActiveRes(tracked)
     setSubmitting(false)
-    setReservation(`${body.guests} personnes le ${dateStr} à ${body.time} — au nom de ${body.fullname}.`)
   }
 
   return (
@@ -182,14 +255,76 @@ export default function ReviewsSection() {
               <h2 className="font-extrabold text-[clamp(28px,3.4vw,42px)] text-brand" style={{ fontFamily: 'var(--font-baloo)' }}>RÉSERVEZ VOTRE TABLE</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#8A8A8A]">Confirmation par e-mail. Pour les groupes ou les commandes à emporter, appelez-nous au 04 27 50 00 62.</p>
 
-              {reservation ? (
-                <div className="mt-6 p-6 rounded-2xl border-2 border-brand bg-accent">
-                  <h3 className="font-extrabold text-xl flex items-center gap-2" style={{ fontFamily: 'var(--font-baloo)' }}>
-                    Table confirmée
-                    <svg className="w-5 h-5 text-brand shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed">{reservation}</p>
-                  <button onClick={() => setReservation(null)} className="mt-4 px-5 py-2.5 rounded-full border-2 border-brand bg-cream text-xs font-bold uppercase tracking-widest hover:bg-brand hover:text-cream transition">Nouvelle réservation</button>
+              {activeRes ? (
+                <div className="mt-6">
+                  {/* Pending */}
+                  {activeRes.status === 'pending' && (
+                    <div className="p-5 rounded-2xl border-2 border-amber-300 bg-amber-50">
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse inline-block" />
+                          En attente de confirmation
+                        </span>
+                      </div>
+                      <div className="space-y-1 mb-4 text-sm text-brand/80">
+                        <p className="font-bold">📅 {formatResDate(activeRes.date)}</p>
+                        <p>🕐 {activeRes.time} · {activeRes.guests} personnes</p>
+                        <p>👤 {activeRes.fullname}</p>
+                      </div>
+                      <p className="text-xs text-brand/50 mb-4 leading-relaxed">Le patron confirmera votre réservation sous 24h.{activeRes.id ? ' Le statut se met à jour automatiquement.' : ' Pour toute question, appelez le 04 27 50 00 62.'}</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {activeRes.id && (
+                          <button onClick={checkStatusManual} disabled={checkingStatus}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-full border-2 border-brand bg-transparent text-brand text-xs font-bold hover:bg-brand hover:text-cream transition disabled:opacity-50">
+                            {checkingStatus ? (
+                              <><span className="inline-block w-3 h-3 border-2 border-brand border-t-transparent rounded-full animate-spin"/>Vérification…</>
+                            ) : '↻ Vérifier le statut'}
+                          </button>
+                        )}
+                        <button onClick={() => setActiveRes(null)}
+                          className="px-4 py-2 rounded-full border-2 border-brand/30 text-brand/60 text-xs font-bold hover:border-brand hover:text-brand transition">
+                          + Autre réservation
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {/* Confirmed */}
+                  {activeRes.status === 'confirmed' && (
+                    <div className="p-5 rounded-2xl border-2 border-emerald-400 bg-emerald-50">
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                          Réservation confirmée !
+                        </span>
+                      </div>
+                      <div className="space-y-1 mb-4 text-sm text-brand/80">
+                        <p className="font-bold">📅 {formatResDate(activeRes.date)}</p>
+                        <p>🕐 {activeRes.time} · {activeRes.guests} personnes</p>
+                        <p>👤 {activeRes.fullname}</p>
+                      </div>
+                      <p className="text-xs text-emerald-600 mb-4 font-semibold">Votre table est réservée ! À très bientôt chez Ramo. 🎉</p>
+                      <button onClick={() => setActiveRes(null)}
+                        className="px-4 py-2 rounded-full border-2 border-brand bg-brand text-cream text-xs font-bold hover:bg-accent hover:text-brand transition">
+                        + Autre réservation
+                      </button>
+                    </div>
+                  )}
+                  {/* Cancelled */}
+                  {activeRes.status === 'cancelled' && (
+                    <div className="p-5 rounded-2xl border-2 border-red-200 bg-red-50">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-600 text-xs font-bold">
+                          ✗ Réservation annulée
+                        </span>
+                      </div>
+                      <p className="text-sm text-brand/70 mb-3 leading-relaxed">Nous sommes désolés, votre demande pour le {formatResDate(activeRes.date)} à {activeRes.time} n&apos;a pas pu être acceptée.</p>
+                      <p className="text-xs text-brand/50 mb-4">📞 Appelez-nous au <strong>04 27 50 00 62</strong> pour trouver un autre créneau.</p>
+                      <button onClick={() => setActiveRes(null)}
+                        className="px-4 py-2 rounded-full border-2 border-brand bg-brand text-cream text-xs font-bold hover:bg-accent hover:text-brand transition">
+                        + Nouvelle réservation
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <form onSubmit={handleReservation} className="mt-6 space-y-3 min-w-0 w-full">
@@ -205,7 +340,7 @@ export default function ReviewsSection() {
                   <div className="grid grid-cols-2 gap-3">
                     <select name="time" required aria-label="Heure de réservation" className="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent">
                       <option value="" disabled>Heure</option>
-                      {['12:00','12:30','13:00','19:00','19:30','20:00','21:00'].map(t => <option key={t} value={t}>{t}</option>)}
+                      {['12:00','12:30','13:00','19:00','19:30','20:00','20:30','21:00','21:30'].map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                     <select name="guests" required aria-label="Nombre de personnes" className="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent">
                       <option value="" disabled>Personnes</option>

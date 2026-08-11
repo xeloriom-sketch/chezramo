@@ -40,6 +40,31 @@ Deno.serve(async (req) => {
 
   const SB = Deno.env.get('SUPABASE_URL') ?? ''
 
+  // GET public par ID (pour le client) — uniquement si ?id=<n> est présent
+  if (req.method === 'GET') {
+    const idParam = new URL(req.url).searchParams.get('id')
+    if (idParam !== null) {
+      const id = Number(idParam)
+      if (!Number.isInteger(id) || id < 1) {
+        return Response.json({ error: 'id invalide.' }, { status: 400, headers: CORS })
+      }
+      try {
+        const res = await fetch(
+          `${SB}/rest/v1/reservations?id=eq.${id}&select=id,status,date,time`,
+          { headers: sbHeaders() }
+        )
+        const rows = res.ok ? await res.json() : []
+        if (!Array.isArray(rows) || !rows.length) {
+          return Response.json({ error: 'Réservation introuvable.' }, { status: 404, headers: CORS })
+        }
+        return Response.json({ id: rows[0].id, status: rows[0].status, date: rows[0].date, time: rows[0].time }, { headers: CORS })
+      } catch {
+        return Response.json({ error: 'Erreur serveur.' }, { status: 500, headers: CORS })
+      }
+    }
+    // Pas de ?id → fallthrough vers l'auth admin ci-dessous
+  }
+
   // POST — public (formulaire de réservation client)
   if (req.method === 'POST') {
     try {
@@ -60,7 +85,7 @@ Deno.serve(async (req) => {
 
       const res = await fetch(`${SB}/rest/v1/reservations`, {
         method: 'POST',
-        headers: { ...sbHeaders(), Prefer: 'return=minimal' },
+        headers: { ...sbHeaders(), Prefer: 'return=representation' },
         body: JSON.stringify({
           fullname: safeName,
           email: safeEmail,
@@ -78,7 +103,9 @@ Deno.serve(async (req) => {
         console.error('[reservations POST]', res.status, err)
         return Response.json({ error: 'Erreur base de données.' }, { status: 500, headers: CORS })
       }
-      return Response.json({ ok: true }, { headers: CORS })
+      const rows = await res.json()
+      const insertedId = Array.isArray(rows) && rows.length ? rows[0].id : null
+      return Response.json({ ok: true, id: insertedId }, { headers: CORS })
     } catch (e) {
       console.error('[reservations POST]', e)
       return Response.json({ error: 'Erreur serveur.' }, { status: 500, headers: CORS })

@@ -550,7 +550,10 @@ export default function CheckoutModal() {
 
             <div className="w-full max-w-xs mt-4 mb-5 px-4 py-4 rounded-2xl bg-accent text-brand flex items-center gap-3 text-left">
               <svg className="w-10 h-10 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-4a3 3 0 0 1 6 0v4"/></svg>
-              <p className="font-extrabold text-sm uppercase tracking-wide leading-snug" style={{ fontFamily: 'var(--font-baloo)' }}>N'oubliez pas de venir<br />récupérer votre commande<br />sur place !</p>
+              <div>
+                <p className="font-extrabold text-sm uppercase tracking-wide leading-snug" style={{ fontFamily: 'var(--font-baloo)' }}>N'oubliez pas de venir<br />récupérer votre commande<br />sur place !</p>
+                <p className="text-brand/70 text-xs font-semibold mt-1.5">⏱ Délai estimé : 15 à 20 min</p>
+              </div>
             </div>
 
             <div className="w-full max-w-xs space-y-3">

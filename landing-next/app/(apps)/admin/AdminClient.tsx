@@ -311,14 +311,14 @@ function IconX() {
 
 /* ─── sidebar ────────────────────────────────────────────────── */
 type NavItem = { id: Tab; label: string; icon: React.ReactNode; badge?: number }
-function Sidebar({ tab, setTab, logout, pendingCount, mobileOpen, setMobileOpen }: {
+function Sidebar({ tab, setTab, logout, pendingCount, pendingResCount, mobileOpen, setMobileOpen }: {
   tab: Tab; setTab: (t: Tab) => void; logout: () => void
-  pendingCount: number; mobileOpen: boolean; setMobileOpen: (v: boolean) => void
+  pendingCount: number; pendingResCount: number; mobileOpen: boolean; setMobileOpen: (v: boolean) => void
 }) {
   const items: NavItem[] = [
     { id: 'dashboard',     label: 'Dashboard',    icon: <IconDash />     },
     { id: 'commandes',     label: 'Commandes',    icon: <IconOrders />,  badge: pendingCount || undefined },
-    { id: 'reservations',  label: 'Réservations', icon: <IconCalendar /> },
+    { id: 'reservations',  label: 'Réservations', icon: <IconCalendar />, badge: pendingResCount || undefined },
     { id: 'menu',          label: 'Menu',         icon: <IconMenu />     },
     { id: 'tvs',           label: 'TVs',          icon: <IconTV />       },
     { id: 'settings',      label: 'Réglages',     icon: <IconSettings /> },
@@ -389,11 +389,11 @@ function Sidebar({ tab, setTab, logout, pendingCount, mobileOpen, setMobileOpen 
 }
 
 /* ─── mobile bottom nav ──────────────────────────────────────── */
-function MobileBottomNav({ tab, setTab, pendingCount }: { tab: Tab; setTab: (t: Tab) => void; pendingCount: number }) {
+function MobileBottomNav({ tab, setTab, pendingCount, pendingResCount }: { tab: Tab; setTab: (t: Tab) => void; pendingCount: number; pendingResCount: number }) {
   const items: NavItem[] = [
-    { id: 'dashboard',    label: 'Accueil', icon: <IconDash />,      badge: pendingCount || undefined },
-    { id: 'commandes',    label: 'Cmdes',   icon: <IconOrders />    },
-    { id: 'reservations', label: 'Résas',   icon: <IconCalendar />  },
+    { id: 'dashboard',    label: 'Accueil', icon: <IconDash />                                          },
+    { id: 'commandes',    label: 'Cmdes',   icon: <IconOrders />,   badge: pendingCount || undefined     },
+    { id: 'reservations', label: 'Résas',   icon: <IconCalendar />, badge: pendingResCount || undefined  },
     { id: 'menu',         label: 'Menu',    icon: <IconMenu />      },
     { id: 'settings',     label: 'Config',  icon: <IconSettings />  },
   ]
@@ -517,7 +517,7 @@ function BtnCollected({ onClick }: { onClick: () => void }) {
 }
 function BtnCancel({ onClick }: { onClick: () => void }) {
   return (
-    <button onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+    <button onClick={() => { if (window.confirm('Annuler cette commande ?')) onClick() }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       Annuler
     </button>
@@ -548,6 +548,68 @@ function ActionButtons({ id, status, updateStatus }: { id: number; status: Order
   )
 }
 
+/* ─── mobile order card ──────────────────────────────────────── */
+function OrderCard({ o, updateStatus }: { o: Order; updateStatus: (id: number, s: string) => void }) {
+  const summary = (o.items ?? []).map(i => `${i.qty}× ${i.name}`).join(' · ')
+  return (
+    <div style={{ padding: '14px 16px', borderBottom: '1px solid #F1F5F9', background: 'white' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <div style={{ fontWeight: 800, color: '#1E4D3A', fontSize: 14 }}>RMO-{o.order_id}</div>
+        <StatusBadge status={o.status} />
+      </div>
+      <div style={{ fontSize: 12, color: '#374151', marginBottom: 6, lineHeight: 1.4 }}>{summary}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <div style={{ fontSize: 11, color: '#94A3B8' }}>{fmt(o.created_at)}</div>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#111827' }}>{money(Number(o.total))}</div>
+      </div>
+      <ActionButtons id={o.id} status={o.status} updateStatus={updateStatus} />
+    </div>
+  )
+}
+
+/* ─── mobile reservation card ────────────────────────────────── */
+function ResCard({ r, updateResStatus }: { r: Reservation; updateResStatus: (id: number, s: string) => void }) {
+  const fmtD = (d: string) => {
+    try { return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' }) }
+    catch { return d }
+  }
+  return (
+    <div style={{ padding: '14px 16px', borderBottom: '1px solid #F1F5F9', background: 'white' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+        <div>
+          <div style={{ fontWeight: 800, color: '#1E4D3A', fontSize: 14 }}>{r.fullname}</div>
+          <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{fmtD(r.date)} · {r.time} · {r.guests} pers.</div>
+        </div>
+        <ResStatusBadge status={r.status} />
+      </div>
+      {r.message && (
+        <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 8, borderLeft: '3px solid #E5E7EB', paddingLeft: 8 }}>{r.message}</div>
+      )}
+      <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 10 }}>{r.email}{r.phone ? ' · ' + r.phone : ''}</div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        {r.status === 'pending' && (
+          <button onClick={() => updateResStatus(r.id, 'confirmed')}
+            style={{ flex: 1, padding: '9px', background: '#059669', color: 'white', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+            ✓ Confirmer
+          </button>
+        )}
+        {r.status !== 'cancelled' && (
+          <button onClick={() => updateResStatus(r.id, 'cancelled')}
+            style={{ flex: 1, padding: '9px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+            Annuler
+          </button>
+        )}
+        {r.status === 'cancelled' && (
+          <button onClick={() => updateResStatus(r.id, 'pending')}
+            style={{ flex: 1, padding: '9px', background: 'white', color: '#6B7280', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            Réouvrir
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ─── orders table ───────────────────────────────────────────── */
 function OrdersTable({ orders, updateStatus, compact, emptyMsg }: {
   orders: Order[]; updateStatus: (id: number, s: string) => void; compact?: boolean; emptyMsg?: string
@@ -560,7 +622,13 @@ function OrdersTable({ orders, updateStatus, compact, emptyMsg }: {
     )
   }
   return (
-    <div style={{ overflowX: 'auto' }}>
+    <>
+      {/* Mobile cards */}
+      <div className="orders-cards">
+        {orders.map(o => <OrderCard key={o.id} o={o} updateStatus={updateStatus} />)}
+      </div>
+      {/* Desktop/tablet table */}
+      <div className="orders-table-wrap" style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 520 }}>
         <thead>
           <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
@@ -578,7 +646,8 @@ function OrdersTable({ orders, updateStatus, compact, emptyMsg }: {
                 <td style={{ padding: compact ? '10px 12px' : '14px 16px', fontWeight: 800, color: '#1E4D3A', fontSize: 13, whiteSpace: 'nowrap' }}>RMO-{o.order_id}</td>
                 {!compact && <td style={{ padding: '14px 8px', fontSize: 12, color: '#64748B', whiteSpace: 'nowrap' }}>{fmtDate(o.created_at)}</td>}
                 <td style={{ padding: compact ? '10px 8px' : '14px 8px', fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>{fmt(o.created_at)}</td>
-                <td style={{ padding: compact ? '10px 8px' : '14px 8px', fontSize: 12, color: '#64748B', maxWidth: 180 }}>
+                <td style={{ padding: compact ? '10px 8px' : '14px 8px', fontSize: 12, color: '#64748B', maxWidth: 180, cursor: 'help' }}
+                  title={(o.items ?? []).map(i => `${i.qty}× ${i.name}`).join('\n')}>
                   <span style={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{summary}</span>
                 </td>
                 <td style={{ padding: compact ? '10px 8px' : '14px 8px', fontWeight: 800, fontSize: 14, color: '#1E293B', whiteSpace: 'nowrap' }}>{money(Number(o.total))}</td>
@@ -591,7 +660,8 @@ function OrdersTable({ orders, updateStatus, compact, emptyMsg }: {
           })}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   )
 }
 
@@ -742,7 +812,7 @@ function DashboardTab({ orders, updateStatus, onGoToCommandes }: {
   const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === today)
   const pending = orders.filter(o => o.status === 'pending')
   const done = todayOrders.filter(o => o.status === 'done')
-  const revenue = todayOrders.reduce((t, o) => t + Number(o.total), 0)
+  const revenue = todayOrders.filter(o => o.status !== 'cancelled').reduce((t, o) => t + Number(o.total), 0)
   const recentOrders = orders.slice(0, 8)
 
   return (
@@ -937,7 +1007,7 @@ function CommandesTab({ orders, updateStatus }: { orders: Order[]; updateStatus:
 /* ─── notification toast ─────────────────────────────────────── */
 function NewOrderToast({ count, onDismiss }: { count: number; onDismiss: () => void }) {
   useEffect(() => {
-    const t = setTimeout(onDismiss, 6000)
+    const t = setTimeout(onDismiss, typeof document !== 'undefined' && document.hasFocus() ? 15000 : 60000)
     return () => clearTimeout(t)
   }, [count, onDismiss])
 
@@ -957,6 +1027,35 @@ function NewOrderToast({ count, onDismiss }: { count: number; onDismiss: () => v
           {count === 1 ? 'Nouvelle commande !' : `${count} nouvelles commandes !`}
         </div>
         <div style={{ fontSize: 12, opacity: .7, marginTop: 2 }}>Un client vient de payer en ligne</div>
+      </div>
+      <button onClick={onDismiss} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', padding: 4, marginLeft: 4, display: 'flex', alignItems: 'center' }}><IconX /></button>
+    </div>
+  )
+}
+
+/* ─── reservation toast ──────────────────────────────────────── */
+function NewResToast({ count, onDismiss }: { count: number; onDismiss: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, typeof document !== 'undefined' && document.hasFocus() ? 15000 : 60000)
+    return () => clearTimeout(t)
+  }, [count, onDismiss])
+  return (
+    <div className="toast-pos" style={{
+      position: 'fixed', zIndex: 201,
+      background: '#1E4D3A', color: 'white', borderRadius: 16,
+      padding: '16px 20px', boxShadow: '0 8px 32px rgba(0,0,0,.28)',
+      display: 'flex', alignItems: 'center', gap: 12,
+      animation: 'slideUp .35s ease-out',
+      bottom: 76,
+    }}>
+      <div style={{ width: 36, height: 36, background: '#E8A93B', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <IconCalendar />
+      </div>
+      <div>
+        <div style={{ fontWeight: 800, fontSize: 14 }}>
+          {count === 1 ? 'Nouvelle réservation !' : `${count} nouvelles réservations !`}
+        </div>
+        <div style={{ fontSize: 12, opacity: .7, marginTop: 2 }}>Un client demande une table</div>
       </div>
       <button onClick={onDismiss} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', padding: 4, marginLeft: 4, display: 'flex', alignItems: 'center' }}><IconX /></button>
     </div>
@@ -984,7 +1083,12 @@ function ReservationsTab({ reservations, updateResStatus }: {
   updateResStatus: (id: number, status: string) => void
 }) {
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled'>('all')
-  const filtered = filter === 'all' ? reservations : reservations.filter(r => r.status === filter)
+  const filtered = (filter === 'all' ? reservations : reservations.filter(r => r.status === filter))
+    .slice().sort((a, b) => {
+      const da = new Date(`${a.date}T${a.time ?? '00:00'}`).getTime()
+      const db = new Date(`${b.date}T${b.time ?? '00:00'}`).getTime()
+      return da - db
+    })
   const counts = {
     all: reservations.length,
     pending: reservations.filter(r => r.status === 'pending').length,
@@ -1023,59 +1127,66 @@ function ReservationsTab({ reservations, updateResStatus }: {
             Aucune réservation
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 680 }}>
-              <thead>
-                <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
-                  {['Nom', 'Date', 'Heure', 'Pers.', 'Contact', 'Message', 'Statut', 'Action'].map(h => (
-                    <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(r => (
-                  <tr key={r.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                    <td style={{ padding: '14px', fontWeight: 700, color: '#1E4D3A', fontSize: 13, whiteSpace: 'nowrap' }}>{r.fullname}</td>
-                    <td style={{ padding: '14px', fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>{fmtResDate(r.date)}</td>
-                    <td style={{ padding: '14px', fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>{r.time}</td>
-                    <td style={{ padding: '14px', fontSize: 13, color: '#334155', textAlign: 'center' }}>{r.guests}</td>
-                    <td style={{ padding: '14px', fontSize: 12, color: '#64748B' }}>
-                      <div style={{ whiteSpace: 'nowrap' }}>{r.email}</div>
-                      {r.phone && <div style={{ color: '#94A3B8', whiteSpace: 'nowrap' }}>{r.phone}</div>}
-                    </td>
-                    <td style={{ padding: '14px', fontSize: 12, color: '#64748B', maxWidth: 160 }}>
-                      {r.message
-                        ? <span title={r.message} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.message}</span>
-                        : <span style={{ color: '#D1D5DB' }}>—</span>}
-                    </td>
-                    <td style={{ padding: '14px' }}><ResStatusBadge status={r.status} /></td>
-                    <td style={{ padding: '14px' }}>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {r.status === 'pending' && (
-                          <button onClick={() => updateResStatus(r.id, 'confirmed')}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: '#059669', color: 'white', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                            ✓ Confirmer
-                          </button>
-                        )}
-                        {r.status !== 'cancelled' && (
-                          <button onClick={() => updateResStatus(r.id, 'cancelled')}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                            Annuler
-                          </button>
-                        )}
-                        {r.status === 'cancelled' && (
-                          <button onClick={() => updateResStatus(r.id, 'pending')}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: 'white', color: '#6B7280', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                            Réouvrir
-                          </button>
-                        )}
-                      </div>
-                    </td>
+          <>
+            {/* Mobile cards */}
+            <div className="res-cards">
+              {filtered.map(r => <ResCard key={r.id} r={r} updateResStatus={updateResStatus} />)}
+            </div>
+            {/* Desktop table */}
+            <div className="res-table-wrap" style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 680 }}>
+                <thead>
+                  <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
+                    {['Nom', 'Date', 'Heure', 'Pers.', 'Contact', 'Message', 'Statut', 'Action'].map(h => (
+                      <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filtered.map(r => (
+                    <tr key={r.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                      <td style={{ padding: '14px', fontWeight: 700, color: '#1E4D3A', fontSize: 13, whiteSpace: 'nowrap' }}>{r.fullname}</td>
+                      <td style={{ padding: '14px', fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>{fmtResDate(r.date)}</td>
+                      <td style={{ padding: '14px', fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>{r.time}</td>
+                      <td style={{ padding: '14px', fontSize: 13, color: '#334155', textAlign: 'center' }}>{r.guests}</td>
+                      <td style={{ padding: '14px', fontSize: 12, color: '#64748B' }}>
+                        <div style={{ whiteSpace: 'nowrap' }}>{r.email}</div>
+                        {r.phone && <div style={{ color: '#94A3B8', whiteSpace: 'nowrap' }}>{r.phone}</div>}
+                      </td>
+                      <td style={{ padding: '14px', fontSize: 12, color: '#64748B', maxWidth: 160 }}>
+                        {r.message
+                          ? <span title={r.message} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.message}</span>
+                          : <span style={{ color: '#D1D5DB' }}>—</span>}
+                      </td>
+                      <td style={{ padding: '14px' }}><ResStatusBadge status={r.status} /></td>
+                      <td style={{ padding: '14px' }}>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {r.status === 'pending' && (
+                            <button onClick={() => updateResStatus(r.id, 'confirmed')}
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: '#059669', color: 'white', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                              ✓ Confirmer
+                            </button>
+                          )}
+                          {r.status !== 'cancelled' && (
+                            <button onClick={() => updateResStatus(r.id, 'cancelled')}
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                              Annuler
+                            </button>
+                          )}
+                          {r.status === 'cancelled' && (
+                            <button onClick={() => updateResStatus(r.id, 'pending')}
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: 'white', color: '#6B7280', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                              Réouvrir
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -1090,13 +1201,16 @@ export default function AdminClient() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [mobileOpen, setMobileOpen] = useState(false)
   const [newOrderCount, setNewOrderCount] = useState(0)
+  const [newResCount, setNewResCount] = useState(0)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const soundEnabledRef = useRef(true)
   const [notifEnabled, setNotifEnabled] = useState(true)
   const notifEnabledRef = useRef(true)
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default')
   const lastMaxId = useRef<number>(0)
+  const lastMaxResId = useRef<number>(0)
   const isFirst = useRef(true)
+  const isFirstRes = useRef(true)
 
   useEffect(() => {
     if (FUNCTIONS_BASE) {
@@ -1147,15 +1261,42 @@ export default function AdminClient() {
     n.onclick = () => { window.focus(); n.close() }
   }, [])
 
+  const showResNotif = useCallback((res: Reservation) => {
+    if (typeof Notification === 'undefined') return
+    if (Notification.permission !== 'granted') return
+    if (!notifEnabledRef.current) return
+    const n = new Notification('📅 Nouvelle réservation !', {
+      body: `${res.fullname} · ${res.guests} pers. le ${res.date} à ${res.time}`,
+      icon: `${BASE}/favicon.svg`,
+      badge: `${BASE}/favicon.svg`,
+      tag: `res-${res.id}`,
+      requireInteraction: true,
+    })
+    n.onclick = () => { window.focus(); n.close() }
+  }, [])
+
   const fetchReservations = useCallback(async () => {
     try {
       const url = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/admin-reservations` : '/api/reservations'
       const res = await fetch(url, { headers: adminFetchHeaders() })
       if (!res.ok) return
       const data: Reservation[] = await res.json()
-      if (Array.isArray(data)) setReservations(data)
+      if (!Array.isArray(data)) return
+      setReservations(data)
+
+      if (data.length > 0) {
+        const maxResId = Math.max(...data.map(r => r.id))
+        if (!isFirstRes.current && maxResId > lastMaxResId.current) {
+          const newResas = data.filter(r => r.id > lastMaxResId.current)
+          setNewResCount(n => n + newResas.length)
+          if (soundEnabledRef.current) playNotificationSound()
+          newResas.forEach(r => showResNotif(r))
+        }
+        lastMaxResId.current = maxResId
+        isFirstRes.current = false
+      }
     } catch { /* silent */ }
-  }, [])
+  }, [showResNotif])
 
   const updateResStatus = useCallback(async (id: number, status: string) => {
     const url = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/admin-reservations` : '/api/reservations'
@@ -1195,7 +1336,7 @@ export default function AdminClient() {
     fetchOrders()
     fetchReservations()
     const iv = setInterval(fetchOrders, 5000)
-    const iv2 = setInterval(fetchReservations, 30000)
+    const iv2 = setInterval(fetchReservations, 5000)
     return () => { clearInterval(iv); clearInterval(iv2) }
   }, [authed, fetchOrders, fetchReservations])
 
@@ -1303,8 +1444,10 @@ export default function AdminClient() {
   }, [fetchOrders])
 
   const goToCommandes = useCallback(() => { setTab('commandes'); setNewOrderCount(0) }, [])
+  const goToReservations = useCallback(() => { setTab('reservations'); setNewResCount(0) }, [])
   // Badge = toutes les commandes actives non finalisées (en attente + en préparation)
   const pendingCount = orders.filter(o => o.status === 'pending' || o.status === 'preparing').length
+  const pendingResCount = reservations.filter(r => r.status === 'pending').length
   const isAdminJsTab = tab === 'menu' || tab === 'tvs'
 
   if (!authed) return <LoginScreen onLogin={login} />
@@ -1459,7 +1602,7 @@ export default function AdminClient() {
         .mobile-hamburger { display: none !important; }
         .mobile-bottom-nav { display: none; }
         .sidebar-close-btn { display: none; }
-        .toast-pos { bottom: 28px; right: 28px; max-width: 320px; }
+        .toast-pos { bottom: 28px; right: 28px; max-width: 340px; }
 
         /* dashboard */
         .dash-hero   { padding: 32px 36px; min-height: 148px; }
@@ -1468,7 +1611,11 @@ export default function AdminClient() {
         .dash-grid   { display: grid; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
         .stats-grid  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
         .promo-panel { display: flex; }
-        .commandes-padding { padding: 32px 28px; max-width: 1100px; }
+        .commandes-padding { padding: 32px 28px; }
+
+        /* Tables plein largeur */
+        .res-cards { display: none; }
+        .orders-cards { display: none; }
 
         /* ── tablet (sidebar collapses) ── */
         @media (max-width: 960px) {
@@ -1484,19 +1631,24 @@ export default function AdminClient() {
         /* ── mobile ── */
         @media (max-width: 640px) {
           .mobile-bottom-nav {
-            display: flex; position: fixed; bottom: 0; left: 0; right: 0; height: 58px;
+            display: flex; position: fixed; bottom: 0; left: 0; right: 0; height: 62px;
             background: white; border-top: 1px solid #F1F5F9; z-index: 40;
             padding-bottom: env(safe-area-inset-bottom, 0px);
-            box-shadow: 0 -4px 20px rgba(0,0,0,.07);
+            box-shadow: 0 -4px 24px rgba(0,0,0,.1);
           }
-          .admin-tab-content { padding-bottom: 66px !important; }
-          .dash-hero   { padding: 22px 18px; min-height: auto; }
-          .dash-hero-title { font-size: 24px !important; }
+          .admin-tab-content { padding-bottom: 72px !important; }
+          .dash-hero   { padding: 18px 16px; min-height: auto; }
+          .dash-hero-title { font-size: 22px !important; }
           .dash-hero-deco { display: none !important; }
-          .dash-padding { padding: 14px; }
+          .dash-padding { padding: 12px; }
           .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-          .commandes-padding { padding: 14px; }
-          .toast-pos { bottom: 70px; right: 12px; left: 12px; max-width: none; }
+          .commandes-padding { padding: 12px; }
+          .toast-pos { bottom: 74px; right: 10px; left: 10px; max-width: none; }
+          /* Mobile: cards au lieu de tables */
+          .res-table-wrap { display: none !important; }
+          .res-cards { display: block; }
+          .orders-table-wrap { display: none !important; }
+          .orders-cards { display: block; }
         }
 
         @media (max-width: 420px) {
@@ -1677,8 +1829,8 @@ export default function AdminClient() {
 
       <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#F8F9FB' }}>
         <Sidebar
-          tab={tab} setTab={t => { setTab(t); if (t === 'commandes') setNewOrderCount(0) }}
-          logout={logout} pendingCount={pendingCount}
+          tab={tab} setTab={t => { setTab(t); if (t === 'commandes') setNewOrderCount(0); if (t === 'reservations') setNewResCount(0) }}
+          logout={logout} pendingCount={pendingCount} pendingResCount={pendingResCount}
           mobileOpen={mobileOpen} setMobileOpen={setMobileOpen}
         />
 
@@ -1810,7 +1962,7 @@ export default function AdminClient() {
       </div>
 
       {/* Mobile bottom navigation */}
-      <MobileBottomNav tab={tab} setTab={t => { setTab(t); if (t === 'commandes') setNewOrderCount(0) }} pendingCount={pendingCount} />
+      <MobileBottomNav tab={tab} setTab={t => { setTab(t); if (t === 'commandes') setNewOrderCount(0); if (t === 'reservations') setNewResCount(0) }} pendingCount={pendingCount} pendingResCount={pendingResCount} />
 
       {/* Modals (needed by admin.js) */}
       <div id="edit-modal" className="modal-overlay" style={{ display: 'none' }}>
@@ -1890,6 +2042,9 @@ export default function AdminClient() {
 
       {newOrderCount > 0 && (
         <NewOrderToast count={newOrderCount} onDismiss={() => setNewOrderCount(0)} />
+      )}
+      {newResCount > 0 && (
+        <NewResToast count={newResCount} onDismiss={() => { setNewResCount(0); goToReservations() }} />
       )}
 
       <link rel="stylesheet" href={`${BASE}/admin/admin.css`} />

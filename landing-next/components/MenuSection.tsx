@@ -179,7 +179,7 @@ export default function MenuSection() {
                             <span className="font-black text-lg text-brand tabular-nums" style={{ fontFamily: 'var(--font-baloo)' }}>{fmtPrice(item.price)}</span>
                             <button
                               onClick={() => openCustomizer(item.title, parseMenuPrice(item.price), parseMenuPrice(item.menu_price), itemHasSauce(item.category))}
-                              className="w-8 h-8 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center"
+                              className="w-11 h-11 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center"
                             >+</button>
                           </div>
                         </div>
