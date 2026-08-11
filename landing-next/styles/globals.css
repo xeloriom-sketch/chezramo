@@ -207,7 +207,7 @@ body {
   .pill-sm { padding: 0.4rem 0.75rem; font-size: 0.7rem; letter-spacing: 0.06em; }
 }
 @media (max-width: 479px) {
-  .bs-img { height: 10rem; }
+  .bs-img { height: 12rem; }
 }
 
 /* ── Checkout success ── */
