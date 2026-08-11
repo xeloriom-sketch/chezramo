@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useStore } from '@/lib/store'
 
 function loadTicketCount(): number {
@@ -14,6 +14,7 @@ function hasOrders(): boolean {
 export default function Header() {
   const { cartCount, openCart, navMenuOpen, setNavMenuOpen } = useStore()
   const count = cartCount()
+  const [closing, setClosing] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [hidden, setHidden] = useState(false)
   const [lastY, setLastY] = useState(0)
@@ -50,6 +51,11 @@ export default function Header() {
     window.addEventListener('scroll', handler, { passive: true })
     return () => window.removeEventListener('scroll', handler)
   }, [lastY])
+
+  const closeMenu = useCallback(() => {
+    setClosing(true)
+    setTimeout(() => { setNavMenuOpen(false); setClosing(false) }, 280)
+  }, [setNavMenuOpen])
 
   const links = [
     { href: '#menu',    label: 'Menu' },
@@ -142,7 +148,7 @@ export default function Header() {
               </button>
 
               <button
-                onClick={() => setNavMenuOpen(!navMenuOpen)}
+                onClick={() => navMenuOpen ? closeMenu() : setNavMenuOpen(true)}
                 className={`md:hidden relative rounded-full flex items-center justify-center hover:bg-white/15 transition-all duration-200 ml-1 ${scrolled ? 'w-8 h-8' : 'w-10 h-10'}`}
                 aria-label="Menu"
               >
@@ -157,14 +163,14 @@ export default function Header() {
       </header>
 
       {/* Mobile nav */}
-      {navMenuOpen && (
+      {(navMenuOpen || closing) && (
         <div
-          className="nav-open fixed inset-0 z-[200] bg-[#163828] flex flex-col md:hidden overflow-hidden"
-          onKeyDown={e => e.key === 'Escape' && setNavMenuOpen(false)}
+          className={`${closing ? 'nav-close' : 'nav-open'} fixed inset-0 z-[200] bg-[#163828] flex flex-col md:hidden overflow-hidden`}
+          onKeyDown={e => e.key === 'Escape' && closeMenu()}
         >
-          <div className="flex items-center justify-between px-6 pt-5 pb-4 shrink-0 nav-link-in" style={{ animationDelay: '0ms' }}>
+          <div className={`flex items-center justify-between px-6 pt-5 pb-4 shrink-0${closing ? '' : ' nav-link-in'}`} style={{ animationDelay: '0ms' }}>
             <span className="font-extrabold text-xl text-cream tracking-wide" style={{ fontFamily: 'var(--font-baloo)' }}>CHEZ RAMO</span>
-            <button onClick={() => setNavMenuOpen(false)} className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center active:scale-95 transition-transform" aria-label="Fermer">
+            <button onClick={closeMenu} className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center active:scale-95 transition-transform" aria-label="Fermer">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
             </button>
           </div>
@@ -174,8 +180,8 @@ export default function Header() {
               <a
                 key={href}
                 href={href}
-                onClick={() => setNavMenuOpen(false)}
-                className="nav-link-in group flex items-center justify-between py-5 border-b border-white/10 last:border-0"
+                onClick={closeMenu}
+                className={`${closing ? '' : 'nav-link-in '}group flex items-center justify-between py-5 border-b border-white/10 last:border-0`}
                 style={{ animationDelay: `${80 + i * 60}ms` }}
               >
                 <span className="font-extrabold text-[clamp(28px,7vw,36px)] text-cream uppercase tracking-wide group-hover:text-accent transition-colors" style={{ fontFamily: 'var(--font-baloo)' }}>{label}</span>
@@ -183,8 +189,8 @@ export default function Header() {
               </a>
             ))}
           </nav>
-          <div className="nav-link-in px-6 pb-10 shrink-0 space-y-3" style={{ animationDelay: '340ms' }}>
-            <a href="#menu" onClick={() => setNavMenuOpen(false)}
+          <div className={`${closing ? '' : 'nav-link-in '}px-6 pb-10 shrink-0 space-y-3`} style={{ animationDelay: '340ms' }}>
+            <a href="#menu" onClick={closeMenu}
                className="flex items-center justify-center gap-2 w-full font-extrabold text-base uppercase tracking-widest py-4 rounded-full bg-accent text-brand active:scale-[.98] transition-transform"
                style={{ fontFamily: 'var(--font-baloo)' }}>
               Commander maintenant

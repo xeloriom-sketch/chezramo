@@ -13,7 +13,19 @@ type Order = {
   status: 'pending' | 'preparing' | 'done' | 'cancelled' | 'collected'
   created_at: string
 }
-type Tab = 'dashboard' | 'commandes' | 'menu' | 'tvs' | 'settings'
+type Reservation = {
+  id: number
+  fullname: string
+  email: string
+  phone: string | null
+  date: string
+  time: string
+  guests: number
+  message: string | null
+  status: 'pending' | 'confirmed' | 'cancelled'
+  created_at: string
+}
+type Tab = 'dashboard' | 'commandes' | 'reservations' | 'menu' | 'tvs' | 'settings'
 
 const HERO_IMG = 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1400&q=80'
 const MAX_ATTEMPTS = 4
@@ -274,6 +286,9 @@ function IconSettings() {
 function IconLogout() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
 }
+function IconCalendar() {
+  return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+}
 function IconHamburger() {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
 }
@@ -288,11 +303,12 @@ function Sidebar({ tab, setTab, logout, pendingCount, mobileOpen, setMobileOpen 
   pendingCount: number; mobileOpen: boolean; setMobileOpen: (v: boolean) => void
 }) {
   const items: NavItem[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: <IconDash /> },
-    { id: 'commandes', label: 'Commandes', icon: <IconOrders />, badge: pendingCount || undefined },
-    { id: 'menu', label: 'Menu', icon: <IconMenu /> },
-    { id: 'tvs', label: 'TVs', icon: <IconTV /> },
-    { id: 'settings', label: 'Réglages', icon: <IconSettings /> },
+    { id: 'dashboard',     label: 'Dashboard',    icon: <IconDash />     },
+    { id: 'commandes',     label: 'Commandes',    icon: <IconOrders />,  badge: pendingCount || undefined },
+    { id: 'reservations',  label: 'Réservations', icon: <IconCalendar /> },
+    { id: 'menu',          label: 'Menu',         icon: <IconMenu />     },
+    { id: 'tvs',           label: 'TVs',          icon: <IconTV />       },
+    { id: 'settings',      label: 'Réglages',     icon: <IconSettings /> },
   ]
   return (
     <>
@@ -362,11 +378,11 @@ function Sidebar({ tab, setTab, logout, pendingCount, mobileOpen, setMobileOpen 
 /* ─── mobile bottom nav ──────────────────────────────────────── */
 function MobileBottomNav({ tab, setTab, pendingCount }: { tab: Tab; setTab: (t: Tab) => void; pendingCount: number }) {
   const items: NavItem[] = [
-    { id: 'dashboard', label: 'Accueil', icon: <IconDash /> },
-    { id: 'commandes', label: 'Cmdes', icon: <IconOrders />, badge: pendingCount || undefined },
-    { id: 'menu', label: 'Menu', icon: <IconMenu /> },
-    { id: 'tvs', label: 'TVs', icon: <IconTV /> },
-    { id: 'settings', label: 'Config', icon: <IconSettings /> },
+    { id: 'dashboard',    label: 'Accueil', icon: <IconDash />,      badge: pendingCount || undefined },
+    { id: 'commandes',    label: 'Cmdes',   icon: <IconOrders />    },
+    { id: 'reservations', label: 'Résas',   icon: <IconCalendar />  },
+    { id: 'menu',         label: 'Menu',    icon: <IconMenu />      },
+    { id: 'settings',     label: 'Config',  icon: <IconSettings />  },
   ]
   return (
     <nav className="mobile-bottom-nav">
@@ -934,11 +950,131 @@ function NewOrderToast({ count, onDismiss }: { count: number; onDismiss: () => v
   )
 }
 
+/* ─── reservations tab ───────────────────────────────────────── */
+const RES_STATUS = {
+  pending:   { bg: '#FEF3C7', color: '#D97706', dot: '#F59E0B', label: 'En attente' },
+  confirmed: { bg: '#D1FAE5', color: '#059669', dot: '#10B981', label: 'Confirmée'  },
+  cancelled: { bg: '#FEE2E2', color: '#DC2626', dot: '#EF4444', label: 'Annulée'    },
+}
+function ResStatusBadge({ status }: { status: Reservation['status'] }) {
+  const cfg = RES_STATUS[status] ?? RES_STATUS.pending
+  return (
+    <span style={{ background: cfg.bg, color: cfg.color, borderRadius: 99, fontSize: 11, fontWeight: 700, padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: cfg.dot, display: 'inline-block', flexShrink: 0, animation: status === 'pending' ? 'ping 1.4s ease-in-out infinite' : 'none' }} />
+      {cfg.label}
+    </span>
+  )
+}
+
+function ReservationsTab({ reservations, updateResStatus }: {
+  reservations: Reservation[]
+  updateResStatus: (id: number, status: string) => void
+}) {
+  const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled'>('all')
+  const filtered = filter === 'all' ? reservations : reservations.filter(r => r.status === filter)
+  const counts = {
+    all: reservations.length,
+    pending: reservations.filter(r => r.status === 'pending').length,
+    confirmed: reservations.filter(r => r.status === 'confirmed').length,
+    cancelled: reservations.filter(r => r.status === 'cancelled').length,
+  }
+
+  const fmtResDate = (d: string) => {
+    try { return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit', year: '2-digit' }) }
+    catch { return d }
+  }
+
+  return (
+    <div className="commandes-padding">
+      <div style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0 }}>Réservations</h1>
+          <p style={{ color: '#94A3B8', fontSize: 13, marginTop: 2 }}>
+            {reservations.length} réservation{reservations.length !== 1 ? 's' : ''} · {counts.pending} en attente
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {(['all', 'pending', 'confirmed', 'cancelled'] as const).map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              style={{ padding: '7px 14px', borderRadius: 99, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, background: filter === f ? '#1E4D3A' : '#F1F5F9', color: filter === f ? 'white' : '#64748B', transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5 }}>
+              {{ all: 'Toutes', pending: 'En attente', confirmed: 'Confirmées', cancelled: 'Annulées' }[f]}
+              <span style={{ opacity: .65, fontSize: 11 }}>({counts[f]})</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ background: 'white', borderRadius: 16, border: '1px solid #F1F5F9', boxShadow: '0 1px 4px rgba(0,0,0,.06)', overflow: 'hidden' }}>
+        {filtered.length === 0 ? (
+          <div style={{ padding: '48px 24px', textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>
+            Aucune réservation
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 680 }}>
+              <thead>
+                <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
+                  {['Nom', 'Date', 'Heure', 'Pers.', 'Contact', 'Message', 'Statut', 'Action'].map(h => (
+                    <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(r => (
+                  <tr key={r.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                    <td style={{ padding: '14px', fontWeight: 700, color: '#1E4D3A', fontSize: 13, whiteSpace: 'nowrap' }}>{r.fullname}</td>
+                    <td style={{ padding: '14px', fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>{fmtResDate(r.date)}</td>
+                    <td style={{ padding: '14px', fontSize: 13, color: '#334155', whiteSpace: 'nowrap' }}>{r.time}</td>
+                    <td style={{ padding: '14px', fontSize: 13, color: '#334155', textAlign: 'center' }}>{r.guests}</td>
+                    <td style={{ padding: '14px', fontSize: 12, color: '#64748B' }}>
+                      <div style={{ whiteSpace: 'nowrap' }}>{r.email}</div>
+                      {r.phone && <div style={{ color: '#94A3B8', whiteSpace: 'nowrap' }}>{r.phone}</div>}
+                    </td>
+                    <td style={{ padding: '14px', fontSize: 12, color: '#64748B', maxWidth: 160 }}>
+                      {r.message
+                        ? <span title={r.message} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.message}</span>
+                        : <span style={{ color: '#D1D5DB' }}>—</span>}
+                    </td>
+                    <td style={{ padding: '14px' }}><ResStatusBadge status={r.status} /></td>
+                    <td style={{ padding: '14px' }}>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {r.status === 'pending' && (
+                          <button onClick={() => updateResStatus(r.id, 'confirmed')}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: '#059669', color: 'white', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            ✓ Confirmer
+                          </button>
+                        )}
+                        {r.status !== 'cancelled' && (
+                          <button onClick={() => updateResStatus(r.id, 'cancelled')}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            Annuler
+                          </button>
+                        )}
+                        {r.status === 'cancelled' && (
+                          <button onClick={() => updateResStatus(r.id, 'pending')}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', background: 'white', color: '#6B7280', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            Réouvrir
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ─── main component ─────────────────────────────────────────── */
 export default function AdminClient() {
   const [authed, setAuthed] = useState(false)
   const [tab, setTab] = useState<Tab>('dashboard')
   const [orders, setOrders] = useState<Order[]>([])
+  const [reservations, setReservations] = useState<Reservation[]>([])
   const [mobileOpen, setMobileOpen] = useState(false)
   const [newOrderCount, setNewOrderCount] = useState(0)
   const [soundEnabled, setSoundEnabled] = useState(true)
@@ -987,6 +1123,24 @@ export default function AdminClient() {
     n.onclick = () => { window.focus(); n.close() }
   }, [])
 
+  const fetchReservations = useCallback(async () => {
+    try {
+      const res = await fetch('/api/reservations')
+      if (!res.ok) return
+      const data: Reservation[] = await res.json()
+      if (Array.isArray(data)) setReservations(data)
+    } catch { /* silent */ }
+  }, [])
+
+  const updateResStatus = useCallback(async (id: number, status: string) => {
+    await fetch('/api/reservations', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    })
+    fetchReservations()
+  }, [fetchReservations])
+
   const fetchOrders = useCallback(async () => {
     try {
       const res = await fetch('/api/orders')
@@ -1012,9 +1166,11 @@ export default function AdminClient() {
   useEffect(() => {
     if (!authed) return
     fetchOrders()
+    fetchReservations()
     const iv = setInterval(fetchOrders, 5000)
-    return () => clearInterval(iv)
-  }, [authed, fetchOrders])
+    const iv2 = setInterval(fetchReservations, 30000)
+    return () => { clearInterval(iv); clearInterval(iv2) }
+  }, [authed, fetchOrders, fetchReservations])
 
   // Force le nouveau SW à prendre le contrôle sans intervention DevTools
   useEffect(() => {
@@ -1493,7 +1649,7 @@ export default function AdminClient() {
               <IconHamburger />
             </button>
             <div style={{ flex: 1, fontWeight: 700, fontSize: 15, color: '#111827' }}>
-              {{ dashboard: 'Dashboard', commandes: 'Commandes', menu: 'Menu', tvs: 'TVs', settings: 'Réglages' }[tab]}
+              {{ dashboard: 'Dashboard', commandes: 'Commandes', reservations: 'Réservations', menu: 'Menu', tvs: 'TVs', settings: 'Réglages' }[tab]}
             </div>
             {pendingCount > 0 && (
               <button onClick={goToCommandes}
@@ -1545,9 +1701,10 @@ export default function AdminClient() {
 
           {/* Tab content */}
           <div style={{ flex: 1, overflow: 'auto' }} className="admin-tab-content">
-            {tab === 'dashboard' && <DashboardTab orders={orders} updateStatus={updateStatus} onGoToCommandes={goToCommandes} />}
-            {tab === 'commandes' && <CommandesTab orders={orders} updateStatus={updateStatus} />}
-            {tab === 'settings' && <SettingsTab soundEnabled={soundEnabled} onSoundChange={handleSoundChange} notifEnabled={notifEnabled} notifPermission={notifPermission} onNotifChange={handleNotifChange} onRequestNotif={requestNotifPermission} />}
+            {tab === 'dashboard'    && <DashboardTab orders={orders} updateStatus={updateStatus} onGoToCommandes={goToCommandes} />}
+            {tab === 'commandes'    && <CommandesTab orders={orders} updateStatus={updateStatus} />}
+            {tab === 'reservations' && <ReservationsTab reservations={reservations} updateResStatus={updateResStatus} />}
+            {tab === 'settings'     && <SettingsTab soundEnabled={soundEnabled} onSoundChange={handleSoundChange} notifEnabled={notifEnabled} notifPermission={notifPermission} onNotifChange={handleNotifChange} onRequestNotif={requestNotifPermission} />}
 
             <div id="admin-legacy-wrap" className={isAdminJsTab ? 'admin-legacy-active' : ''} style={{ display: isAdminJsTab ? 'block' : 'none', minHeight: '100%' }}>
               <div id="login-screen" style={{ display: 'none' }} />

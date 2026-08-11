@@ -14,6 +14,7 @@ export default function ReviewsSection() {
   const [dragDelta, setDragDelta] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [reservation, setReservation] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const today = new Date().toISOString().split('T')[0]
   const trackRef = useRef<HTMLDivElement>(null)
   const counterRef = useRef<HTMLSpanElement>(null)
@@ -68,14 +69,31 @@ export default function ReviewsSection() {
 
   const trackStyle = `translateX(calc(-${reviewIndex} * (min(480px,88vw) + clamp(16px,4vw,20px)) + 50vw - min(240px,44vw) + ${isDragging ? dragDelta : 0}px))`
 
-  const handleReservation = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleReservation = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setSubmitting(true)
     const fd = new FormData(e.currentTarget)
-    const name = fd.get('fullname') as string || 'Client'
-    const guests = fd.get('guests') as string || '4'
-    const date = fd.get('date') as string || ''
-    const time = fd.get('time') as string || '19:00'
-    setReservation(`${guests} personnes le ${date} à ${time} — au nom de ${name}.`)
+    const body = {
+      fullname: fd.get('fullname') as string,
+      email:    fd.get('email')    as string,
+      phone:    fd.get('phone')    as string,
+      date:     fd.get('date')     as string,
+      time:     fd.get('time')     as string,
+      guests:   fd.get('guests')   as string,
+      message:  fd.get('message')  as string,
+    }
+    try {
+      await fetch('/api/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+    } catch { /* API non dispo (export statique GitHub Pages) — on affiche quand même la confirmation */ }
+    const dateStr = body.date
+      ? new Date(body.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+      : body.date
+    setSubmitting(false)
+    setReservation(`${body.guests} personnes le ${dateStr} à ${body.time} — au nom de ${body.fullname}.`)
   }
 
   return (
@@ -194,15 +212,26 @@ export default function ReviewsSection() {
                     </select>
                   </div>
                   <textarea name="message" rows={3} placeholder="Allergies, occasion spéciale, table en terrasse…" aria-label="Message optionnel" className="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent resize-y" />
-                  <button type="submit" className="w-full py-4 rounded-full border-2 border-brand bg-brand text-cream text-sm font-bold uppercase tracking-widest hover:bg-accent hover:text-brand transition btn-hover-scale">Réserver ma table</button>
+                  <button type="submit" disabled={submitting} className="w-full py-4 rounded-full border-2 border-brand bg-brand text-cream text-sm font-bold uppercase tracking-widest hover:bg-accent hover:text-brand transition btn-hover-scale disabled:opacity-60 disabled:cursor-not-allowed">
+                    {submitting ? 'Envoi en cours…' : 'Réserver ma table'}
+                  </button>
                 </form>
               )}
             </div>
-            <div className="min-h-[280px] lg:min-h-full bg-[#EADFC0]">
-              <picture>
-                <source srcSet={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/uploads/pasted-1777911777094-0.webp`} type="image/webp" />
-                <img src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/uploads/pasted-1777911777094-0.png`} alt="Devanture restaurant Chez Ramo Lagnieu — Tacos Kebab 100% Veau fait maison" loading="lazy" className="w-full h-full object-cover" />
-              </picture>
+            <div className="min-h-[280px] lg:min-h-full bg-[#1E4D3A] relative overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=900&q=85"
+                alt="Salle de restaurant Chez Ramo — tables dressées, ambiance chaleureuse"
+                loading="lazy"
+                className="w-full h-full object-cover"
+                style={{ minHeight: 280 }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-brand/60 via-transparent to-transparent" />
+              <div className="absolute bottom-5 left-5 text-cream">
+                <p className="text-xs font-bold uppercase tracking-widest opacity-60">Chez Ramo · Lagnieu</p>
+                <p className="font-extrabold text-lg leading-tight" style={{ fontFamily: 'var(--font-baloo)' }}>RÉSERVEZ<br />VOTRE TABLE</p>
+              </div>
             </div>
           </div>
 

@@ -61,10 +61,7 @@ jobs:
             fi
           done
 
-      - name: Copier og-image.png (pour les partages sociaux)
-        run: |
-          src=$(find landing-next/out -maxdepth 2 -name "opengraph-image*" ! -name "*.html" ! -name "*.txt" 2>/dev/null | head -1)
-          if [ -n "$src" ]; then cp "$src" landing-next/out/og-image.png; fi
+      - name: og-image.png déjà inclus via public/ (rien à faire)
 
       - name: Copier uploads dans le dossier out
         run: |
