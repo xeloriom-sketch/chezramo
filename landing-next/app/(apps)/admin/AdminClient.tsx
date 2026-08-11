@@ -76,10 +76,13 @@ function ShieldIcon() {
   )
 }
 
+const REMEMBER_KEY = 'ramo_admin_remember'
+
 /* ─── login screen ───────────────────────────────────────────── */
 function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => Promise<boolean> }) {
   const [user, setUser] = useState('')
   const [pw, setPw] = useState('')
+  const [remember, setRemember] = useState(false)
   const [showPw, setShowPw] = useState(false)
   const [err, setErr] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -87,6 +90,13 @@ function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => Promi
   const [lockUntil, setLockUntil] = useState<number | null>(null)
   const [remaining, setRemaining] = useState(0)
   const [focusedField, setFocusedField] = useState<'user' | 'pw' | null>(null)
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(REMEMBER_KEY) || 'null')
+      if (saved?.user) { setUser(saved.user); setPw(saved.pw ?? ''); setRemember(true) }
+    } catch { /* ignore */ }
+  }, [])
 
   useEffect(() => {
     if (!lockUntil) return
@@ -105,7 +115,10 @@ function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => Promi
     setLoading(true)
     const ok = await onLogin(user, pw)
     setLoading(false)
-    if (!ok) {
+    if (ok) {
+      if (remember) localStorage.setItem(REMEMBER_KEY, JSON.stringify({ user, pw }))
+      else localStorage.removeItem(REMEMBER_KEY)
+    } else {
       const next = attempts + 1
       setAttempts(next)
       setErr(true)
@@ -148,14 +161,14 @@ function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => Promi
             Panneau d&apos;administration du restaurant
           </p>
 
-          {/* Username */}
+          {/* Email */}
           <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 8, letterSpacing: '.04em', textTransform: 'uppercase' }}>Identifiant</label>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 8, letterSpacing: '.04em', textTransform: 'uppercase' }}>Adresse mail</label>
             <div style={inputBox(focusedField === 'user', false)}>
-              <input type="text" value={user} onChange={e => setUser(e.target.value)}
+              <input type="email" value={user} onChange={e => setUser(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && submit()}
                 onFocus={() => setFocusedField('user')} onBlur={() => setFocusedField(null)}
-                placeholder="Votre identifiant" autoFocus autoComplete="username" disabled={isLocked}
+                placeholder="Votre adresse mail" autoFocus autoComplete="email" disabled={isLocked}
                 style={{ flex: 1, padding: '14px 18px', fontSize: 15, background: 'transparent', border: 'none', outline: 'none', color: '#1E293B', cursor: isLocked ? 'not-allowed' : 'text' }} />
             </div>
           </div>
@@ -176,6 +189,13 @@ function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => Promi
             </div>
           </div>
 
+          {/* Remember me */}
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, cursor: 'pointer', userSelect: 'none' }}>
+            <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)}
+              style={{ width: 16, height: 16, accentColor: '#1E4D3A', cursor: 'pointer' }} />
+            <span style={{ fontSize: 13, color: '#64748B' }}>Se souvenir de moi</span>
+          </label>
+
           {/* Error / lockout */}
           {isLocked ? (
             <div style={{ marginBottom: 14, padding: '10px 14px', borderRadius: 10, background: '#FEF2F2', border: '1px solid #FECACA', fontSize: 13, color: '#DC2626', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -185,7 +205,7 @@ function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => Promi
           ) : err ? (
             <p style={{ marginBottom: 14, fontSize: 13, color: '#DC2626', display: 'flex', alignItems: 'center', gap: 6 }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              Identifiant ou mot de passe incorrect{attempts > 1 ? ` · ${MAX_ATTEMPTS - attempts} essai${MAX_ATTEMPTS - attempts > 1 ? 's' : ''} restant` : ''}
+              Adresse mail ou mot de passe incorrect{attempts > 1 ? ` · ${MAX_ATTEMPTS - attempts} essai${MAX_ATTEMPTS - attempts > 1 ? 's' : ''} restant` : ''}
             </p>
           ) : <div style={{ marginBottom: 14 }} />}
 
@@ -654,7 +674,7 @@ function SettingsTab({ soundEnabled, onSoundChange, notifEnabled, notifPermissio
           <div style={{ padding: '14px 20px', borderBottom: '1px solid #F3F4F6', background: '#F8FAFC' }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.1em', margin: 0 }}>Accès admin</p>
           </div>
-          {row('Identifiant', 'ramo')}
+          {row('Adresse mail', 'admin@chezramo.fr')}
           <div style={{ padding: '13px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>Mot de passe</span>
             <span style={{ fontSize: 12, color: '#374151', fontFamily: 'monospace', background: '#F3F4F6', padding: '3px 10px', borderRadius: 8 }}>••••••••</span>

@@ -19,6 +19,8 @@ declare global {
 
 const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=VOTRE_PLACE_ID'
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+
 const ITEM_IMG: Record<string, string> = {
   // Sandwichs & galettes
   'Kebab':              '/uploads/cut/Kebab.png',
@@ -89,7 +91,7 @@ const ITEM_IMG: Record<string, string> = {
 }
 
 function getImg(title: string, fallback: string) {
-  return ITEM_IMG[title] ?? fallback
+  return BASE + (ITEM_IMG[title] ?? fallback)
 }
 
 // Zoom automatique sur la zone non-transparente de chaque image
@@ -805,7 +807,7 @@ export default function MenuQRPage() {
                         </span>
                         <div className="rounded-t-3xl overflow-hidden" style={{ background: BS_BG[i % BS_BG.length], height: 130, padding: '4px 4px 0 4px' }}>
                           <img
-                            src={bs.img} alt={bs.title}
+                            src={BASE + bs.img} alt={bs.title}
                             style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                           />
                         </div>

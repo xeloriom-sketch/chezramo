@@ -3,13 +3,15 @@
 import { useEffect } from 'react'
 import { useStore, categoryItems, fmtPrice, itemHasSauce, parseMenuPrice } from '@/lib/store'
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+
 const CATEGORIES = [
   {
     id: 'kebab',
     label: 'KEBAB & GALETTES',
     icon: 'https://img.icons8.com/ios/100/1E4D3A/burrito.png',
     cats: ['Sandwichs Vedettes','Nos Spécialités','Tradition & Galettes'],
-    img: '/uploads/Kebab.webp',
+    img: `${BASE}/uploads/Kebab.webp`,
     imgAlt: 'Kebab',
     featuredName: 'Kebab', featuredPrice: 9, featuredMenuPrice: 12,
     desc: 'Pain rond, veau de broche tranché minute, crudités fraîches, sauce au choix. Seul 9 € — Menu 12 €',
@@ -19,7 +21,7 @@ const CATEGORIES = [
     label: 'TACOS',
     icon: 'https://img.icons8.com/ios/100/1E4D3A/taco.png',
     cats: ['Tacos'],
-    img: '/uploads/Tacos.webp',
+    img: `${BASE}/uploads/Tacos.webp`,
     imgAlt: 'Tacos',
     featuredName: 'Tacos', featuredPrice: 10, featuredMenuPrice: 13,
     desc: 'Viande au choix, sauce et frites incluses. Format Maxi avec 2 viandes disponible.',
@@ -29,7 +31,7 @@ const CATEGORIES = [
     label: 'BURGERS & FINGER FOOD',
     icon: 'https://img.icons8.com/ios/100/1E4D3A/hamburger.png',
     cats: ['Burgers','Finger Food'],
-    img: '/uploads/Cheese Burger.webp',
+    img: `${BASE}/uploads/Cheese Burger.webp`,
     imgAlt: 'Burger',
     featuredName: 'Chicken Burger', featuredPrice: 6, featuredMenuPrice: 9,
     desc: 'Poulet croustillant, cheddar fondant, sauce maison. Menu burger +3 € (frites + boisson).',
@@ -39,7 +41,7 @@ const CATEGORIES = [
     label: 'ASSIETTES GOURMET',
     icon: 'https://img.icons8.com/ios/100/1E4D3A/french-fries.png',
     cats: ['Assiettes Gourmet','Assiettes Gourmet (Suite)','Assiettes & Salade'],
-    img: '/uploads/Assiette Escalope.png',
+    img: `${BASE}/uploads/Assiette Escalope.png`,
     imgAlt: 'Assiette Mixte',
     featuredName: 'Assiette Mixte', featuredPrice: 18, featuredMenuPrice: 0,
     desc: 'Kebab + 2 viandes au choix. Frites, blé et crudités fraîches du jour inclus dans toutes les assiettes.',
@@ -49,7 +51,7 @@ const CATEGORIES = [
     label: 'PLATS MAISON & QOFTE',
     icon: 'https://img.icons8.com/ios/100/1E4D3A/poultry-leg.png',
     cats: ['Plats Maison','Qofte Grillées','Burek & Spécialités'],
-    img: '/uploads/Qofte_x7.webp',
+    img: `${BASE}/uploads/Qofte_x7.webp`,
     imgAlt: 'Qofte',
     featuredName: 'Qofte ×7', featuredPrice: 11, featuredMenuPrice: 0,
     desc: '7 boulettes grillées maison. Frites, fromage, tomate, concombre et sauce blanche.',
@@ -59,7 +61,7 @@ const CATEGORIES = [
     label: 'SALADES & BUREK',
     icon: 'https://img.icons8.com/ios/100/1E4D3A/salad.png',
     cats: ['Salades Fraîches','Salades & Burek'],
-    img: '/uploads/Salade du Berger.webp',
+    img: `${BASE}/uploads/Salade du Berger.webp`,
     imgAlt: 'Salade',
     featuredName: 'Salade du Berger', featuredPrice: 10, featuredMenuPrice: 0, hasSauce: false,
     desc: 'Salades fraîches du jour. Burek feuilleté fait maison — fromage, épinards ou viande.',
@@ -69,7 +71,7 @@ const CATEGORIES = [
     label: 'DESSERTS & BOISSONS',
     icon: 'https://img.icons8.com/ios/100/1E4D3A/cake.png',
     cats: ['Desserts','Menu Enfants','Accompagnements & Sauces','Boissons & Boissons Chaudes'],
-    img: '/uploads/Trilece.webp',
+    img: `${BASE}/uploads/Trilece.webp`,
     imgAlt: 'Trilece',
     featuredName: 'Trilece', featuredPrice: 3.5, featuredMenuPrice: 0, hasSauce: false,
     desc: 'Douceurs maison, sodas, eaux et boissons chaudes. Menu Enfant disponible au choix.',
