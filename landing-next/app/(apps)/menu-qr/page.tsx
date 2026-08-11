@@ -153,7 +153,7 @@ const CATEGORIES = [
   { id: 'tacos',     label: 'TACOS',             img: '/uploads/cut/Maxi%20Tacos.png',         cats: ['Tacos'] },
   { id: 'burgers',   label: 'BURGERS & FINGER',  img: '/uploads/cut/Cheese%20Burger.png',      cats: ['Burgers','Finger Food'] },
   { id: 'assiettes', label: 'ASSIETTES',         img: '/uploads/cut/Assiette%20Kebab.png',     cats: ['Assiettes Gourmet','Assiettes Gourmet (Suite)','Assiettes & Salade'] },
-  { id: 'plats',     label: 'PLATS MAISON',      img: '/uploads/cut/Kofte.png',                cats: ['Plats Maison','Qofte Grillées','Burek & Spécialités'] },
+  { id: 'plats',     label: 'NOS PLATS',          img: '/uploads/cut/Kofte.png',                cats: ['Plats Maison','Qofte Grillées','Burek & Spécialités'] },
   { id: 'salades',   label: 'SALADES & BUREK',   img: '/uploads/cut/Salade%20du%20Berger.png', cats: ['Salades Fraîches','Salades & Burek'] },
   { id: 'drinks',    label: 'DESSERTS & DRINKS', img: '/uploads/cut/Tiramisu.png',             cats: ['Desserts','Menu Enfants','Accompagnements & Sauces','Boissons & Boissons Chaudes'] },
 ]
@@ -168,9 +168,9 @@ const BEST_SELLERS = [
 
 const PRIZES = [
   { id: 'drink', label: 'Une boisson offerte',  desc: 'Coca, Fanta, Sprite ou eau plate (33 cl)', color: '#3B82F6' },
-  { id: 'fries', label: 'Des frites offertes',  desc: 'Petite portion de frites maison',           color: '#F59E0B' },
-  { id: 'cake',  label: 'Un dessert offert',    desc: 'Trilece ou Tiramisu maison',                color: '#EC4899' },
-  { id: 'sauce', label: 'Une sauce bonus',      desc: 'Au choix parmi nos 12 sauces maison',       color: '#10B981' },
+  { id: 'fries', label: 'Des frites offertes',  desc: 'Petite portion de frites',                  color: '#F59E0B' },
+  { id: 'cake',  label: 'Un dessert offert',    desc: 'Trilece ou Tiramisu',                       color: '#EC4899' },
+  { id: 'sauce', label: 'Une sauce bonus',      desc: 'Au choix parmi nos 12 sauces',              color: '#10B981' },
   { id: 'gift',  label: '1 € offert',           desc: 'Sur votre prochaine visite chez Chez Ramo', color: '#8B5CF6' },
 ]
 

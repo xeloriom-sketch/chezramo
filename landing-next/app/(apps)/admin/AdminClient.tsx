@@ -252,7 +252,7 @@ function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => Promi
           <div style={{ position: 'absolute', bottom: 32, left: 32, color: 'white' }}>
             <div style={{ fontSize: 11, letterSpacing: '.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,.45)', marginBottom: 6 }}>Restaurant · Lagnieu</div>
             <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-.01em', lineHeight: 1.2 }}>Chez Ramo</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', marginTop: 4 }}>Kebab · Tacos · Burgers · Plats maison</div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,.5)', marginTop: 4 }}>Kebab · Tacos · Burgers · Spécialités</div>
           </div>
         </div>
       </section>

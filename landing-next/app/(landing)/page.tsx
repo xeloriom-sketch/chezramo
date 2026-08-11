@@ -81,7 +81,7 @@ const restaurantSchema = {
     { '@type': 'LocationFeatureSpecification', name: 'Halal certifié', value: true },
     { '@type': 'LocationFeatureSpecification', name: 'À emporter', value: true },
     { '@type': 'LocationFeatureSpecification', name: 'Commande en ligne', value: true },
-    { '@type': 'LocationFeatureSpecification', name: 'Fait maison', value: true },
+    { '@type': 'LocationFeatureSpecification', name: 'Artisanal', value: true },
   ],
   potentialAction: {
     '@type': 'OrderAction',

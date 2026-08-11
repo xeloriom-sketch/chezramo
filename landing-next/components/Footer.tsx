@@ -71,10 +71,10 @@ export default function Footer() {
         <div>
           <h3 className="font-extrabold text-xl text-brand mb-4" style={{ fontFamily: 'var(--font-baloo)' }}>CHEZ RAMO</h3>
           <p className="text-sm leading-relaxed text-[#4C7A63]">
-            Le meilleur kebab halal de Lagnieu (Ain). Depuis notre cuisine rue Pasteur, nous préparons chaque jour des kebabs généreux, galettes, tacos et spécialités balkaniques — broche artisanale, sauces maison, ingrédients frais.
+            Le meilleur kebab halal de Lagnieu (Ain). Depuis notre cuisine rue Pasteur, nous préparons chaque jour des kebabs généreux, galettes, tacos et spécialités balkaniques — broche artisanale, sauces préparées sur place, ingrédients frais.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            {['Halal ✓', 'Fait maison ✓', 'Commande en ligne ✓'].map(tag => (
+            {['Halal ✓', 'Artisanal ✓', 'Commande en ligne ✓'].map(tag => (
               <span key={tag} className="text-[10px] font-bold uppercase tracking-wider bg-brand/10 text-brand px-3 py-1.5 rounded-full">{tag}</span>
             ))}
           </div>

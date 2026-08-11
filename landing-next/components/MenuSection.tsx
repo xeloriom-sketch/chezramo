@@ -34,7 +34,7 @@ const CATEGORIES = [
     img: `${BASE}/uploads/Cheese Burger.webp`,
     imgAlt: 'Burger',
     featuredName: 'Chicken Burger', featuredPrice: 6, featuredMenuPrice: 9,
-    desc: 'Poulet croustillant, cheddar fondant, sauce maison. Menu burger +3 € (frites + boisson).',
+    desc: 'Poulet croustillant, cheddar fondant, sauce au choix. Menu burger +3 € (frites + boisson).',
   },
   {
     id: 'assiettes',
@@ -48,13 +48,13 @@ const CATEGORIES = [
   },
   {
     id: 'plats',
-    label: 'PLATS MAISON & QOFTE',
+    label: 'NOS PLATS & QOFTE',
     icon: 'https://img.icons8.com/ios/100/1E4D3A/poultry-leg.png',
     cats: ['Plats Maison','Qofte Grillées','Burek & Spécialités'],
     img: `${BASE}/uploads/Qofte_x7.webp`,
     imgAlt: 'Qofte',
     featuredName: 'Qofte ×7', featuredPrice: 11, featuredMenuPrice: 0,
-    desc: '7 boulettes grillées maison. Frites, fromage, tomate, concombre et sauce blanche.',
+    desc: '7 boulettes grillées. Frites, fromage, tomate, concombre et sauce blanche.',
   },
   {
     id: 'salades',
@@ -64,7 +64,7 @@ const CATEGORIES = [
     img: `${BASE}/uploads/Salade du Berger.webp`,
     imgAlt: 'Salade',
     featuredName: 'Salade du Berger', featuredPrice: 10, featuredMenuPrice: 0, hasSauce: false,
-    desc: 'Salades fraîches du jour. Burek feuilleté fait maison — fromage, épinards ou viande.',
+    desc: 'Salades fraîches du jour. Burek feuilleté — fromage, épinards ou viande.',
   },
   {
     id: 'drinks',
@@ -74,7 +74,7 @@ const CATEGORIES = [
     img: `${BASE}/uploads/Trilece.webp`,
     imgAlt: 'Trilece',
     featuredName: 'Trilece', featuredPrice: 3.5, featuredMenuPrice: 0, hasSauce: false,
-    desc: 'Douceurs maison, sodas, eaux et boissons chaudes. Menu Enfant disponible au choix.',
+    desc: 'Douceurs, sodas, eaux et boissons chaudes. Menu Enfant disponible au choix.',
   },
 ]
 
@@ -116,7 +116,7 @@ export default function MenuSection() {
           NOTRE CARTE
         </h2>
         <p className="mt-3 max-w-lg mx-auto text-sm leading-relaxed text-brand/60">
-          Kebabs, galettes, tacos, burgers, plats maison, salades, burek, desserts — viande halal certifiée.
+          Kebabs, galettes, tacos, burgers, nos plats, salades, burek, desserts — viande halal certifiée.
         </p>
       </div>
 
