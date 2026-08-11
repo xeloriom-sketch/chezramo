@@ -172,13 +172,13 @@ export default function ReviewsSection() {
                   <button onClick={() => setReservation(null)} className="mt-4 px-5 py-2.5 rounded-full border-2 border-brand bg-cream text-xs font-bold uppercase tracking-widest hover:bg-brand hover:text-cream transition">Nouvelle réservation</button>
                 </div>
               ) : (
-                <form onSubmit={handleReservation} className="mt-6 space-y-3">
+                <form onSubmit={handleReservation} className="mt-6 space-y-3 min-w-0 w-full">
                   <input type="text" name="fullname" placeholder="Nom complet" required aria-label="Nom complet" className="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input type="email" name="email" placeholder="Adresse e-mail" required aria-label="Adresse e-mail" className="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent" />
                     <input type="tel" name="phone" placeholder="Téléphone" required aria-label="Numéro de téléphone" className="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-accent" />
                   </div>
-                  <input type="date" name="date" required aria-label="Date de réservation" className="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent" />
+                  <input type="date" name="date" required aria-label="Date de réservation" className="w-full min-w-0 max-w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent appearance-none" style={{ boxSizing: 'border-box' }} />
                   <div className="grid grid-cols-2 gap-3">
                     <select name="time" required aria-label="Heure de réservation" className="w-full px-4 py-4 rounded-xl border-2 border-brand bg-transparent text-sm text-brand focus:outline-none focus:border-accent">
                       <option value="" disabled>Heure</option>
