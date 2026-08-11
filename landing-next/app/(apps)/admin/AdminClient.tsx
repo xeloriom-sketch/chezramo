@@ -54,12 +54,14 @@ function fmtDate(iso: string) {
 // On utilise un élément <audio> HTML plutôt que Web Audio API.
 // L'<audio> fonctionne dans les onglets en arrière-plan sans restriction
 // d'autoplay une fois débloqué par un geste utilisateur (le login).
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+
 let _audio: HTMLAudioElement | null = null
 export function warmupAudio() {
   // Appelé au login (geste utilisateur) pour débloquer l'audio du navigateur
   if (typeof window === 'undefined') return
   if (!_audio) {
-    _audio = new Audio('/ding.wav')
+    _audio = new Audio(`${BASE}/ding.wav`)
     _audio.volume = 1
   }
   // Lecture silencieuse à volume 0 pour débloquer l'autoplay policy
@@ -69,7 +71,7 @@ export function warmupAudio() {
 }
 function playNotificationSound() {
   try {
-    if (!_audio) _audio = new Audio('/ding.wav')
+    if (!_audio) _audio = new Audio(`${BASE}/ding.wav`)
     _audio.currentTime = 0
     _audio.volume = 1
     _audio.play().catch(() => {})
@@ -1890,9 +1892,9 @@ export default function AdminClient() {
         <NewOrderToast count={newOrderCount} onDismiss={() => setNewOrderCount(0)} />
       )}
 
-      <link rel="stylesheet" href="/admin/admin.css" />
+      <link rel="stylesheet" href={`${BASE}/admin/admin.css`} />
       <Script
-        src="/admin/admin.js"
+        src={`${BASE}/admin/admin.js`}
         strategy="afterInteractive"
         onLoad={() => {
           // DOMContentLoaded already fired — manually init admin.js
