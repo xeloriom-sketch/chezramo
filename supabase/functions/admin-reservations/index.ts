@@ -1,7 +1,7 @@
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'content-type, authorization',
-  'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
 }
 
 async function generateToken(): Promise<string> {
@@ -32,6 +32,15 @@ function sbHeaders() {
     'Content-Type': 'application/json',
     'apikey': Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY') ?? ''}`,
+  }
+}
+
+function sbServiceHeaders() {
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+  return {
+    'Content-Type': 'application/json',
+    'apikey': serviceKey,
+    'Authorization': `Bearer ${serviceKey}`,
   }
 }
 
@@ -137,6 +146,20 @@ Deno.serve(async (req) => {
       method: 'PATCH',
       headers: { ...sbHeaders(), Prefer: 'return=minimal' },
       body: JSON.stringify({ status }),
+    })
+    if (!res.ok) return Response.json({ error: 'Erreur base de données.' }, { status: 500, headers: CORS })
+    return Response.json({ ok: true }, { headers: CORS })
+  }
+
+  if (req.method === 'DELETE') {
+    const url = new URL(req.url)
+    const id = Number(url.searchParams.get('id') ?? '0')
+    if (!Number.isInteger(id) || id < 1) {
+      return Response.json({ error: 'id invalide.' }, { status: 400, headers: CORS })
+    }
+    const res = await fetch(`${SB}/rest/v1/reservations?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { ...sbServiceHeaders(), Prefer: 'return=minimal' },
     })
     if (!res.ok) return Response.json({ error: 'Erreur base de données.' }, { status: 500, headers: CORS })
     return Response.json({ ok: true }, { headers: CORS })

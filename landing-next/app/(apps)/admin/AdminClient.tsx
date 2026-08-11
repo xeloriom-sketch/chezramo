@@ -568,7 +568,7 @@ function OrderCard({ o, updateStatus }: { o: Order; updateStatus: (id: number, s
 }
 
 /* ─── mobile reservation card ────────────────────────────────── */
-function ResCard({ r, updateResStatus }: { r: Reservation; updateResStatus: (id: number, s: string) => void }) {
+function ResCard({ r, updateResStatus, deleteRes }: { r: Reservation; updateResStatus: (id: number, s: string) => void; deleteRes: (id: number) => void }) {
   const fmtD = (d: string) => {
     try { return new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' }) }
     catch { return d }
@@ -605,6 +605,11 @@ function ResCard({ r, updateResStatus }: { r: Reservation; updateResStatus: (id:
             Réouvrir
           </button>
         )}
+        <button onClick={() => deleteRes(r.id)}
+          style={{ padding: '9px 12px', background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          title="Supprimer">
+          🗑
+        </button>
       </div>
     </div>
   )
@@ -1078,9 +1083,10 @@ function ResStatusBadge({ status }: { status: Reservation['status'] }) {
   )
 }
 
-function ReservationsTab({ reservations, updateResStatus }: {
+function ReservationsTab({ reservations, updateResStatus, deleteRes }: {
   reservations: Reservation[]
   updateResStatus: (id: number, status: string) => void
+  deleteRes: (id: number) => void
 }) {
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'cancelled'>('all')
   const filtered = (filter === 'all' ? reservations : reservations.filter(r => r.status === filter))
@@ -1130,7 +1136,7 @@ function ReservationsTab({ reservations, updateResStatus }: {
           <>
             {/* Mobile cards */}
             <div className="res-cards">
-              {filtered.map(r => <ResCard key={r.id} r={r} updateResStatus={updateResStatus} />)}
+              {filtered.map(r => <ResCard key={r.id} r={r} updateResStatus={updateResStatus} deleteRes={deleteRes} />)}
             </div>
             {/* Desktop table */}
             <div className="res-table-wrap" style={{ overflowX: 'auto' }}>
@@ -1179,6 +1185,11 @@ function ReservationsTab({ reservations, updateResStatus }: {
                               Réouvrir
                             </button>
                           )}
+                          <button onClick={() => deleteRes(r.id)}
+                            style={{ display: 'inline-flex', alignItems: 'center', padding: '5px 8px', background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                            title="Supprimer définitivement">
+                            🗑
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1305,6 +1316,13 @@ export default function AdminClient() {
       headers: adminFetchHeaders(true),
       body: JSON.stringify({ id, status }),
     })
+    fetchReservations()
+  }, [fetchReservations])
+
+  const deleteReservation = useCallback(async (id: number) => {
+    if (!window.confirm('Supprimer définitivement cette réservation ?')) return
+    const url = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/admin-reservations?id=${id}` : `/api/reservations?id=${id}`
+    await fetch(url, { method: 'DELETE', headers: adminFetchHeaders() })
     fetchReservations()
   }, [fetchReservations])
 
@@ -1896,7 +1914,7 @@ export default function AdminClient() {
           <div style={{ flex: 1, overflow: 'auto' }} className="admin-tab-content">
             {tab === 'dashboard'    && <DashboardTab orders={orders} updateStatus={updateStatus} onGoToCommandes={goToCommandes} />}
             {tab === 'commandes'    && <CommandesTab orders={orders} updateStatus={updateStatus} />}
-            {tab === 'reservations' && <ReservationsTab reservations={reservations} updateResStatus={updateResStatus} />}
+            {tab === 'reservations' && <ReservationsTab reservations={reservations} updateResStatus={updateResStatus} deleteRes={deleteReservation} />}
             {tab === 'settings'     && <SettingsTab soundEnabled={soundEnabled} onSoundChange={handleSoundChange} notifEnabled={notifEnabled} notifPermission={notifPermission} onNotifChange={handleNotifChange} onRequestNotif={requestNotifPermission} />}
 
             <div id="admin-legacy-wrap" className={isAdminJsTab ? 'admin-legacy-active' : ''} style={{ display: isAdminJsTab ? 'block' : 'none', minHeight: '100%' }}>
