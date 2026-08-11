@@ -36,7 +36,7 @@ export default function DifferenceSection() {
       <div className="absolute inset-0 pattern-bg" />
 
       <div className="relative -mx-4 h-[220px] md:h-[clamp(200px,28vw,360px)] mb-10 md:mb-0">
-        <div className="absolute -top-0.5 left-0 right-0 h-[200px] md:h-[44%] bg-cream rounded-b-[240px] md:rounded-b-[120px]" />
+        <div className="absolute -top-0.5 left-0 right-0 h-[200px] md:h-[44%] bg-cream rounded-b-[200px] md:rounded-b-[120px]" />
         <div className="absolute left-[-6%] top-[40%] md:top-[18%] w-[26%] aspect-square rounded-full bg-cream" />
         <div className="absolute left-[10%] top-[45%] md:top-[6%] w-[34%] aspect-square rounded-full bg-cream" />
         <div className="absolute left-[32%] top-[38%] md:top-0 w-[38%] aspect-square rounded-full bg-cream" />
