@@ -1,6 +1,7 @@
 'use client'
 
 import { useStore } from '@/lib/store'
+import { BASE } from '@/lib/basePath'
 
 const Stars = ({ color = 'text-accent' }: { color?: string }) => (
   <div className={`flex justify-center gap-0.5 mt-4 ${color}`}>
@@ -36,8 +37,8 @@ export default function BestSellers() {
           {/* Kebab */}
           <div className="relative pt-4 pb-6 px-5 rounded-3xl bg-brand text-cream text-center reveal-stagger card-lift" style={{ '--stagger-delay': '0ms' } as React.CSSProperties}>
             <picture>
-              <source srcSet="/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.webp" type="image/webp" />
-              <img src="/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.png" alt="Kebab halal broche artisanale Chez Ramo Lagnieu" loading="lazy" width={420} height={280} className="bs-img w-[90%] h-40 sm:h-52 object-cover mx-auto -mt-12 sm:-mt-16" />
+              <source srcSet={`${BASE}/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.webp`} type="image/webp" />
+              <img src={`${BASE}/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.png`} alt="Kebab halal broche artisanale Chez Ramo Lagnieu" loading="lazy" width={420} height={280} className="bs-img w-[90%] h-40 sm:h-52 object-cover mx-auto -mt-12 sm:-mt-16" />
             </picture>
             <Stars />
             <h3 className="font-extrabold text-2xl mt-2" style={{ fontFamily: 'var(--font-baloo)' }}>LE KEBAB</h3>
@@ -51,8 +52,8 @@ export default function BestSellers() {
           {/* Galette */}
           <div className="relative pt-4 pb-6 px-5 rounded-3xl bg-accent text-brand text-center reveal-stagger card-lift" style={{ '--stagger-delay': '130ms' } as React.CSSProperties}>
             <picture>
-              <source srcSet="/uploads/lucid-origin_An_ultra-realistic_close-up_panoramic_photograph_of_a_steaming_premium_kebab_dur-0.webp" type="image/webp" />
-              <img src="/uploads/lucid-origin_An_ultra-realistic_close-up_panoramic_photograph_of_a_steaming_premium_kebab_dur-0.png" alt="Galette durum kebab Chez Ramo Lagnieu" loading="lazy" width={420} height={280} className="bs-img w-[90%] h-40 sm:h-52 object-cover mx-auto -mt-12 sm:-mt-16" />
+              <source srcSet={`${BASE}/uploads/lucid-origin_An_ultra-realistic_close-up_panoramic_photograph_of_a_steaming_premium_kebab_dur-0.webp`} type="image/webp" />
+              <img src={`${BASE}/uploads/lucid-origin_An_ultra-realistic_close-up_panoramic_photograph_of_a_steaming_premium_kebab_dur-0.png`} alt="Galette durum kebab Chez Ramo Lagnieu" loading="lazy" width={420} height={280} className="bs-img w-[90%] h-40 sm:h-52 object-cover mx-auto -mt-12 sm:-mt-16" />
             </picture>
             <Stars color="text-brand" />
             <h3 className="font-extrabold text-2xl mt-2" style={{ fontFamily: 'var(--font-baloo)' }}>LA GALETTE</h3>
@@ -66,8 +67,8 @@ export default function BestSellers() {
           {/* Tacos */}
           <div className="relative pt-4 pb-6 px-5 rounded-3xl bg-[#C8412F] text-cream text-center reveal-stagger card-lift" style={{ '--stagger-delay': '260ms' } as React.CSSProperties}>
             <picture>
-              <source srcSet="/uploads/gpt-image-2_A_high-resolution_commercial_food_photograph_of_a_massive_perfectly_rectangular--0.webp" type="image/webp" />
-              <img src="/uploads/gpt-image-2_A_high-resolution_commercial_food_photograph_of_a_massive_perfectly_rectangular--0.png" alt="Tacos maison Chez Ramo Lagnieu" loading="lazy" width={420} height={280} className="bs-img w-[90%] h-40 sm:h-52 object-cover mx-auto -mt-12 sm:-mt-16" />
+              <source srcSet={`${BASE}/uploads/gpt-image-2_A_high-resolution_commercial_food_photograph_of_a_massive_perfectly_rectangular--0.webp`} type="image/webp" />
+              <img src={`${BASE}/uploads/gpt-image-2_A_high-resolution_commercial_food_photograph_of_a_massive_perfectly_rectangular--0.png`} alt="Tacos maison Chez Ramo Lagnieu" loading="lazy" width={420} height={280} className="bs-img w-[90%] h-40 sm:h-52 object-cover mx-auto -mt-12 sm:-mt-16" />
             </picture>
             <Stars />
             <h3 className="font-extrabold text-2xl mt-2" style={{ fontFamily: 'var(--font-baloo)' }}>TACOS</h3>

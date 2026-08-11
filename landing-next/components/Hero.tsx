@@ -1,3 +1,5 @@
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+
 export default function Hero() {
   const marqueeItems = [
     'KEBAB','FRITES FRAÎCHES','SAUCES SECRÈTES','DURUM DORÉ',
@@ -24,9 +26,9 @@ export default function Hero() {
 
         <div className="relative max-w-3xl mx-auto -mt-[3vw] z-20">
           <picture>
-            <source srcSet="/uploads/pasted-1785851492914-0.webp" type="image/webp" />
+            <source srcSet={`${BASE}/uploads/pasted-1785851492914-0.webp`} type="image/webp" />
             <img
-              src="/uploads/pasted-1785851492914-0.png"
+              src={`${BASE}/uploads/pasted-1785851492914-0.png`}
               alt="Kebab halal maison — Chez Ramo restaurant Lagnieu"
               loading="eager"
               fetchPriority="high"

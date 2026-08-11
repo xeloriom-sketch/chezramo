@@ -23,7 +23,7 @@ export default function TVPage() {
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&family=Anton&family=Nunito:wght@600;700;800&family=Playfair+Display:ital,wght@0,700;0,900;1,600&display=swap" rel="stylesheet" />
-      <link rel="stylesheet" href="/tv/style.css" />
+      <link rel="stylesheet" href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/tv/style.css`} />
 
       <div id="app">
         <div id="header">
@@ -39,7 +39,7 @@ export default function TVPage() {
       </div>
 
       {/* TV menu logic — vanilla JS, runs after hydration */}
-      <Script src="/tv/menu.js" strategy="afterInteractive" />
+      <Script src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}/tv/menu.js`} strategy="afterInteractive" />
 
       {/* Service Worker registration */}
       <Script id="sw-init" strategy="afterInteractive">{`
