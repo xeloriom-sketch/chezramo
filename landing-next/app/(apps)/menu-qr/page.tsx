@@ -237,7 +237,6 @@ export default function MenuQRPage() {
   const [wheelSpun,        setWheelSpun]        = useState(false)
   const [confetti,         setConfetti]         = useState<ReturnType<typeof makeConfetti>>([])
   const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const chipRowRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -280,9 +279,6 @@ export default function MenuQRPage() {
   }, [mounted]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!chipRowRef.current) return
-    const btn = chipRowRef.current.querySelector<HTMLElement>(`[data-cat="${selCatId}"]`)
-    btn?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
     contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
   }, [selCatId])
 
@@ -742,7 +738,7 @@ export default function MenuQRPage() {
 
           {showSearch && searchQ.length > 1 ? (
             /* ── SEARCH RESULTS — sur fond crème ── */
-            <div className="min-h-screen qr-section-in px-4 pt-4 pb-32" style={{ background: '#F4F0E4' }}>
+            <div className="min-h-screen qr-section-in px-4 pt-4 pb-32" style={{ background: '#F7F4ED' }}>
               <p className="text-[10px] font-extrabold uppercase tracking-[.14em] mb-3" style={{ fontFamily: 'var(--font-baloo)', color: '#1A422B' }}>
                 {searchResults.length} résultat{searchResults.length !== 1 ? 's' : ''} pour «&nbsp;{searchQ}&nbsp;»
               </p>
@@ -751,7 +747,7 @@ export default function MenuQRPage() {
                   const cat = CATEGORIES.find(c => c.cats.includes(item.category))
                   return (
                     <div key={item.title} className="flex items-center gap-3 rounded-2xl p-3 qr-item-in"
-                      style={{ '--item-delay': `${i * 30}ms`, background: 'white', boxShadow: '0 2px 12px rgba(0,0,0,.08)' } as React.CSSProperties}>
+                      style={{ '--item-delay': `${i * 30}ms`, background: 'white', border: '1px solid #E8E3D7', boxShadow: '0 2px 8px rgba(0,0,0,.04)' } as React.CSSProperties}>
                       <SmartFoodImg
                         src={getImg(item.title, cat?.img ?? '')} alt={item.title}
                         size={76} bg={IMG_BG[i % IMG_BG.length]}
@@ -796,13 +792,32 @@ export default function MenuQRPage() {
                 </picture>
               </div>
 
+              {/* ── FEATURED OFFER CARD ── */}
+              <div style={{
+                margin: '0 16px 8px',
+                background: 'linear-gradient(135deg, #E8A93B 0%, #f0bc4e 100%)',
+                borderRadius: 20,
+                padding: '14px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+              }}>
+                <div>
+                  <p style={{ color: '#1A422B', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Notre spécialité</p>
+                  <p style={{ color: '#1A422B', fontSize: 18, fontWeight: 900, fontFamily: 'var(--font-baloo)', lineHeight: 1.1 }}>Kebab Géant<br/>à emporter</p>
+                  <p style={{ color: 'rgba(30,77,58,.65)', fontSize: 11, marginTop: 4 }}>Broche artisanale • Sauces maison</p>
+                </div>
+                <img src={`${BASE}/uploads/cut/Kebab%20Geant.png`} alt="Kebab Géant" style={{ width: 80, height: 80, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.25))' }} />
+              </div>
+
               {/* ── WAVE DIVIDER ── */}
               <svg viewBox="0 0 500 60" preserveAspectRatio="none" style={{ width: '100%', height: 50, display: 'block', marginTop: -2, background: '#1E4D3A' }}>
-                <path d="M0,60 L0,35 C40,10 110,10 150,35 C190,10 310,10 350,35 C390,10 460,10 500,35 L500,60 Z" fill="#F4F0E4" />
+                <path d="M0,60 L0,35 C40,10 110,10 150,35 C190,10 310,10 350,35 C390,10 460,10 500,35 L500,60 Z" fill="#F7F4ED" />
               </svg>
 
               {/* ── MENU SECTION (fond crème) ── */}
-              <div style={{ background: '#F4F0E4', minHeight: '60vh' }}>
+              <div style={{ background: '#F7F4ED', minHeight: '60vh' }}>
 
                 {/* Titre NOTRE CARTE */}
                 <div className="text-center px-4 pt-2 pb-4">
@@ -813,6 +828,7 @@ export default function MenuQRPage() {
                       fontSize: 'clamp(1.8rem,6vw,2.2rem)',
                       color: '#1A422B',
                       textShadow: '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff',
+                      letterSpacing: '0.08em',
                     }}
                   >
                     NOTRE CARTE
@@ -858,35 +874,58 @@ export default function MenuQRPage() {
                   </div>
                 </div>
 
-                {/* Category chips — sticky */}
-                <div
-                  ref={chipRowRef}
-                  className="sticky z-10 pt-3 pb-3"
-                  style={{ top: showSearch ? 116 : 62, backdropFilter: 'blur(12px)', background: 'rgba(244,240,228,.95)' }}
-                >
-                  <div className="flex gap-2 qr-noscroll qr-hscroll" style={{ paddingLeft: 16, paddingRight: 16 }}>
-                    {CATEGORIES.map(cat => {
-                      const active = selCatId === cat.id
-                      return (
-                        <button
-                          key={cat.id}
-                          data-cat={cat.id}
-                          onClick={() => setSelCatId(cat.id)}
-                          className="shrink-0 text-[10px] font-extrabold uppercase tracking-wider px-4 py-2 rounded-full whitespace-nowrap transition-all duration-300 active:scale-95"
-                          style={{
-                            fontFamily: 'var(--font-baloo)',
-                            background: active ? '#1A422B' : 'white',
-                            color: active ? 'white' : '#1a1a1a',
-                            border: active ? '2px solid #1A422B' : '2px solid #e2dbc9',
-                            boxShadow: active ? '0 0 0 3px rgba(235,177,52,0.9)' : 'none',
-                            transform: active ? 'scale(1.06)' : 'scale(1)',
-                          }}
-                        >
-                          {cat.label.split(' & ')[0]}
-                        </button>
-                      )
-                    })}
-                  </div>
+                {/* Category tiles — grille visuelle 3 colonnes */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, padding: '0 12px 16px' }}>
+                  {CATEGORIES.map(cat => {
+                    const active = selCatId === cat.id
+                    return (
+                      <button
+                        key={cat.id}
+                        data-cat={cat.id}
+                        onClick={() => setSelCatId(cat.id)}
+                        style={{
+                          background: active ? '#1A422B' : 'white',
+                          borderRadius: 16,
+                          padding: '10px 6px',
+                          border: active ? '2px solid #1A422B' : '2px solid #e8e3d7',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: 6,
+                          boxShadow: active ? '0 0 0 3px rgba(232,169,59,.7), 0 4px 16px rgba(26,66,43,.2)' : '0 2px 8px rgba(0,0,0,.05)',
+                          transition: 'all 0.2s',
+                          cursor: 'pointer',
+                          WebkitTapHighlightColor: 'transparent',
+                        }}
+                      >
+                        <div style={{
+                          width: 52, height: 52,
+                          background: active ? 'rgba(255,255,255,.15)' : '#F4F0E4',
+                          borderRadius: 12,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          overflow: 'hidden',
+                        }}>
+                          <img
+                            src={BASE + cat.img}
+                            alt={cat.label}
+                            style={{ width: 46, height: 46, objectFit: 'contain', display: 'block' }}
+                          />
+                        </div>
+                        <span style={{
+                          fontSize: 9,
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          color: active ? 'white' : '#1A422B',
+                          textAlign: 'center',
+                          lineHeight: 1.2,
+                          fontFamily: 'var(--font-baloo)',
+                        }}>
+                          {cat.label.split(' & ')[0].split(' ')[0]}
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
 
                 {/* Items grid — 2 colonnes */}
@@ -911,20 +950,20 @@ export default function MenuQRPage() {
                           className="qr-item-in active:scale-[0.97] transition-transform"
                           style={{
                             '--item-delay': `${i * 35}ms`,
-                            borderRadius: 16,
+                            borderRadius: 18,
                             overflow: 'hidden',
                             background: 'white',
-                            boxShadow: '0 2px 10px rgba(0,0,0,.08)',
+                            boxShadow: '0 4px 16px rgba(0,0,0,.07)',
                             cursor: 'pointer',
                             WebkitTapHighlightColor: 'transparent',
                           } as React.CSSProperties}
                         >
                           {/* Banner */}
-                          <div style={{ background: '#123321', height: 115, borderRadius: '16px 16px 0 0', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div style={{ background: IMG_BG[i % IMG_BG.length], height: 115, borderRadius: '18px 18px 0 0', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {item.menu_price && item.menu_price !== '' && (
                               <span
                                 className="absolute top-2 right-2 z-10 text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider"
-                                style={{ fontFamily: 'var(--font-baloo)', background: 'rgba(0,0,0,.55)', color: 'white' }}
+                                style={{ fontFamily: 'var(--font-baloo)', background: '#FFF3D6', color: '#C68B00' }}
                               >
                                 Menu {item.menu_price}&thinsp;€
                               </span>
@@ -937,14 +976,14 @@ export default function MenuQRPage() {
                                 maxWidth: '90%',
                                 objectFit: 'contain',
                                 display: 'block',
-                                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
+                                filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))',
                               }}
                               loading="lazy"
                             />
                           </div>
                           {/* Info */}
                           <div style={{ padding: '8px 8px 10px' }}>
-                            <div className="font-extrabold uppercase leading-tight" style={{ fontSize: 13, color: '#111827', fontFamily: 'var(--font-baloo)' }}>
+                            <div className="font-extrabold uppercase leading-tight" style={{ fontSize: 13, color: '#111', fontFamily: 'var(--font-baloo)' }}>
                               {item.title}
                             </div>
                             <div className="line-clamp-2 leading-snug mt-0.5" style={{ fontSize: 10, color: '#6b7280' }}>
