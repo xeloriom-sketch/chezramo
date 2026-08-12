@@ -219,6 +219,7 @@ function saveSession(s: Session) { localStorage.setItem(LS_KEY, JSON.stringify(s
 
 export default function MenuQRPage() {
   const [phase,            setPhase]            = useState<Phase>('menu')
+  const [view,             setView]             = useState<'categories' | 'items'>('categories')
   const [selCatId,         setSelCatId]         = useState('kebab')
   const [searchQ,          setSearchQ]          = useState('')
   const [showSearch,       setShowSearch]       = useState(false)
@@ -755,10 +756,10 @@ export default function MenuQRPage() {
         </header>
 
         {/* CONTENT */}
-        <div ref={contentRef} className="flex-1 overflow-y-auto qr-noscroll pb-24" style={{ background: '#F8F8F6' }}>
+        <div ref={contentRef} className="flex-1 overflow-y-auto qr-noscroll" style={{ background: 'white' }}>
 
-          {showSearch && searchQ.length > 1 ? (
-            /* ── SEARCH RESULTS — sur fond blanc ── */
+          {/* ── SEARCH RESULTS ── */}
+          {showSearch && searchQ.length > 1 && (
             <div className="min-h-screen qr-section-in px-4 pt-4 pb-32" style={{ background: 'white' }}>
               <p className="text-[10px] font-extrabold uppercase tracking-[.14em] mb-3" style={{ fontFamily: 'var(--font-baloo)', color: '#111' }}>
                 {searchResults.length} résultat{searchResults.length !== 1 ? 's' : ''} pour «&nbsp;{searchQ}&nbsp;»
@@ -789,92 +790,110 @@ export default function MenuQRPage() {
                 )}
               </div>
             </div>
-          ) : (
-            /* ── MAIN VIEW ── */
-            <>
-              {/* ── A. FEATURED CARD ── */}
-              <div style={{ padding: '12px 16px 0' }}>
-                <div style={{
-                  background: 'linear-gradient(135deg, #1E4D3A 0%, #163d2e 100%)',
-                  borderRadius: 24,
-                  padding: '20px 20px 0',
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'space-between',
-                  overflow: 'hidden',
-                  minHeight: 150,
-                  position: 'relative',
-                }}>
-                  {/* Pattern subtil en fond */}
-                  <div className="pattern-bg" style={{ position: 'absolute', inset: 0, opacity: 0.06, pointerEvents: 'none' }} />
-                  {/* Texte gauche */}
-                  <div style={{ zIndex: 1, paddingBottom: 20 }}>
-                    <span style={{
-                      background: '#E8A93B', color: '#1E4D3A',
-                      fontSize: 9, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em',
-                      padding: '3px 10px', borderRadius: 99, display: 'inline-block', marginBottom: 10,
-                    }}>
-                      Spécialité maison
-                    </span>
-                    <h2 style={{
-                      color: 'white', fontFamily: 'var(--font-baloo)',
-                      fontSize: 'clamp(20px, 5.5vw, 26px)', fontWeight: 900,
-                      lineHeight: 1.1, marginBottom: 8,
-                    }}>
-                      Que souhaitez-<br/>vous manger ?
-                    </h2>
-                    <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, lineHeight: 1.4 }}>
-                      Broche artisanale · Sauces maison
-                    </p>
-                  </div>
-                  {/* Image kebab droite — coupe en bas du card */}
-                  <div style={{ flexShrink: 0, zIndex: 1 }}>
-                    <img
-                      src={`${BASE}/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.png`}
-                      alt="Kebab Chez Ramo"
-                      style={{
-                        width: 130, height: 140,
-                        objectFit: 'contain',
-                        display: 'block',
-                        filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.4))',
-                        animation: 'heroFloat 4s ease-in-out infinite',
-                        marginBottom: -4,
-                      }}
-                    />
-                  </div>
-                </div>
+          )}
+
+          {/* ── VUE CATÉGORIES — style McDonald's ── */}
+          {view === 'categories' && !showSearch && (
+            <div style={{ padding: '16px', paddingBottom: 100 }}>
+
+              {/* Greeting */}
+              <div style={{ marginBottom: 20 }}>
+                <p style={{ fontSize: 11, color: '#999', fontWeight: 600, marginBottom: 4 }}>
+                  {table ? `Table ${table}` : 'Bienvenue !'}
+                </p>
+                <h1 style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(22px,6vw,28px)', fontWeight: 900, color: '#111', lineHeight: 1.1 }}>
+                  Que souhaitez-vous<br/>manger ?
+                </h1>
               </div>
 
-              {/* ── B. SECTION "LES + COMMANDÉS" ── */}
-              <div style={{ marginTop: 24 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', marginBottom: 12 }}>
-                  <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 12, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#111' }}>
-                    Les plus commandés
-                  </h2>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: '#888' }}>5 plats</span>
-                </div>
-                <div className="flex gap-3 qr-noscroll qr-hscroll" style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 4 }}>
+              {/* Grille 2×N catégories */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {CATEGORIES.map((cat, i) => {
+                  const count = catItems(cat.cats).length
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => { setSelCatId(cat.id); setView('items') }}
+                      className="qr-card-in"
+                      style={{
+                        '--card-delay': `${i * 60}ms`,
+                        background: 'white',
+                        borderRadius: 20,
+                        padding: '16px 12px 14px',
+                        border: '1.5px solid #F0EDE8',
+                        boxShadow: '0 2px 12px rgba(0,0,0,.06)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 10,
+                        cursor: 'pointer',
+                        WebkitTapHighlightColor: 'transparent',
+                        transition: 'transform 0.15s ease',
+                      } as React.CSSProperties}
+                    >
+                      {/* Image food */}
+                      <div style={{
+                        width: 88, height: 88,
+                        background: IMG_BG[i % IMG_BG.length],
+                        borderRadius: 16,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        overflow: 'hidden',
+                      }}>
+                        <img
+                          src={BASE + cat.img}
+                          alt={cat.label}
+                          loading="lazy"
+                          style={{ width: 80, height: 80, objectFit: 'contain', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.15))' }}
+                        />
+                      </div>
+                      {/* Label */}
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                          fontFamily: 'var(--font-baloo)',
+                          fontSize: 12, fontWeight: 800,
+                          color: '#111', textTransform: 'uppercase' as const,
+                          letterSpacing: '0.04em', lineHeight: 1.25,
+                          marginBottom: 3,
+                        }}>
+                          {cat.label.split(' & ')[0]}
+                        </div>
+                        <div style={{ fontSize: 10, color: '#AAA', fontWeight: 600 }}>
+                          {count} plats
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Best sellers — en dessous de la grille */}
+              <div style={{ marginTop: 28 }}>
+                <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 12, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#111', marginBottom: 14 }}>
+                  Les plus commandés
+                </h2>
+                <div className="qr-noscroll qr-hscroll" style={{ display: 'flex', gap: 12, paddingBottom: 4 }}>
                   {BEST_SELLERS.map((bs, i) => (
                     <button
                       key={bs.title}
-                      onClick={() => setSelCatId(bs.catId)}
-                      className="flex flex-col shrink-0 active:scale-95 transition-transform qr-card-in"
-                      style={{ width: 120, '--card-delay': `${i * 75}ms` } as React.CSSProperties}
+                      onClick={() => { setSelCatId(bs.catId); setView('items') }}
+                      className="qr-card-in"
+                      style={{ '--card-delay': `${i * 60}ms`, flexShrink: 0, width: 115, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' } as React.CSSProperties}
                     >
-                      <div style={{ background: 'white', borderRadius: 20, border: '1.5px solid #EEECE8', overflow: 'visible', position: 'relative', boxShadow: '0 2px 12px rgba(0,0,0,.06)' }}>
-                        <span style={{
-                          position: 'absolute', top: 8, left: 8, zIndex: 10,
-                          color: 'white', fontSize: 8, fontWeight: 800, fontFamily: 'var(--font-baloo)',
-                          background: '#1E4D3A', padding: '2px 7px', borderRadius: 99, textTransform: 'uppercase' as const,
-                        }}>
-                          {bs.badge}
-                        </span>
-                        <div style={{ background: BS_BG[i % BS_BG.length], borderRadius: '18px 18px 0 0', height: 115, padding: '4px 4px 0 4px', overflow: 'hidden' }}>
-                          <img src={BASE + bs.img} alt={bs.title} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                      <div style={{ background: 'white', borderRadius: 18, border: '1.5px solid #F0EDE8', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,.05)' }}>
+                        <div style={{ background: BS_BG[i % BS_BG.length], height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                          <span style={{
+                            position: 'absolute', top: 7, left: 7,
+                            background: '#1E4D3A', color: 'white',
+                            fontSize: 8, fontWeight: 800, fontFamily: 'var(--font-baloo)',
+                            padding: '2px 7px', borderRadius: 99, textTransform: 'uppercase' as const,
+                          }}>
+                            {bs.badge}
+                          </span>
+                          <img src={BASE + bs.img} alt={bs.title} style={{ width: '85%', height: '85%', objectFit: 'contain' }} />
                         </div>
-                        <div style={{ padding: '10px 10px 12px' }}>
-                          <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase' as const, color: '#111', lineHeight: 1.2 }}>{bs.title}</div>
-                          <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 14, fontWeight: 900, color: '#1E4D3A', marginTop: 4 }}>{bs.price}&thinsp;€</div>
+                        <div style={{ padding: '8px 10px 10px' }}>
+                          <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 10, fontWeight: 800, textTransform: 'uppercase' as const, color: '#111', lineHeight: 1.2, marginBottom: 3 }}>{bs.title}</div>
+                          <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 13, fontWeight: 900, color: '#1E4D3A' }}>{bs.price}&thinsp;€</div>
                         </div>
                       </div>
                     </button>
@@ -882,220 +901,185 @@ export default function MenuQRPage() {
                 </div>
               </div>
 
-              {/* ── C. SECTION MENU — catégories + items ── */}
-              <div style={{ marginTop: 24 }}>
-                {/* Titre section */}
-                <div style={{ padding: '0 16px', marginBottom: 12 }}>
-                  <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 12, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#111' }}>
-                    Notre carte
-                  </h2>
-                </div>
+            </div>
+          )}
 
-                {/* CATEGORY CHIPS — horizontal scroll pill */}
-                <div
-                  className="qr-noscroll qr-hscroll"
-                  style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 16, display: 'flex', gap: 8 }}
-                >
+          {/* ── VUE ITEMS — list view style McDonald's ── */}
+          {view === 'items' && !showSearch && (
+            <div style={{ paddingBottom: 100 }}>
+
+              {/* Bouton retour + chips catégories */}
+              <div style={{
+                position: 'sticky', top: 62,
+                background: 'rgba(255,255,255,.95)', backdropFilter: 'blur(12px)',
+                zIndex: 10, paddingTop: 12, paddingBottom: 10,
+                borderBottom: '1px solid #F0EDE8',
+              }}>
+                {/* Ligne 1: back + nom catégorie */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 16, paddingRight: 16, marginBottom: 10 }}>
+                  <button
+                    onClick={() => setView('categories')}
+                    style={{
+                      width: 34, height: 34, borderRadius: '50%',
+                      background: '#F0EDE8', border: 'none',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', flexShrink: 0,
+                      WebkitTapHighlightColor: 'transparent',
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E4D3A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                  </button>
+                  <span style={{ fontFamily: 'var(--font-baloo)', fontSize: 15, fontWeight: 800, color: '#111', textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>
+                    {selCat.label}
+                  </span>
+                  <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, padding: '2px 10px', borderRadius: 99, background: '#F0EDE8', color: '#888', fontFamily: 'var(--font-baloo)' }}>
+                    {selItems.length} plats
+                  </span>
+                </div>
+                {/* Ligne 2: chips catégories pour switcher */}
+                <div className="qr-noscroll qr-hscroll" style={{ display: 'flex', gap: 8, paddingLeft: 16, paddingRight: 16 }}>
                   {CATEGORIES.map(cat => {
                     const active = selCatId === cat.id
                     return (
                       <button
                         key={cat.id}
-                        data-cat={cat.id}
                         onClick={() => setSelCatId(cat.id)}
                         style={{
-                          flexShrink: 0,
-                          padding: '8px 16px',
-                          borderRadius: 99,
+                          flexShrink: 0, padding: '7px 14px', borderRadius: 99,
                           border: active ? '2px solid #1E4D3A' : '2px solid #EEECE8',
                           background: active ? '#1E4D3A' : 'white',
-                          color: active ? 'white' : '#444',
-                          fontSize: 11,
-                          fontWeight: 800,
+                          color: active ? 'white' : '#555',
+                          fontSize: 10, fontWeight: 800,
                           fontFamily: 'var(--font-baloo)',
-                          textTransform: 'uppercase' as const,
-                          letterSpacing: '0.05em',
-                          whiteSpace: 'nowrap' as const,
-                          cursor: 'pointer',
-                          boxShadow: active ? '0 2px 12px rgba(30,77,58,.25)' : 'none',
-                          transition: 'all 0.2s',
+                          textTransform: 'uppercase' as const, letterSpacing: '0.05em',
+                          whiteSpace: 'nowrap' as const, cursor: 'pointer',
                           WebkitTapHighlightColor: 'transparent',
                         }}
                       >
-                        {cat.label.split(' & ')[0]}
+                        {cat.label.split(' & ')[0].split(' ')[0]}
                       </button>
                     )
                   })}
                 </div>
-
-                {/* PRODUCT GRID — 2 colonnes sur fond blanc */}
-                <div key={selCatId} className="qr-section-in" style={{ padding: '0 12px', paddingBottom: 120 }}>
-                  {/* Section label */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                    <span style={{ fontFamily: 'var(--font-baloo)', fontSize: 13, fontWeight: 800, color: '#111', textTransform: 'uppercase' as const }}>
-                      {selCat.label}
-                    </span>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 10px', borderRadius: 99, background: '#F0EDE8', color: '#888', fontFamily: 'var(--font-baloo)' }}>
-                      {selItems.length} plats
-                    </span>
-                  </div>
-
-                  {/* Grille 2 colonnes */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-                    {selItems.map((item, i) => (
-                      <div
-                        key={item.title}
-                        role="button"
-                        onClick={() => setSelItem(item)}
-                        className="qr-item-in"
-                        style={{
-                          '--item-delay': `${i * 30}ms`,
-                          background: 'white',
-                          borderRadius: 20,
-                          border: '1.5px solid #EEECE8',
-                          overflow: 'hidden',
-                          boxShadow: '0 2px 10px rgba(0,0,0,.05)',
-                          cursor: 'pointer',
-                          WebkitTapHighlightColor: 'transparent',
-                          transition: 'transform 0.15s ease',
-                        } as React.CSSProperties}
-                      >
-                        {/* Banner image pastel */}
-                        <div style={{
-                          background: IMG_BG[i % IMG_BG.length],
-                          height: 110,
-                          position: 'relative',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          overflow: 'hidden',
-                        }}>
-                          {item.menu_price && item.menu_price !== '' && (
-                            <span style={{
-                              position: 'absolute', top: 8, right: 8,
-                              background: '#FFF3D6', color: '#B8860B',
-                              fontSize: 8, fontWeight: 800, fontFamily: 'var(--font-baloo)',
-                              padding: '2px 6px', borderRadius: 99, textTransform: 'uppercase' as const,
-                              letterSpacing: '0.05em',
-                            }}>
-                              Menu {item.menu_price}€
-                            </span>
-                          )}
-                          <img
-                            src={getImg(item.title, selCat.img)}
-                            alt={item.title}
-                            loading="lazy"
-                            style={{
-                              maxHeight: 95, maxWidth: '88%',
-                              objectFit: 'contain', display: 'block',
-                              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.12))',
-                            }}
-                          />
-                        </div>
-                        {/* Info */}
-                        <div style={{ padding: '9px 10px 11px' }}>
-                          <div style={{
-                            fontFamily: 'var(--font-baloo)', fontSize: 12, fontWeight: 800,
-                            textTransform: 'uppercase' as const, color: '#111', lineHeight: 1.25,
-                            marginBottom: 3,
-                          }}>
-                            {item.title}
-                          </div>
-                          <div style={{
-                            fontSize: 10, color: '#999', lineHeight: 1.3, marginBottom: 6,
-                            overflow: 'hidden', display: '-webkit-box',
-                            WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const,
-                          }}>
-                            {item.description}
-                          </div>
-                          <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 15, fontWeight: 900, color: '#1E4D3A' }}>
-                            {item.price}&thinsp;€
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
-            </>
+
+              {/* Liste items — rows style McDonald's */}
+              <div key={selCatId} className="qr-section-in" style={{ padding: '8px 0' }}>
+                {selItems.map((item, i) => (
+                  <div
+                    key={item.title}
+                    role="button"
+                    onClick={() => setSelItem(item)}
+                    className="qr-item-in"
+                    style={{
+                      '--item-delay': `${i * 25}ms`,
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      padding: '14px 16px',
+                      borderBottom: '1px solid #F7F4F0',
+                      cursor: 'pointer', background: 'white',
+                      WebkitTapHighlightColor: 'transparent',
+                    } as React.CSSProperties}
+                  >
+                    {/* Image */}
+                    <div style={{
+                      width: 76, height: 76, flexShrink: 0,
+                      background: IMG_BG[i % IMG_BG.length],
+                      borderRadius: 14,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      overflow: 'hidden',
+                    }}>
+                      <SmartFoodImg
+                        src={getImg(item.title, selCat.img)} alt={item.title}
+                        size={76} bg="transparent" radius={0}
+                      />
+                    </div>
+                    {/* Infos */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 13, fontWeight: 800, color: '#111', textTransform: 'uppercase' as const, lineHeight: 1.2, marginBottom: 3 }}>
+                        {item.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#AAA', lineHeight: 1.35, marginBottom: item.menu_price ? 4 : 0,
+                        overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const,
+                      }}>
+                        {item.description}
+                      </div>
+                      {item.menu_price && item.menu_price !== '' && (
+                        <span style={{
+                          display: 'inline-block',
+                          background: '#FFF3D6', color: '#B8860B',
+                          fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-baloo)',
+                          padding: '2px 8px', borderRadius: 99, textTransform: 'uppercase' as const,
+                        }}>
+                          Menu {item.menu_price}&thinsp;€
+                        </span>
+                      )}
+                    </div>
+                    {/* Prix */}
+                    <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                      <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 15, fontWeight: 900, color: '#1E4D3A' }}>
+                        {item.price}&thinsp;€
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
           )}
+
         </div>
 
-        {/* ── BOTTOM NAV — pill flottant ──────────────────────────────────── */}
-        <div
-          className="fixed z-40"
-          style={{
-            bottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
-            left: '50%', transform: 'translateX(-50%)',
-            width: 'min(calc(100% - 32px), 360px)',
-          }}
-        >
-          <nav
-            className="flex items-center relative"
-            style={{
-              background: 'white',
-              borderRadius: 30,
-              height: 70,
-              boxShadow: '0 -2px 20px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.1)',
-              padding: '0 12px',
-              overflow: 'visible',
-            }}
+        {/* ── BOTTOM NAV — flat compact icon bar ───────────────────────────── */}
+        <div style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
+          background: 'white',
+          borderTop: '1px solid #EEECE8',
+          boxShadow: '0 -2px 12px rgba(0,0,0,.05)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          display: 'flex', alignItems: 'center',
+          height: 54,
+        }}>
+          {/* Accueil */}
+          <button
+            onClick={() => { setShowSearch(false); setSearchQ(''); setView('categories'); contentRef.current?.scrollTo({ top: 0 }) }}
+            style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}
           >
-            {/* Accueil */}
-            <button
-              onClick={() => { setShowSearch(false); setSearchQ(''); contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) }}
-              className="flex-1 flex flex-col items-center justify-center gap-1.5 h-full transition-all active:scale-90"
-              style={{ color: !showSearch ? '#1E4D3A' : '#C8C8C8' }}
-            >
-              <HomeIcon size={22} />
-              <span style={{ fontFamily: 'var(--font-baloo)', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Accueil
-              </span>
-            </button>
-
-            {/* Centre FAB — Finir & noter */}
-            <div className="relative flex flex-col items-center justify-center" style={{ width: 88, overflow: 'visible' }}>
-              <button
-                onClick={() => setShowModal(true)}
-                className="flex flex-col items-center justify-center gap-1.5 transition-all active:scale-90"
-                style={{ overflow: 'visible' }}
-              >
-                {/* Anneau blanc autour du FAB */}
-                <div style={{
-                  width: 66, height: 66, borderRadius: '50%',
-                  background: 'white',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  marginTop: -32,
-                  boxShadow: '0 0 0 3px white',
-                }}>
-                  <div style={{
-                    width: 58, height: 58, borderRadius: '50%',
-                    background: 'linear-gradient(145deg, #E8A93B 0%, #d4922a 100%)',
-                    boxShadow: '0 4px 20px rgba(232,169,59,.5)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    animation: 'fabGlow 2.5s ease-in-out infinite',
-                  }}>
-                    <GiftIcon size={26} color="white" />
-                  </div>
-                </div>
-                <span style={{ fontFamily: 'var(--font-baloo)', fontSize: 8.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#1E4D3A', whiteSpace: 'nowrap' }}>
-                  Finir &amp; noter
-                </span>
-              </button>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <HomeIcon size={20} color={view === 'categories' && !showSearch ? '#1E4D3A' : '#C0C0C0'} />
+              <span style={{ fontSize: 8, fontWeight: 700, fontFamily: 'var(--font-baloo)', textTransform: 'uppercase', letterSpacing: '0.05em', color: view === 'categories' && !showSearch ? '#1E4D3A' : '#C0C0C0' }}>Menu</span>
             </div>
+          </button>
 
-            {/* Recherche */}
-            <button
-              onClick={() => { setShowSearch(s => !s); setSearchQ('') }}
-              className="flex-1 flex flex-col items-center justify-center gap-1.5 h-full transition-all active:scale-90"
-              style={{ color: showSearch ? '#1E4D3A' : '#C8C8C8' }}
-            >
-              <SearchIcon size={22} />
-              <span style={{ fontFamily: 'var(--font-baloo)', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Recherche
-              </span>
-            </button>
-          </nav>
+          {/* Centre — Finir & noter */}
+          <button
+            onClick={() => setShowModal(true)}
+            style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: 'linear-gradient(145deg, #E8A93B, #d4922a)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 10px rgba(232,169,59,.4)',
+              }}>
+                <GiftIcon size={18} color="white" />
+              </div>
+              <span style={{ fontSize: 7.5, fontWeight: 700, fontFamily: 'var(--font-baloo)', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#E8A93B', whiteSpace: 'nowrap' }}>Avis &amp; cadeau</span>
+            </div>
+          </button>
+
+          {/* Recherche */}
+          <button
+            onClick={() => { setShowSearch(s => !s); setSearchQ('') }}
+            style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <SearchIcon size={20} color={showSearch ? '#1E4D3A' : '#C0C0C0'} />
+              <span style={{ fontSize: 8, fontWeight: 700, fontFamily: 'var(--font-baloo)', textTransform: 'uppercase', letterSpacing: '0.05em', color: showSearch ? '#1E4D3A' : '#C0C0C0' }}>Chercher</span>
+            </div>
+          </button>
         </div>
       </div>
     </>
