@@ -75,8 +75,8 @@ export const metadata: Metadata = {
   },
 
   alternates: {
-    canonical: SITE_URL,
-    languages: { 'fr-FR': SITE_URL },
+    canonical: `${SITE_URL}/`,
+    languages: { 'fr-FR': `${SITE_URL}/` },
   },
 
   icons: {
@@ -99,7 +99,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={`${baloo.variable} ${dmSans.variable}`}>
       <head>
         {/* Preconnects */}
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
+        <link rel="preconnect" href="https://hqfewokpvjmxezhnurbm.supabase.co" crossOrigin="" />
+        <link rel="preconnect" href="https://img.icons8.com" crossOrigin="" />
         <link rel="dns-prefetch" href="https://maps.googleapis.com" />
 
         {/* Preload LCP image */}

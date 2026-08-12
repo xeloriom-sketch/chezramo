@@ -24,7 +24,7 @@ export default function BestSellers() {
             <h2 className="font-extrabold text-[clamp(30px,4vw,52px)] text-brand" style={{ fontFamily: 'var(--font-baloo)' }}>
               LES PLUS COMMANDÉS
             </h2>
-            <p className="mt-3 max-w-md text-sm sm:text-base leading-relaxed text-[#8A8A8A]">
+            <p className="mt-3 max-w-md text-sm sm:text-base leading-relaxed text-[#5A5A5A]">
               Les trois incontournables que nos clients commandent tous les jours. Ajoutez-les au panier en un clic.
             </p>
           </div>

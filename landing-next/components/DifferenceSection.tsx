@@ -67,6 +67,8 @@ export default function DifferenceSection() {
               src={`${BASE}/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.png`}
               alt="Kebab gourmet artisanal Chez Ramo — meilleur kebab Lagnieu"
               loading="lazy"
+              width={1024}
+              height={1024}
               className="w-full max-w-[340px] md:w-[clamp(350px,50vw,750px)] md:max-w-none h-auto object-contain mx-auto diff-burger"
             />
           </picture>

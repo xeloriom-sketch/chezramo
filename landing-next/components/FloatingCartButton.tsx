@@ -13,8 +13,8 @@ export default function FloatingCartButton() {
     <div className="float-cart sm:hidden">
       <button
         onClick={() => openCart()}
-        className="flex items-center gap-2 sm:gap-3 bg-brand text-cream px-4 sm:px-5 py-3.5 rounded-full shadow-2xl font-extrabold text-sm border-2 border-accent"
-        style={{ fontFamily: 'var(--font-baloo)' }}
+        className="flex items-center gap-2 sm:gap-3 bg-brand text-cream px-5 rounded-full shadow-2xl font-extrabold text-sm border-2 border-accent active:scale-95 transition-transform"
+        style={{ fontFamily: 'var(--font-baloo)', height: '52px' }}
       >
         <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>

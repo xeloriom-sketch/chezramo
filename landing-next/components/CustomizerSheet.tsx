@@ -40,7 +40,7 @@ export default function CustomizerSheet() {
           <div className="w-10 h-1 rounded-full bg-brand/25" />
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 sm:px-8 pb-6 sm:pb-8 pt-2 sm:pt-6 safe-pb2" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 sm:px-8 pt-2 sm:pt-6" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
           {/* header */}
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
@@ -93,11 +93,12 @@ export default function CustomizerSheet() {
                   <button
                     key={drink}
                     onClick={() => setCustDrink(drink)}
-                    className={`pill-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border-2 text-[11px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-widest transition-all duration-150 flex items-center gap-1 ${
+                    className={`pill-sm px-3 py-2 sm:px-4 sm:py-2 rounded-full border-2 text-[11px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-widest transition-all duration-150 flex items-center gap-1 ${
                       custDrink === drink
                         ? 'bg-[#1E4D3A] border-[#1E4D3A] text-[#F5ECD9] scale-105 shadow-md'
                         : 'bg-transparent border-[#1E4D3A]/40 text-[#1E4D3A] hover:border-[#1E4D3A] hover:scale-[1.03]'
                     }`}
+                    style={{ minHeight: '40px' }}
                   >
                     {custDrink === drink && (
                       <svg className="w-3 h-3 text-[#F5ECD9] shrink-0" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -131,11 +132,12 @@ export default function CustomizerSheet() {
                   <button
                     key={sauce}
                     onClick={() => toggleSauce(sauce)}
-                    className={`pill-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border-2 text-[11px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-widest transition-all duration-150 flex items-center gap-1 ${
+                    className={`pill-sm px-3 py-2 sm:px-4 sm:py-2 rounded-full border-2 text-[11px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-widest transition-all duration-150 flex items-center gap-1 ${
                       custSauces.includes(sauce)
                         ? 'bg-accent border-accent text-brand scale-105 shadow-md'
                         : 'bg-transparent border-brand/50 text-brand hover:border-brand hover:scale-[1.03]'
                     }`}
+                    style={{ minHeight: '40px' }}
                   >
                     {custSauces.includes(sauce) && (
                       <svg className="w-3 h-3 text-brand shrink-0" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -165,11 +167,12 @@ export default function CustomizerSheet() {
                   <button
                     key={ingr}
                     onClick={() => toggleRemoval(ingr)}
-                    className={`pill-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border-2 text-[11px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-widest transition-all duration-150 flex items-center gap-1 ${
+                    className={`pill-sm px-3 py-2 sm:px-4 sm:py-2 rounded-full border-2 text-[11px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-widest transition-all duration-150 flex items-center gap-1 ${
                       custRemovals.includes(ingr)
                         ? 'bg-[#C8412F] border-[#C8412F] text-cream scale-105 shadow-md'
                         : 'bg-transparent border-brand/40 text-brand hover:border-brand hover:scale-[1.03]'
                     }`}
+                    style={{ minHeight: '40px' }}
                   >
                     {custRemovals.includes(ingr) && (
                       <svg className="w-3 h-3 text-cream shrink-0" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>

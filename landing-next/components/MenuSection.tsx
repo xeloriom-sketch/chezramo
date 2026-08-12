@@ -104,7 +104,7 @@ export default function MenuSection() {
   }, [setMenuData])
 
   const ArrowIcon = () => (
-    <svg className="w-7 h-7 shrink-0 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+    <svg className="w-5 h-5 md:w-7 md:h-7 shrink-0 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
       <line x1="4" y1="12" x2="20" y2="12"/><polyline points="14 6 20 12 14 18"/>
     </svg>
   )
@@ -115,7 +115,7 @@ export default function MenuSection() {
         <h2 className="font-extrabold text-[clamp(28px,4.5vw,56px)] text-brand uppercase tracking-tight leading-none" style={{ fontFamily: 'var(--font-baloo)' }}>
           NOTRE CARTE
         </h2>
-        <p className="mt-3 max-w-lg mx-auto text-sm leading-relaxed text-brand/60">
+        <p className="mt-3 max-w-lg mx-auto text-sm leading-relaxed text-brand/80">
           Kebabs, galettes, tacos, burgers, nos plats, salades, burek, desserts — viande halal certifiée.
         </p>
       </div>
@@ -136,13 +136,13 @@ export default function MenuSection() {
                   onClick={() => toggleCategory(cat.id)}
                   className={`w-full flex items-center justify-between text-brand transition ${
                     isOpen
-                      ? 'bg-accent py-5 px-6 font-extrabold text-2xl md:text-3xl tracking-wide'
-                      : 'py-5 px-2 font-extrabold text-2xl md:text-3xl tracking-wide hover:opacity-70 group'
+                      ? 'bg-accent py-5 px-6 font-extrabold text-base md:text-2xl lg:text-3xl tracking-wide'
+                      : 'py-5 px-2 font-extrabold text-base md:text-2xl lg:text-3xl tracking-wide hover:opacity-70 group'
                   }`}
                   style={{ fontFamily: 'var(--font-baloo)' }}
                 >
-                  <div className="flex items-center gap-5">
-                    <img src={cat.icon} alt="" loading="lazy" className={`w-12 h-12 object-contain shrink-0 ${!isOpen ? 'group-hover:scale-110 transition-transform' : ''}`} />
+                  <div className="flex items-center gap-2 md:gap-5">
+                    <img src={cat.icon} alt="" loading="lazy" className={`w-8 h-8 md:w-12 md:h-12 object-contain shrink-0 ${!isOpen ? 'group-hover:scale-110 transition-transform' : ''}`} />
                     <span dangerouslySetInnerHTML={{ __html: cat.label.replace(/&/g, '&amp;') }} />
                   </div>
                   <span className={`${isOpen ? 'rotate-90' : !isOpen ? 'group-hover:translate-x-1' : ''} transition-transform duration-300`}>
@@ -154,7 +154,7 @@ export default function MenuSection() {
                   <div className="pt-6 pb-4 px-2 md:px-3 grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-start">
                     {/* Featured image card */}
                     <div
-                      className="md:col-span-4 bg-brand rounded-2xl overflow-hidden shadow-lg cursor-pointer group"
+                      className="hidden md:block md:col-span-4 bg-brand rounded-2xl overflow-hidden shadow-lg cursor-pointer group"
                       onClick={() => openCustomizer(cat.featuredName, cat.featuredPrice, cat.featuredMenuPrice, cat.hasSauce !== false)}
                     >
                       <div className="bg-[#F0E2BA] flex items-end justify-center h-56 overflow-hidden">
@@ -168,18 +168,18 @@ export default function MenuSection() {
                     </div>
 
                     {/* Item list */}
-                    <div className="md:col-span-8">
+                    <div className="col-span-1 md:col-span-8">
                       {categoryItems(menuData, cat.cats).map((item, idx) => (
                         <div key={item.title} className={`flex justify-between items-start gap-3 ${idx === 0 ? 'pb-3' : 'py-3 border-t border-brand/20'}`}>
-                          <div>
+                          <div className="min-w-0 flex-1">
                             <h2 className="font-black text-base md:text-lg text-brand uppercase" style={{ fontFamily: 'var(--font-baloo)' }}>{item.title}</h2>
-                            <p className="text-xs text-brand/55 mt-0.5">{item.description}</p>
+                            <p className="text-xs text-brand/55 mt-0.5 line-clamp-1 md:line-clamp-none">{item.description}</p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="font-black text-lg text-brand tabular-nums" style={{ fontFamily: 'var(--font-baloo)' }}>{fmtPrice(item.price)}</span>
+                            <span className="font-black text-sm md:text-lg text-brand tabular-nums" style={{ fontFamily: 'var(--font-baloo)' }}>{fmtPrice(item.price)}</span>
                             <button
                               onClick={() => openCustomizer(item.title, parseMenuPrice(item.price), parseMenuPrice(item.menu_price), itemHasSauce(item.category))}
-                              className="w-11 h-11 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center"
+                              className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-brand text-cream font-bold hover:bg-brand/75 transition flex items-center justify-center"
                             >+</button>
                           </div>
                         </div>

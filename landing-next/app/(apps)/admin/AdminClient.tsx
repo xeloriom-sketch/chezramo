@@ -281,6 +281,18 @@ function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => Promi
 }
 
 /* ─── icons ──────────────────────────────────────────────────── */
+function IconTrash() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+}
+function IconBell() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+}
+function IconBellOff() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+}
+function IconRefresh() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+}
 function IconDash() {
   return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
 }
@@ -444,26 +456,26 @@ function StatCard({ icon, iconBg, iconColor, label, value, badge, badgeGreen, fo
   onAction?: () => void; actionLabel?: string
 }) {
   return (
-    <div style={{ background: 'white', padding: 20, borderRadius: 20, border: '1px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,.05)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 42, height: 42, borderRadius: 13, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: iconColor, flexShrink: 0 }}>
+    <div style={{ background: 'white', padding: 16, borderRadius: 16, border: '1px solid #F3F4F6', boxShadow: '0 1px 4px rgba(0,0,0,.05)', minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12, gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 11, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: iconColor, flexShrink: 0 }}>
             {icon}
           </div>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>{label}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#374151', lineHeight: 1.3 }}>{label}</span>
         </div>
         {actionLabel && onAction && (
-          <button onClick={onAction} style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', border: '1px solid #E5E7EB', padding: '4px 10px', borderRadius: 8, background: 'none', cursor: 'pointer' }}>{actionLabel}</button>
+          <button onClick={onAction} style={{ fontSize: 10, fontWeight: 600, color: '#6B7280', border: '1px solid #E5E7EB', padding: '3px 8px', borderRadius: 7, background: 'none', cursor: 'pointer', flexShrink: 0 }}>{actionLabel}</button>
         )}
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-        <span style={{ fontSize: 28, fontWeight: 800, color: '#111827', fontFamily: "'Baloo 2', system-ui" }}>{value}</span>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 26, fontWeight: 800, color: '#111827', fontFamily: "'Baloo 2', system-ui" }}>{value}</span>
         {badge && (
-          <span style={{ fontSize: 11, fontWeight: 700, color: badgeGreen ? '#059669' : '#EF4444', background: badgeGreen ? '#D1FAE5' : '#FEE2E2', padding: '2px 7px', borderRadius: 6 }}>{badge}</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: badgeGreen ? '#059669' : '#EF4444', background: badgeGreen ? '#D1FAE5' : '#FEE2E2', padding: '2px 6px', borderRadius: 5 }}>{badge}</span>
         )}
       </div>
       {footer && (
-        <div style={{ borderTop: '1px solid #F9FAFB', paddingTop: 10, marginTop: 4, fontSize: 11, color: '#9CA3AF' }}>
+        <div style={{ borderTop: '1px solid #F9FAFB', paddingTop: 8, marginTop: 2, fontSize: 10, color: '#9CA3AF' }}>
           {footer}
         </div>
       )}
@@ -606,9 +618,9 @@ function ResCard({ r, updateResStatus, deleteRes }: { r: Reservation; updateResS
           </button>
         )}
         <button onClick={() => deleteRes(r.id)}
-          style={{ padding: '9px 12px', background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          style={{ padding: '9px 12px', background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           title="Supprimer">
-          🗑
+          <IconTrash />
         </button>
       </div>
     </div>
@@ -688,7 +700,7 @@ function SettingsTab({ soundEnabled, onSoundChange, notifEnabled, notifPermissio
         <h1 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0 }}>Réglages</h1>
         <p style={{ color: '#94A3B8', fontSize: 13, marginTop: 2 }}>Configuration du panneau d&apos;administration</p>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 560 }}>
+      <div className="settings-wrap" style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 560 }}>
 
         {/* Notifications */}
         <div style={{ background: 'white', borderRadius: 16, border: '1px solid #F3F4F6', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.05)' }}>
@@ -711,8 +723,8 @@ function SettingsTab({ soundEnabled, onSoundChange, notifEnabled, notifPermissio
           <div style={{ padding: '12px 20px', borderTop: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: '#6B7280' }}>Tester — le navigateur bloque l&apos;audio sans interaction préalable</span>
             <button onClick={() => playNotificationSound()}
-              style={{ fontSize: 12, fontWeight: 600, color: '#1E4D3A', border: '1px solid #D1D5DB', padding: '6px 14px', borderRadius: 8, background: 'white', cursor: 'pointer' }}>
-              🔔 Tester le son
+              style={{ fontSize: 12, fontWeight: 600, color: '#1E4D3A', border: '1px solid #D1D5DB', padding: '6px 14px', borderRadius: 8, background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <IconBell /> Tester le son
             </button>
           </div>
         </div>
@@ -827,7 +839,7 @@ function DashboardTab({ orders, updateStatus, onGoToCommandes }: {
       <div className="dash-hero" style={{ background: '#F0F7F3', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ position: 'relative', zIndex: 1 }}>
           <p style={{ fontSize: 16, fontWeight: 600, color: '#374151', margin: '0 0 2px' }}>
-            Bonjour, <span style={{ color: '#1E4D3A', fontWeight: 700 }}>Admin</span> 👋
+            Bonjour, <span style={{ color: '#1E4D3A', fontWeight: 700 }}>Admin</span>
           </p>
           <h1 className="dash-hero-title" style={{ fontWeight: 900, color: '#111827', margin: '0 0 10px', fontFamily: "'Baloo 2', system-ui", letterSpacing: '-.01em', lineHeight: 1.1 }}>
             Bienvenue chez Ramo
@@ -888,38 +900,43 @@ function DashboardTab({ orders, updateStatus, onGoToCommandes }: {
                     Aucune commande pour l&apos;instant
                   </div>
                 ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
-                      <thead>
-                        <tr style={{ background: 'rgba(243,244,246,.7)', borderBottom: '1px solid #F3F4F6' }}>
-                          {['N° commande','Heure','Articles','Total','Statut','Action'].map(h => (
-                            <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#6B7280', letterSpacing: '.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recentOrders.map(o => {
-                          const summary = (o.items ?? []).slice(0, 2).map(i => `${i.qty}× ${i.name}`).join(', ') + ((o.items?.length ?? 0) > 2 ? ` +${o.items.length - 2}` : '')
-                          return (
-                            <tr key={o.id} style={{ borderBottom: '1px solid #F9FAFB' }}>
-                              <td style={{ padding: '12px 14px', fontWeight: 700, color: '#1E4D3A', fontSize: 13, whiteSpace: 'nowrap' }}>RMO-{o.order_id}</td>
-                              <td style={{ padding: '12px 14px', fontSize: 12, color: '#6B7280', whiteSpace: 'nowrap' }}>{fmt(o.created_at)}</td>
-                              <td style={{ padding: '12px 14px', fontSize: 12, color: '#374151', maxWidth: 180 }}>
-                                <span style={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{summary}</span>
-                              </td>
-                              <td style={{ padding: '12px 14px', fontWeight: 700, fontSize: 13, color: '#111827', whiteSpace: 'nowrap' }}>{money(Number(o.total))}</td>
-                              <td style={{ padding: '12px 14px' }}>
-                                <StatusBadge status={o.status} />
-                              </td>
-                              <td style={{ padding: '12px 14px' }}>
-                                <ActionButtons id={o.id} status={o.status} updateStatus={updateStatus} />
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                  <>
+                    <div className="orders-cards">
+                      {recentOrders.map(o => <OrderCard key={o.id} o={o} updateStatus={updateStatus} />)}
+                    </div>
+                    <div className="orders-table-wrap" style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 480 }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(243,244,246,.7)', borderBottom: '1px solid #F3F4F6' }}>
+                            {['N° commande','Heure','Articles','Total','Statut','Action'].map(h => (
+                              <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#6B7280', letterSpacing: '.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {recentOrders.map(o => {
+                            const summary = (o.items ?? []).slice(0, 2).map(i => `${i.qty}× ${i.name}`).join(', ') + ((o.items?.length ?? 0) > 2 ? ` +${o.items.length - 2}` : '')
+                            return (
+                              <tr key={o.id} style={{ borderBottom: '1px solid #F9FAFB' }}>
+                                <td style={{ padding: '12px 14px', fontWeight: 700, color: '#1E4D3A', fontSize: 13, whiteSpace: 'nowrap' }}>RMO-{o.order_id}</td>
+                                <td style={{ padding: '12px 14px', fontSize: 12, color: '#6B7280', whiteSpace: 'nowrap' }}>{fmt(o.created_at)}</td>
+                                <td style={{ padding: '12px 14px', fontSize: 12, color: '#374151', maxWidth: 180 }}>
+                                  <span style={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{summary}</span>
+                                </td>
+                                <td style={{ padding: '12px 14px', fontWeight: 700, fontSize: 13, color: '#111827', whiteSpace: 'nowrap' }}>{money(Number(o.total))}</td>
+                                <td style={{ padding: '12px 14px' }}>
+                                  <StatusBadge status={o.status} />
+                                </td>
+                                <td style={{ padding: '12px 14px' }}>
+                                  <ActionButtons id={o.id} status={o.status} updateStatus={updateStatus} />
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -987,7 +1004,7 @@ function CommandesTab({ orders, updateStatus }: { orders: Order[]; updateStatus:
           <p style={{ color: '#94A3B8', fontSize: 13, marginTop: 2 }}>{orders.length} commande{orders.length !== 1 ? 's' : ''} au total</p>
         </div>
         <LiveIndicator />
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div className="filters-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {(['all', 'pending', 'preparing', 'done', 'collected', 'cancelled'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               style={{
@@ -1045,13 +1062,12 @@ function NewResToast({ count, onDismiss }: { count: number; onDismiss: () => voi
     return () => clearTimeout(t)
   }, [count, onDismiss])
   return (
-    <div className="toast-pos" style={{
+    <div className="toast-pos toast-pos-2" style={{
       position: 'fixed', zIndex: 201,
       background: '#1E4D3A', color: 'white', borderRadius: 16,
       padding: '16px 20px', boxShadow: '0 8px 32px rgba(0,0,0,.28)',
       display: 'flex', alignItems: 'center', gap: 12,
       animation: 'slideUp .35s ease-out',
-      bottom: 76,
     }}>
       <div style={{ width: 36, height: 36, background: '#E8A93B', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <IconCalendar />
@@ -1116,7 +1132,7 @@ function ReservationsTab({ reservations, updateResStatus, deleteRes }: {
             {reservations.length} réservation{reservations.length !== 1 ? 's' : ''} · {counts.pending} en attente
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div className="filters-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {(['all', 'pending', 'confirmed', 'cancelled'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               style={{ padding: '7px 14px', borderRadius: 99, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, background: filter === f ? '#1E4D3A' : '#F1F5F9', color: filter === f ? 'white' : '#64748B', transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -1186,9 +1202,9 @@ function ReservationsTab({ reservations, updateResStatus, deleteRes }: {
                             </button>
                           )}
                           <button onClick={() => deleteRes(r.id)}
-                            style={{ display: 'inline-flex', alignItems: 'center', padding: '5px 8px', background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '5px 8px', background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
                             title="Supprimer définitivement">
-                            🗑
+                            <IconTrash />
                           </button>
                         </div>
                       </td>
@@ -1262,7 +1278,7 @@ export default function AdminClient() {
     if (typeof Notification === 'undefined') return
     if (Notification.permission !== 'granted') return
     if (!notifEnabledRef.current) return
-    const n = new Notification('🛎️ Nouvelle commande !', {
+    const n = new Notification('Nouvelle commande !', {
       body: `RMO-${order.order_id} · ${money(order.total)} · Voir dans l'admin`,
       icon: `${BASE}/favicon.svg`,
       badge: `${BASE}/favicon.svg`,
@@ -1276,7 +1292,7 @@ export default function AdminClient() {
     if (typeof Notification === 'undefined') return
     if (Notification.permission !== 'granted') return
     if (!notifEnabledRef.current) return
-    const n = new Notification('📅 Nouvelle réservation !', {
+    const n = new Notification('Nouvelle réservation !', {
       body: `${res.fullname} · ${res.guests} pers. le ${res.date} à ${res.time}`,
       icon: `${BASE}/favicon.svg`,
       badge: `${BASE}/favicon.svg`,
@@ -1619,8 +1635,10 @@ export default function AdminClient() {
         .admin-sidebar   { transition: transform .28s cubic-bezier(.4,0,.2,1); }
         .mobile-hamburger { display: none !important; }
         .mobile-bottom-nav { display: none; }
+        .admin-topbar { display: flex; }
         .sidebar-close-btn { display: none; }
         .toast-pos { bottom: 28px; right: 28px; max-width: 340px; }
+        .toast-pos-2 { bottom: 96px; }
 
         /* dashboard */
         .dash-hero   { padding: 32px 36px; min-height: 148px; }
@@ -1630,6 +1648,8 @@ export default function AdminClient() {
         .stats-grid  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
         .promo-panel { display: flex; }
         .commandes-padding { padding: 32px 28px; }
+        .notif-banner { flex-direction: row; padding: 10px 20px; }
+        .notif-banner-text { font-size: 13px; }
 
         /* Tables plein largeur */
         .res-cards { display: none; }
@@ -1648,25 +1668,38 @@ export default function AdminClient() {
 
         /* ── mobile ── */
         @media (max-width: 640px) {
+          /* Navigation unique : bottom nav seulement */
           .mobile-bottom-nav {
             display: flex; position: fixed; bottom: 0; left: 0; right: 0; height: 62px;
             background: white; border-top: 1px solid #F1F5F9; z-index: 40;
             padding-bottom: env(safe-area-inset-bottom, 0px);
             box-shadow: 0 -4px 24px rgba(0,0,0,.1);
           }
+          /* Masquer le top bar sur mobile (bottom nav remplace) */
+          .admin-topbar { display: none !important; }
+          /* Compensation pour le bottom nav fixe */
           .admin-tab-content { padding-bottom: 72px !important; }
-          .dash-hero   { padding: 18px 16px; min-height: auto; }
-          .dash-hero-title { font-size: 22px !important; }
+          .dash-hero   { padding: 14px 12px; min-height: auto; }
+          .dash-hero-title { font-size: 20px !important; }
           .dash-hero-deco { display: none !important; }
-          .dash-padding { padding: 12px; }
-          .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-          .commandes-padding { padding: 12px; }
+          .dash-padding { padding: 10px; }
+          .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+          .commandes-padding { padding: 10px; }
           .toast-pos { bottom: 74px; right: 10px; left: 10px; max-width: none; }
+          .toast-pos-2 { bottom: 148px; }
           /* Mobile: cards au lieu de tables */
           .res-table-wrap { display: none !important; }
           .res-cards { display: block; }
           .orders-table-wrap { display: none !important; }
           .orders-cards { display: block; }
+          /* Bannières notifications compactes */
+          .notif-banner { flex-direction: column; gap: 8px; padding: 10px 12px; align-items: flex-start !important; }
+          .notif-banner-text { font-size: 12px !important; }
+          /* Settings scrollable */
+          .settings-wrap { max-width: none !important; }
+          /* Filtres scrollables horizontalement */
+          .filters-row { flex-wrap: nowrap !important; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+          .filters-row::-webkit-scrollbar { display: none; }
         }
 
         @media (max-width: 420px) {
@@ -1853,8 +1886,8 @@ export default function AdminClient() {
         />
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', marginLeft: 256 }} className="admin-main">
-          {/* Top bar */}
-          <div style={{ background: 'white', borderBottom: '1px solid #F3F4F6', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          {/* Top bar — masqué sur mobile (bottom nav prend le relais) */}
+          <div className="admin-topbar" style={{ background: 'white', borderBottom: '1px solid #F3F4F6', padding: '0 20px', height: 56, alignItems: 'center', gap: 12, flexShrink: 0 }}>
             <button onClick={() => setMobileOpen(v => !v)} className="mobile-hamburger"
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', padding: 4, alignItems: 'center' }}>
               <IconHamburger />
@@ -1873,10 +1906,10 @@ export default function AdminClient() {
 
           {/* Bannière permission notifications — visible tant que pas accordée */}
           {notifPermission !== 'granted' && notifPermission !== 'denied' && (
-            <div style={{ background: '#FFFBEB', borderBottom: '1px solid #FDE68A', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
+            <div className="notif-banner" style={{ background: '#FFFBEB', borderBottom: '1px solid #FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 18 }}>🔔</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#92400E' }}>
+                <span style={{ color: '#D97706', display: 'flex', alignItems: 'center', flexShrink: 0 }}><IconBell /></span>
+                <span className="notif-banner-text" style={{ fontWeight: 600, color: '#92400E' }}>
                   Active les notifications pour être alerté dès qu&apos;une commande arrive
                 </span>
               </div>
@@ -1888,12 +1921,12 @@ export default function AdminClient() {
             </div>
           )}
           {notifPermission === 'denied' && (
-            <div style={{ background: '#FEF2F2', borderBottom: '1px solid #FECACA', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#991B1B' }}>🚫 Notifications bloquées dans le navigateur</div>
-                <div style={{ fontSize: 12, color: '#B91C1C', marginTop: 3 }}>
-                  Chrome : barre d&apos;adresse → icône 🔒 → Notifications → Autoriser → recharge la page<br/>
-                  Safari : Préférences → Sites web → Notifications → localhost → Autoriser
+            <div className="notif-banner" style={{ background: '#FEF2F2', borderBottom: '1px solid #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ minWidth: 0 }}>
+                <div className="notif-banner-text" style={{ fontWeight: 700, color: '#991B1B', display: 'flex', alignItems: 'center', gap: 6 }}><IconBellOff /> Notifications bloquées dans le navigateur</div>
+                <div style={{ fontSize: 11, color: '#B91C1C', marginTop: 3, lineHeight: 1.5 }}>
+                  Chrome : cadenas → Notifications → Autoriser → recharge<br/>
+                  Safari : Préférences → Sites web → Notifications → Autoriser
                 </div>
               </div>
               <button
@@ -1901,11 +1934,10 @@ export default function AdminClient() {
                   const p = typeof Notification !== 'undefined' ? Notification.permission : 'denied'
                   setNotifPermission(p)
                   if (p === 'granted') return
-                  // Essayer quand même au cas où le navigateur l'a débloqué entre-temps
                   Notification.requestPermission().then(r => setNotifPermission(r)).catch(() => {})
                 }}
-                style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#991B1B', border: '1px solid #FECACA', background: 'white', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                🔄 Re-tester
+                style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: '#991B1B', border: '1px solid #FECACA', background: 'white', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <IconRefresh /> Re-tester
               </button>
             </div>
           )}

@@ -22,12 +22,38 @@ function getOrCreateToken(): string {
   return t
 }
 
+/* ── Step icons (inline SVG, no emoji) ── */
+function StepIcon({ stepKey, size = 18 }: { stepKey: Order['status']; size?: number }) {
+  if (stepKey === 'pending') return (
+    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/><line x1="10" y1="17" x2="8" y2="17"/>
+    </svg>
+  )
+  if (stepKey === 'preparing') return (
+    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+    </svg>
+  )
+  if (stepKey === 'done') return (
+    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  )
+  if (stepKey === 'collected') return (
+    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+  )
+  return null
+}
+
 /* ── Step progress bar ── */
-const STEPS: { key: Order['status']; label: string; emoji: string }[] = [
-  { key: 'pending',   label: 'Reçue',    emoji: '📋' },
-  { key: 'preparing', label: 'En cuisine', emoji: '🔥' },
-  { key: 'done',      label: 'Prête',    emoji: '✅' },
-  { key: 'collected', label: 'Récupérée', emoji: '🎉' },
+const STEPS: { key: Order['status']; label: string }[] = [
+  { key: 'pending',   label: 'Reçue' },
+  { key: 'preparing', label: 'En cuisine' },
+  { key: 'done',      label: 'Prête' },
+  { key: 'collected', label: 'Récupérée' },
 ]
 
 function OrderStepper({ status }: { status: Order['status'] }) {
@@ -38,16 +64,18 @@ function OrderStepper({ status }: { status: Order['status'] }) {
       {STEPS.map((step, i) => {
         const past   = i < currentIdx
         const active = i === currentIdx
-        const future = i > currentIdx
         return (
           <div key={step.key} className="flex items-center flex-1">
             <div className="flex flex-col items-center gap-1.5 flex-shrink-0 w-10">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-base transition-all duration-300 ${
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
                 active  ? 'bg-brand text-white shadow-[0_4px_12px_rgba(30,77,58,0.35)] scale-110' :
                 past    ? 'bg-green-500 text-white' :
                           'bg-gray-100 text-gray-300'
               }`}>
-                {past ? '✓' : step.emoji}
+                {past
+                  ? <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                  : <StepIcon stepKey={step.key} size={14} />
+                }
               </div>
               <span className={`text-[9px] font-bold text-center leading-tight transition-colors ${
                 active ? 'text-brand' : past ? 'text-green-600' : 'text-gray-300'
@@ -190,11 +218,16 @@ export default function CustomerOrdersModal({ open, onClose }: { open: boolean; 
       <div onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-[4px]" />
 
       <div
-        className="relative bg-white w-full sm:max-w-lg rounded-t-[1.75rem] sm:rounded-3xl overflow-hidden flex flex-col"
+        className="relative bg-white w-full sm:max-w-lg rounded-t-[2rem] sm:rounded-3xl overflow-hidden flex flex-col"
         style={{ maxHeight: '92vh', boxShadow: '0 32px 80px rgba(0,0,0,0.4)' }}
       >
+        {/* Drag handle — mobile only */}
+        <div className="sm:hidden pt-3 pb-0.5 flex justify-center shrink-0">
+          <div className="w-10 h-1 rounded-full bg-gray-200" />
+        </div>
+
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 shrink-0">
+        <div className="flex items-center justify-between px-5 pt-4 pb-4 shrink-0">
           <div>
             <h2 className="font-extrabold text-brand text-lg" style={{ fontFamily: 'var(--font-baloo)' }}>
               Mes commandes
@@ -221,7 +254,7 @@ export default function CustomerOrdersModal({ open, onClose }: { open: boolean; 
 
             <button
               onClick={onClose}
-              className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition ml-1"
+              className="w-11 h-11 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition ml-1 active:scale-90"
               aria-label="Fermer"
             >
               <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -234,20 +267,23 @@ export default function CustomerOrdersModal({ open, onClose }: { open: boolean; 
         {/* ── Notification banner ── */}
         {needsNotif && (
           <div className="mx-4 mb-2 px-4 py-3 bg-brand/5 rounded-2xl border border-brand/10 flex items-center gap-3 shrink-0">
-            <span className="text-xl shrink-0">🔔</span>
+            <svg className="w-5 h-5 text-brand shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-brand">Soyez averti quand c'est prêt</p>
               <p className="text-[10px] text-gray-400 mt-0.5">Notification même si vous fermez cet onglet</p>
             </div>
             <button onClick={requestNotif}
-              className="shrink-0 px-3 py-1.5 rounded-xl bg-brand text-white text-xs font-bold hover:bg-[#163d2e] transition active:scale-95">
+              className="shrink-0 px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-bold hover:bg-[#163d2e] transition active:scale-95" style={{ minHeight: '44px' }}>
               Activer
             </button>
           </div>
         )}
 
         {/* ── Content ── */}
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 space-y-2" style={{ touchAction: 'pan-y' }}>
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-4 space-y-2" style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}>
 
           {loading ? (
             /* Skeleton */
@@ -284,8 +320,8 @@ export default function CustomerOrdersModal({ open, onClose }: { open: boolean; 
               <p className="text-base font-extrabold text-gray-700" style={{ fontFamily: 'var(--font-baloo)' }}>Aucune commande</p>
               <p className="text-xs text-gray-400 mt-1">Votre historique apparaîtra ici après votre première commande.</p>
               <button onClick={onClose}
-                className="mt-5 px-6 py-2.5 rounded-full bg-brand text-white text-sm font-bold hover:bg-[#163d2e] transition active:scale-95"
-                style={{ fontFamily: 'var(--font-baloo)' }}>
+                className="mt-5 px-8 rounded-full bg-brand text-white text-sm font-bold hover:bg-[#163d2e] transition active:scale-95 inline-flex items-center justify-center"
+                style={{ fontFamily: 'var(--font-baloo)', height: '48px' }}>
                 Commander maintenant
               </button>
             </div>
@@ -321,7 +357,7 @@ export default function CustomerOrdersModal({ open, onClose }: { open: boolean; 
         </div>
 
         {/* ── Footer ── */}
-        <div className="px-5 py-3 border-t border-gray-50 shrink-0 flex items-center justify-between">
+        <div className="px-5 border-t border-gray-50 shrink-0 flex items-center justify-between" style={{ paddingTop: '0.75rem', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
           <span className="flex items-center gap-1 text-[10px] text-gray-300 font-medium">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
@@ -362,12 +398,17 @@ function OrderCard({ order, compact = false }: { order: Order; compact?: boolean
       <button
         onClick={() => setExpanded(e => !e)}
         className="w-full flex items-center justify-between gap-3 p-4 text-left"
+        style={{ minHeight: '64px' }}
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 ${
-            isDone ? 'bg-green-100' : isPreparing ? 'bg-orange-100' : isCollected ? 'bg-purple-100' : isCancelled ? 'bg-red-100' : 'bg-gray-100'
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+            isDone ? 'bg-green-100 text-green-700' : isPreparing ? 'bg-orange-100 text-orange-600' : isCollected ? 'bg-purple-100 text-purple-700' : isCancelled ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-400'
           }`}>
-            {isDone ? '✅' : isPreparing ? '🔥' : isCollected ? '🎉' : isCancelled ? '❌' : '📋'}
+            {isDone && <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>}
+            {isPreparing && <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>}
+            {isCollected && <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>}
+            {isCancelled && <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>}
+            {isPending && <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="10" y1="17" x2="8" y2="17"/></svg>}
           </div>
           <div className="min-w-0">
             <p className="font-extrabold text-brand text-sm" style={{ fontFamily: 'var(--font-baloo)' }}>
@@ -408,8 +449,8 @@ function OrderCard({ order, compact = false }: { order: Order; compact?: boolean
 
           {/* Status blocks */}
           {isPending && (
-            <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl">
-              <span className="text-xl shrink-0">⏳</span>
+            <div className="flex items-center gap-3 px-4 py-3.5 bg-amber-50 border border-amber-100 rounded-xl">
+              <svg className="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <div>
                 <p className="text-amber-800 font-bold text-xs">Commande reçue</p>
                 <p className="text-amber-600/70 text-[10px] mt-0.5">En attente de prise en charge par le restaurant</p>
@@ -435,7 +476,9 @@ function OrderCard({ order, compact = false }: { order: Order; compact?: boolean
 
           {isDone && (
             <div className="flex items-center gap-3 px-4 py-4 bg-green-600 rounded-xl">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-xl shrink-0">🎉</div>
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
               <div>
                 <p className="text-white font-extrabold text-sm" style={{ fontFamily: 'var(--font-baloo)' }}>Votre commande est prête !</p>
                 <p className="text-white/70 text-[10px] mt-0.5">Venez la récupérer au restaurant — 32 rue Pasteur, Lagnieu</p>
@@ -444,8 +487,8 @@ function OrderCard({ order, compact = false }: { order: Order; compact?: boolean
           )}
 
           {isCollected && (
-            <div className="flex items-center gap-3 px-4 py-3 bg-purple-50 border border-purple-100 rounded-xl">
-              <span className="text-xl shrink-0">✅</span>
+            <div className="flex items-center gap-3 px-4 py-3.5 bg-purple-50 border border-purple-100 rounded-xl">
+              <svg className="w-5 h-5 text-purple-600 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
               <div>
                 <p className="text-purple-800 font-bold text-xs">Commande récupérée</p>
                 <p className="text-purple-500/70 text-[10px] mt-0.5">Merci pour votre visite — à bientôt chez Ramo !</p>
@@ -454,8 +497,8 @@ function OrderCard({ order, compact = false }: { order: Order; compact?: boolean
           )}
 
           {isCancelled && (
-            <div className="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-100 rounded-xl">
-              <span className="text-xl shrink-0">❌</span>
+            <div className="flex items-center gap-3 px-4 py-3.5 bg-red-50 border border-red-100 rounded-xl">
+              <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               <div>
                 <p className="text-red-700 font-bold text-xs">Commande annulée</p>
                 <p className="text-red-400/70 text-[10px] mt-0.5">Contactez le restaurant pour plus d'informations</p>

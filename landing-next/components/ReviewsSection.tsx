@@ -227,15 +227,17 @@ export default function ReviewsSection() {
           </div>
         </div>
 
-        {/* dots */}
-        <div className="flex justify-center gap-2 mt-6">
+        {/* dots — min 44px touch target */}
+        <div className="flex justify-center mt-4">
           {REVIEWS.map((_, i) => (
             <button
               key={i}
               onClick={() => setReviewIndex(i)}
               aria-label={`Avis ${i + 1}`}
-              className={`h-2.5 rounded-full border border-white/20 transition-all duration-300 hover:bg-accent ${i === reviewIndex ? 'bg-accent w-7' : 'bg-cream/35 w-2.5'}`}
-            />
+              className="flex items-center justify-center w-11 h-11 group"
+            >
+              <span className={`h-2.5 rounded-full border border-white/20 transition-all duration-300 group-hover:bg-accent ${i === reviewIndex ? 'bg-accent w-7' : 'bg-cream/35 w-2.5'}`} />
+            </button>
           ))}
         </div>
       </div>
@@ -253,7 +255,7 @@ export default function ReviewsSection() {
           <div className="relative max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_1fr] bg-cream rounded-3xl overflow-hidden">
             <div className="p-6 sm:p-10">
               <h2 className="font-extrabold text-[clamp(28px,3.4vw,42px)] text-brand" style={{ fontFamily: 'var(--font-baloo)' }}>RÉSERVEZ VOTRE TABLE</h2>
-              <p className="mt-3 text-sm leading-relaxed text-[#8A8A8A]">Confirmation par e-mail. Pour les groupes ou les commandes à emporter, appelez-nous au 04 27 50 00 62.</p>
+              <p className="mt-3 text-sm leading-relaxed text-[#5A5A5A]">Confirmation par e-mail. Pour les groupes ou les commandes à emporter, appelez-nous au 04 27 50 00 62.</p>
 
               {activeRes ? (
                 <div className="mt-6">
@@ -267,11 +269,20 @@ export default function ReviewsSection() {
                         </span>
                       </div>
                       <div className="space-y-1 mb-4 text-sm text-brand/80">
-                        <p className="font-bold">📅 {formatResDate(activeRes.date)}</p>
-                        <p>🕐 {activeRes.time} · {activeRes.guests} personnes</p>
-                        <p>👤 {activeRes.fullname}</p>
+                        <p className="font-bold flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                          {formatResDate(activeRes.date)}
+                        </p>
+                        <p className="flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          {activeRes.time} · {activeRes.guests} personnes
+                        </p>
+                        <p className="flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          {activeRes.fullname}
+                        </p>
                       </div>
-                      <p className="text-xs text-brand/50 mb-4 leading-relaxed">Le patron confirmera votre réservation sous 24h.{activeRes.id ? ' Le statut se met à jour automatiquement.' : ' Pour toute question, appelez le 04 27 50 00 62.'}</p>
+                      <p className="text-xs text-brand/60 mb-4 leading-relaxed">Le patron confirmera votre réservation sous 24h.{activeRes.id ? ' Le statut se met à jour automatiquement.' : ' Pour toute question, appelez le 04 27 50 00 62.'}</p>
                       <div className="flex gap-2 flex-wrap">
                         {activeRes.id && (
                           <button onClick={checkStatusManual} disabled={checkingStatus}
@@ -298,9 +309,18 @@ export default function ReviewsSection() {
                         </span>
                       </div>
                       <div className="space-y-1 mb-4 text-sm text-brand/80">
-                        <p className="font-bold">📅 {formatResDate(activeRes.date)}</p>
-                        <p>🕐 {activeRes.time} · {activeRes.guests} personnes</p>
-                        <p>👤 {activeRes.fullname}</p>
+                        <p className="font-bold flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                          {formatResDate(activeRes.date)}
+                        </p>
+                        <p className="flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          {activeRes.time} · {activeRes.guests} personnes
+                        </p>
+                        <p className="flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          {activeRes.fullname}
+                        </p>
                       </div>
                       <p className="text-xs text-emerald-600 mb-4 font-semibold">Votre table est réservée ! À très bientôt chez Ramo. 🎉</p>
                       <button onClick={() => setActiveRes(null)}

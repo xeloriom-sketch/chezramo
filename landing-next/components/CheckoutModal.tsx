@@ -367,15 +367,20 @@ export default function CheckoutModal() {
         className="absolute inset-0 bg-black/50 backdrop-blur-[3px]"
       />
 
-      <div className="relative bg-white w-full sm:max-w-4xl rounded-t-[1.5rem] sm:rounded-3xl overflow-hidden flex flex-col" style={{ maxHeight: '96vh', boxShadow: '0 32px 80px rgba(0,0,0,0.35)' }}>
+      <div className="relative bg-white w-full sm:max-w-4xl rounded-t-[2rem] sm:rounded-3xl overflow-hidden flex flex-col" style={{ maxHeight: '96vh', minHeight: '60vh', boxShadow: '0 32px 80px rgba(0,0,0,0.35)' }}>
 
         {/* Ticket popup overlay */}
         {showTicket && currentTicket && (
           <TicketPopup ticket={currentTicket} onClose={() => setShowTicket(false)} />
         )}
 
+        {/* Drag handle — mobile only */}
+        <div className="sm:hidden pt-3 pb-1 flex justify-center shrink-0">
+          <div className="w-10 h-1 rounded-full bg-gray-200" />
+        </div>
+
         {/* Top bar */}
-        <div className="flex items-center justify-between px-5 sm:px-7 py-4 border-b border-gray-100 shrink-0">
+        <div className="flex items-center justify-between px-5 sm:px-7 py-3 sm:py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-brand text-base" style={{ fontFamily: 'var(--font-baloo)' }}>Chez Ramo</span>
           </div>
@@ -385,7 +390,7 @@ export default function CheckoutModal() {
             ))}
           </div>
           {paymentPhase !== 'paying' && checkoutStep < 3 && (
-            <button onClick={() => closeCheckout()} className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition shrink-0">
+            <button onClick={() => closeCheckout()} className="w-11 h-11 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition shrink-0 active:scale-90">
               <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           )}
@@ -393,27 +398,28 @@ export default function CheckoutModal() {
 
         {/* Étape 1 : Panier */}
         {checkoutStep === 1 && (
-          <div className="flex-1 overflow-y-auto overscroll-contain" style={{ touchAction: 'pan-y' }}>
-            <div className="p-5 sm:p-7 grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-              <div className="lg:col-span-2">
+          <div className="flex-1 overflow-y-auto overscroll-contain" style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}>
+            <div className="p-4 sm:p-7 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 items-start">
+              {/* Articles — col 1-2 sur lg, second sur mobile (order-2) */}
+              <div className="lg:col-span-2 order-2 lg:order-1">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-gray-900">Mon panier</h2>
+                  <h2 className="text-base sm:text-lg font-bold text-gray-900">Mon panier</h2>
                   <span className="text-xs text-gray-400 font-medium">{count} article{count > 1 ? 's' : ''}</span>
                 </div>
                 <div className="space-y-3">
                   {cart.map((item, idx) => (
-                    <div key={item.key} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div key={item.key} className="flex items-center gap-3 sm:gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-gray-900 leading-snug">{item.name}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{money(item.price)} / unité</p>
                         <div className="flex items-center gap-3 mt-3">
-                          <button onClick={() => stepItem(idx, -1)} className="w-7 h-7 rounded-xl bg-white border border-gray-200 text-gray-700 flex items-center justify-center font-bold text-sm hover:bg-gray-100 transition">−</button>
-                          <span className="text-sm font-bold text-gray-800 w-4 text-center tabular-nums">{item.qty}</span>
-                          <button onClick={() => stepItem(idx, 1)} className="w-7 h-7 rounded-xl bg-brand text-white flex items-center justify-center font-bold text-sm hover:bg-[#163d2e] transition">+</button>
+                          <button onClick={() => stepItem(idx, -1)} className="w-10 h-10 rounded-xl bg-white border border-gray-200 text-gray-700 flex items-center justify-center font-bold text-base hover:bg-gray-100 transition active:scale-90">−</button>
+                          <span className="text-sm font-bold text-gray-800 w-5 text-center tabular-nums">{item.qty}</span>
+                          <button onClick={() => stepItem(idx, 1)} className="w-10 h-10 rounded-xl bg-brand text-white flex items-center justify-center font-bold text-base hover:bg-[#163d2e] transition active:scale-90">+</button>
                         </div>
                       </div>
                       <div className="flex flex-col items-end justify-between gap-4 shrink-0">
-                        <button onClick={() => stepItem(idx, -item.qty)} className="text-gray-300 hover:text-red-400 transition">
+                        <button onClick={() => stepItem(idx, -item.qty)} className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-400 transition active:scale-90">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                         </button>
                         <span className="text-base font-bold text-gray-900 tabular-nums">{money(item.price * item.qty)}</span>
@@ -422,7 +428,9 @@ export default function CheckoutModal() {
                   ))}
                 </div>
               </div>
-              <div className="bg-gray-50 rounded-2xl border border-gray-100 p-5 flex flex-col gap-4">
+
+              {/* Résumé — premier sur mobile (order-1), col 3 sur lg */}
+              <div className="order-1 lg:order-2 bg-gray-50 rounded-2xl border border-gray-100 p-4 sm:p-5 flex flex-col gap-3 sm:gap-4">
                 <h3 className="text-sm font-bold text-gray-900">Résumé</h3>
                 <div className="space-y-2.5 pb-3 border-b border-gray-200 text-sm">
                   <div className="flex justify-between text-gray-500"><span>Sous-total</span><span className="font-bold text-gray-900 tabular-nums">{money(total())}</span></div>
@@ -453,11 +461,11 @@ export default function CheckoutModal() {
 
         {/* Étape 2 : Paiement */}
         {checkoutStep === 2 && (
-          <div className="flex-1 overflow-y-auto overscroll-contain" style={{ touchAction: 'pan-y' }}>
-            <div className="p-5 sm:p-8 w-full max-w-lg mx-auto">
+          <div className="flex-1 overflow-y-auto overscroll-contain" style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}>
+            <div className="p-4 sm:p-8 w-full max-w-lg mx-auto" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
               {paymentPhase !== 'paying' && (
                 <div className="flex items-center gap-3 mb-6">
-                  <button onClick={() => goToStep(1)} className="w-9 h-9 rounded-2xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition shrink-0">
+                  <button onClick={() => goToStep(1)} className="w-11 h-11 rounded-2xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition shrink-0 active:scale-90">
                     <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
                   <div className="flex-1">
@@ -484,26 +492,28 @@ export default function CheckoutModal() {
               {/* Le formulaire reste dans le DOM pendant 'paying' pour que l'élément Stripe reste monté */}
               {(paymentPhase === 'form' || paymentPhase === 'paying') && (
                 <div className="relative">
-                  <form onSubmit={handleCardPayment} className="space-y-3">
+                  <form onSubmit={handleCardPayment} className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Nom sur la carte</label>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nom sur la carte</label>
                       <input
                         type="text"
                         value={cardholderName}
                         onChange={e => setCardholderName(e.target.value)}
                         placeholder="Jean Dupont"
-                        className="w-full px-4 py-3.5 rounded-2xl border-2 border-brand/15 bg-white text-brand text-sm font-medium placeholder:text-gray-300 focus:outline-none focus:border-brand/40 transition"
+                        autoComplete="cc-name"
+                        className="w-full px-4 rounded-2xl border-2 border-brand/15 bg-white text-brand text-base font-medium placeholder:text-gray-300 focus:outline-none focus:border-brand/40 transition"
+                        style={{ height: '52px' }}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Numéro de carte</label>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Numéro de carte</label>
                       <div
                         ref={cardDivCallback}
-                        className="px-4 py-4 rounded-2xl border-2 border-brand/15 bg-white transition-opacity"
+                        className="px-4 rounded-2xl border-2 border-brand/15 bg-white transition-opacity flex items-center"
                         style={{ minHeight: '52px', opacity: cardReady ? 1 : 0.4 }}
                       />
                     </div>
-                    <button type="submit" disabled={!cardReady || paymentPhase === 'paying'} className="w-full py-4 rounded-2xl bg-brand text-white font-extrabold text-base tracking-wide hover:bg-[#163d2e] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed" style={{ boxShadow: '0 8px 28px rgba(30,77,58,0.28)', fontFamily: 'var(--font-baloo)' }}>
+                    <button type="submit" disabled={!cardReady || paymentPhase === 'paying'} className="w-full rounded-2xl bg-brand text-white font-extrabold text-base tracking-wide hover:bg-[#163d2e] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center" style={{ height: '56px', boxShadow: '0 8px 28px rgba(30,77,58,0.28)', fontFamily: 'var(--font-baloo)' }}>
                       Payer · {money(total())}
                     </button>
                   </form>
@@ -527,8 +537,8 @@ export default function CheckoutModal() {
                     </div>
                     <p className="text-sm font-semibold text-red-600">{paymentError || 'Paiement refusé.'}</p>
                   </div>
-                  <button onClick={handleGoToPayment} className="w-full py-3.5 rounded-2xl bg-brand text-white font-semibold text-sm tracking-wide hover:bg-[#163d2e] transition">Réessayer</button>
-                  <button onClick={() => closeCheckout()} className="w-full py-2.5 text-gray-400 text-sm hover:text-gray-600 transition-colors">Annuler</button>
+                  <button onClick={handleGoToPayment} className="w-full rounded-2xl bg-brand text-white font-semibold text-sm tracking-wide hover:bg-[#163d2e] transition active:scale-[.98] flex items-center justify-center" style={{ height: '52px' }}>Réessayer</button>
+                  <button onClick={() => closeCheckout()} className="w-full py-3 text-gray-400 text-sm hover:text-gray-600 transition-colors">Annuler</button>
                 </div>
               )}
             </div>
@@ -537,43 +547,48 @@ export default function CheckoutModal() {
 
         {/* Étape 3 : Confirmation */}
         {checkoutStep === 3 && (
-          <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
-            <div className="relative w-28 h-28 mx-auto mb-6 flex items-center justify-center">
-              <span className="absolute top-1 left-2 w-3 h-3 rounded-full bg-accent/70 animate-ping" />
-              <div className="w-20 h-20 rounded-full bg-brand flex items-center justify-center" style={{ boxShadow: '0 8px 32px rgba(30,77,58,0.32)' }}>
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          <div className="flex-1 overflow-y-auto overscroll-contain" style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}>
+            <div className="flex flex-col items-center px-6 py-8 sm:py-12 text-center" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+              <div className="relative w-28 h-28 mx-auto mb-5 flex items-center justify-center">
+                <span className="absolute top-1 left-2 w-3 h-3 rounded-full bg-accent/70 animate-ping" />
+                <div className="w-20 h-20 rounded-full bg-brand flex items-center justify-center" style={{ boxShadow: '0 8px 32px rgba(30,77,58,0.32)' }}>
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
               </div>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Paiement réussi !</h2>
-            <p className="text-sm text-gray-400 font-medium">Merci pour votre commande chez Ramo.</p>
-            <p className="text-xs font-bold text-gray-700 bg-gray-100 py-2 px-5 rounded-xl inline-block mt-5">N° RMO-{orderId}</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Paiement réussi !</h2>
+              <p className="text-sm text-gray-400 font-medium">Merci pour votre commande chez Ramo.</p>
+              <p className="text-xs font-bold text-gray-700 bg-gray-100 py-2 px-5 rounded-xl inline-block mt-4">N° RMO-{orderId}</p>
 
-            <div className="w-full max-w-xs mt-4 mb-5 px-4 py-4 rounded-2xl bg-accent text-brand flex items-center gap-3 text-left">
-              <svg className="w-10 h-10 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-4a3 3 0 0 1 6 0v4"/></svg>
-              <div>
-                <p className="font-extrabold text-sm uppercase tracking-wide leading-snug" style={{ fontFamily: 'var(--font-baloo)' }}>N'oubliez pas de venir<br />récupérer votre commande<br />sur place !</p>
-                <p className="text-brand/70 text-xs font-semibold mt-1.5">⏱ Délai estimé : 15 à 20 min</p>
+              <div className="w-full max-w-xs mt-4 mb-5 px-4 py-4 rounded-2xl bg-accent text-brand flex items-center gap-3 text-left">
+                <svg className="w-10 h-10 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-4a3 3 0 0 1 6 0v4"/></svg>
+                <div>
+                  <p className="font-extrabold text-sm uppercase tracking-wide leading-snug" style={{ fontFamily: 'var(--font-baloo)' }}>N'oubliez pas de venir<br />récupérer votre commande<br />sur place !</p>
+                  <p className="text-brand/70 text-xs font-semibold mt-1.5 flex items-center gap-1">
+                    <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Délai estimé : 15 à 20 min
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="w-full max-w-xs space-y-3">
-              {currentTicket && (
-                <button onClick={() => setShowTicket(true)} className="w-full py-3.5 rounded-2xl bg-brand text-white font-extrabold text-sm tracking-wide hover:bg-[#163d2e] transition active:scale-[.98] flex items-center justify-center gap-2" style={{ boxShadow: '0 8px 28px rgba(30,77,58,0.28)', fontFamily: 'var(--font-baloo)' }}>
-                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                  Voir mon ticket
+              <div className="w-full max-w-xs space-y-3">
+                {currentTicket && (
+                  <button onClick={() => setShowTicket(true)} className="w-full rounded-2xl bg-brand text-white font-extrabold text-sm tracking-wide hover:bg-[#163d2e] transition active:scale-[.98] flex items-center justify-center gap-2" style={{ height: '52px', boxShadow: '0 8px 28px rgba(30,77,58,0.28)', fontFamily: 'var(--font-baloo)' }}>
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    Voir mon ticket
+                  </button>
+                )}
+                <button
+                  onClick={() => { closeCheckout(); window.dispatchEvent(new CustomEvent('open-tickets')) }}
+                  className="w-full rounded-2xl border-2 border-brand/20 text-brand font-extrabold text-sm tracking-wide hover:bg-brand/5 transition active:scale-[.98] flex items-center justify-center gap-2"
+                  style={{ height: '52px', fontFamily: 'var(--font-baloo)' }}
+                >
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Suivre ma commande
                 </button>
-              )}
-              <button
-                onClick={() => { closeCheckout(); window.dispatchEvent(new CustomEvent('open-tickets')) }}
-                className="w-full py-3.5 rounded-2xl border-2 border-brand/20 text-brand font-extrabold text-sm tracking-wide hover:bg-brand/5 transition active:scale-[.98] flex items-center justify-center gap-2"
-                style={{ fontFamily: 'var(--font-baloo)' }}
-              >
-                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Suivre ma commande
-              </button>
-              <button onClick={() => closeCheckout()} className="w-full py-2 text-gray-400 text-sm hover:text-gray-600 transition-colors">
-                Retour à l'accueil
-              </button>
+                <button onClick={() => closeCheckout()} className="w-full py-3 text-gray-400 text-sm hover:text-gray-600 transition-colors">
+                  Retour à l'accueil
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -754,7 +754,7 @@ export default function MenuQRPage() {
                       style={{ '--item-delay': `${i * 30}ms`, background: 'rgba(255,255,255,.92)', boxShadow: '0 4px 20px rgba(0,0,0,.15)' } as React.CSSProperties}>
                       <SmartFoodImg
                         src={getImg(item.title, cat?.img ?? '')} alt={item.title}
-                        size={96} bg={IMG_BG[i % IMG_BG.length]}
+                        size={76} bg={IMG_BG[i % IMG_BG.length]}
                       />
                       <div className="flex-1 min-w-0">
                         <div className="font-extrabold text-sm uppercase truncate" style={{ fontFamily: 'var(--font-baloo)', color: '#1E4D3A' }}>{item.title}</div>
@@ -796,7 +796,7 @@ export default function MenuQRPage() {
                       key={bs.title}
                       onClick={() => setSelCatId(bs.catId)}
                       className="flex flex-col shrink-0 active:scale-95 transition-transform qr-card-in"
-                      style={{ width: 142, '--card-delay': `${i * 75}ms` } as React.CSSProperties}
+                      style={{ width: 125, '--card-delay': `${i * 75}ms` } as React.CSSProperties}
                     >
                       <div className="bg-white rounded-3xl shadow-xl overflow-visible relative" style={{ paddingBottom: 0 }}>
                         <span
@@ -885,20 +885,20 @@ export default function MenuQRPage() {
                         >
                           <SmartFoodImg
                             src={getImg(item.title, selCat.img)} alt={item.title}
-                            size={96} bg={IMG_BG[i % IMG_BG.length]}
+                            size={76} bg={IMG_BG[i % IMG_BG.length]}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="font-extrabold text-[13px] uppercase leading-tight" style={{ fontFamily: 'var(--font-baloo)', color: '#1E4D3A' }}>
                               {item.title}
                             </div>
                             <div className="text-[11px] mt-0.5 line-clamp-2 leading-relaxed text-gray-500">{item.description}</div>
-                            {item.menu_price && (
-                              <span className="inline-block mt-1.5 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase" style={{ background: '#FFF3E8', color: '#E8A93B' }}>
+                            {item.menu_price && item.menu_price !== '' && (
+                              <span className="inline-block mt-1.5 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase" style={{ background: '#FFF3E8', color: '#E8A93B' }}>
                                 Menu {item.menu_price}&thinsp;€
                               </span>
                             )}
                           </div>
-                          <div className="shrink-0 font-extrabold text-[14px]" style={{ fontFamily: 'var(--font-baloo)', color: '#1E4D3A' }}>
+                          <div className="shrink-0 font-extrabold text-[15px]" style={{ fontFamily: 'var(--font-baloo)', color: '#1E4D3A' }}>
                             {item.price}&thinsp;€
                           </div>
                         </div>

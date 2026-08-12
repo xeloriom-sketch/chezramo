@@ -32,7 +32,7 @@ export default function Footer() {
               className="w-20 h-20 object-cover rounded-2xl border-2 border-brand/20 flex-none"
             />
             <address
-              className="not-italic text-sm leading-relaxed text-[#4C7A63]"
+              className="not-italic text-sm leading-relaxed text-brand/85"
               itemProp="address"
               itemScope
               itemType="https://schema.org/PostalAddress"
@@ -56,7 +56,7 @@ export default function Footer() {
           </div>
 
           {/* Horaires */}
-          <div className="mt-4 text-sm text-[#4C7A63] space-y-1">
+          <div className="mt-4 text-sm text-brand/85 space-y-1">
             <p className="font-bold text-brand text-xs uppercase tracking-wider mb-2">Horaires · Lun – Sam</p>
             <p className="flex items-center gap-2">
               <svg className="w-4 h-4 shrink-0 text-brand" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -72,7 +72,7 @@ export default function Footer() {
         {/* À propos */}
         <div>
           <h3 className="font-extrabold text-xl text-brand mb-4" style={{ fontFamily: 'var(--font-baloo)' }}>CHEZ RAMO</h3>
-          <p className="text-sm leading-relaxed text-[#4C7A63]">
+          <p className="text-sm leading-relaxed text-brand/85">
             Le meilleur kebab halal de Lagnieu (Ain). Depuis notre cuisine rue Pasteur, nous préparons chaque jour des kebabs généreux, galettes, tacos et spécialités balkaniques — broche artisanale, sauces préparées sur place, ingrédients frais.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -94,12 +94,12 @@ export default function Footer() {
             />
             <button type="submit" className="px-5 py-3.5 rounded-full border-2 border-brand bg-brand text-cream text-xs font-bold uppercase tracking-wider hover:bg-accent hover:text-brand transition">OK</button>
           </form>
-          <p className="text-sm text-[#4C7A63] mb-4">{newsletterMsg}</p>
+          <p className="text-sm text-brand/85 mb-4">{newsletterMsg}</p>
           <div className="space-y-2.5 text-sm">
             {/* Phone — clickable (important pour mobile + local SEO) */}
             <a
               href="tel:+33427500062"
-              className="flex items-center gap-3 text-[#4C7A63] hover:text-brand transition-colors group"
+              className="flex items-center gap-3 text-brand/85 hover:text-brand transition-colors group"
               itemProp="telephone"
             >
               <svg className="w-4 h-4 text-brand shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.574 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
@@ -108,7 +108,7 @@ export default function Footer() {
             {/* Email — clickable */}
             <a
               href="mailto:contact@chezramo.fr"
-              className="flex items-center gap-3 text-[#4C7A63] hover:text-brand transition-colors group"
+              className="flex items-center gap-3 text-brand/85 hover:text-brand transition-colors group"
               itemProp="email"
             >
               <svg className="w-4 h-4 text-brand shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
