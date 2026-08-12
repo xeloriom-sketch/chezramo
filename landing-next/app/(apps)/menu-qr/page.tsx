@@ -741,9 +741,9 @@ export default function MenuQRPage() {
         <div ref={contentRef} className="flex-1 overflow-y-auto qr-noscroll pb-24" style={{ background: '#1E4D3A' }}>
 
           {showSearch && searchQ.length > 1 ? (
-            /* ── SEARCH RESULTS — sur fond vert ── */
-            <div className="min-h-screen qr-section-in px-4 pt-4 pb-32">
-              <p className="text-white/50 text-[10px] font-extrabold uppercase tracking-[.14em] mb-3" style={{ fontFamily: 'var(--font-baloo)' }}>
+            /* ── SEARCH RESULTS — sur fond crème ── */
+            <div className="min-h-screen qr-section-in px-4 pt-4 pb-32" style={{ background: '#F4F0E4' }}>
+              <p className="text-[10px] font-extrabold uppercase tracking-[.14em] mb-3" style={{ fontFamily: 'var(--font-baloo)', color: '#1A422B' }}>
                 {searchResults.length} résultat{searchResults.length !== 1 ? 's' : ''} pour «&nbsp;{searchQ}&nbsp;»
               </p>
               <div className="space-y-2.5">
@@ -751,23 +751,23 @@ export default function MenuQRPage() {
                   const cat = CATEGORIES.find(c => c.cats.includes(item.category))
                   return (
                     <div key={item.title} className="flex items-center gap-3 rounded-2xl p-3 qr-item-in"
-                      style={{ '--item-delay': `${i * 30}ms`, background: 'rgba(255,255,255,.92)', boxShadow: '0 4px 20px rgba(0,0,0,.15)' } as React.CSSProperties}>
+                      style={{ '--item-delay': `${i * 30}ms`, background: 'white', boxShadow: '0 2px 12px rgba(0,0,0,.08)' } as React.CSSProperties}>
                       <SmartFoodImg
                         src={getImg(item.title, cat?.img ?? '')} alt={item.title}
                         size={76} bg={IMG_BG[i % IMG_BG.length]}
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="font-extrabold text-sm uppercase truncate" style={{ fontFamily: 'var(--font-baloo)', color: '#1E4D3A' }}>{item.title}</div>
+                        <div className="font-extrabold text-sm uppercase truncate" style={{ fontFamily: 'var(--font-baloo)', color: '#1A422B' }}>{item.title}</div>
                         <div className="text-xs text-gray-500 truncate mt-0.5">{item.description}</div>
                       </div>
-                      <div className="font-extrabold text-sm shrink-0" style={{ fontFamily: 'var(--font-baloo)', color: '#1E4D3A' }}>{item.price}&thinsp;€</div>
+                      <div className="font-extrabold text-sm shrink-0" style={{ fontFamily: 'var(--font-baloo)', color: '#1A422B' }}>{item.price}&thinsp;€</div>
                     </div>
                   )
                 }) : (
                   <div className="text-center py-20">
-                    <SearchIcon size={40} color="rgba(255,255,255,.2)" />
-                    <p className="text-sm font-semibold mt-3 text-white/50">Aucun résultat</p>
-                    <p className="text-xs mt-1 text-white/30">Essayez «&nbsp;kebab&nbsp;» ou «&nbsp;tacos&nbsp;»</p>
+                    <SearchIcon size={40} color="rgba(26,66,43,.2)" />
+                    <p className="text-sm font-semibold mt-3" style={{ color: 'rgba(26,66,43,.5)' }}>Aucun résultat</p>
+                    <p className="text-xs mt-1" style={{ color: 'rgba(26,66,43,.35)' }}>Essayez «&nbsp;kebab&nbsp;» ou «&nbsp;tacos&nbsp;»</p>
                   </div>
                 )}
               </div>
@@ -775,60 +775,94 @@ export default function MenuQRPage() {
           ) : (
             /* ── MAIN VIEW ── */
             <>
-              {/* Greeting */}
-              <div className="px-5 pt-4 pb-2">
-                <h1 className="font-extrabold text-white leading-tight qr-slide-up" style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(18px,5.5vw,26px)' }}>
-                  Que souhaitez-vous<br/>manger aujourd&apos;hui ?
-                </h1>
+              {/* ── HERO SECTION (fond vert) ── */}
+              <div className="flex flex-col items-center justify-center pt-6 pb-0" style={{ background: '#1E4D3A' }}>
+                <picture>
+                  <source
+                    srcSet={`${BASE}/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.webp`}
+                    type="image/webp"
+                  />
+                  <img
+                    src={`${BASE}/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.png`}
+                    alt="Kebab Chez Ramo"
+                    style={{
+                      maxWidth: 260,
+                      width: '100%',
+                      display: 'block',
+                      filter: 'drop-shadow(0 12px 18px rgba(0,0,0,0.5))',
+                      animation: 'heroFloat 3.5s ease-in-out infinite',
+                    }}
+                  />
+                </picture>
               </div>
 
-              {/* Best sellers */}
-              <div className="mt-5">
-                <div className="flex items-center justify-between px-5 mb-3">
-                  <h2 className="font-extrabold text-white text-[11px] uppercase tracking-[.12em]" style={{ fontFamily: 'var(--font-baloo)' }}>
-                    Les plus commandés
-                  </h2>
-                  <span className="text-white/40 text-xs font-semibold">5 plats</span>
-                </div>
-                <div className="flex gap-3 qr-noscroll qr-hscroll px-5 pb-4">
-                  {BEST_SELLERS.map((bs, i) => (
-                    <button
-                      key={bs.title}
-                      onClick={() => setSelCatId(bs.catId)}
-                      className="flex flex-col shrink-0 active:scale-95 transition-transform qr-card-in"
-                      style={{ width: 125, '--card-delay': `${i * 75}ms` } as React.CSSProperties}
-                    >
-                      <div className="bg-white rounded-3xl shadow-xl overflow-visible relative" style={{ paddingBottom: 0 }}>
-                        <span
-                          className="absolute top-2.5 left-2.5 z-10 text-white text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider"
-                          style={{ fontFamily: 'var(--font-baloo)', background: '#1E4D3A' }}
-                        >
-                          {bs.badge}
-                        </span>
-                        <div className="rounded-t-3xl overflow-hidden" style={{ background: BS_BG[i % BS_BG.length], height: 130, padding: '4px 4px 0 4px' }}>
-                          <img
-                            src={BASE + bs.img} alt={bs.title}
-                            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-                          />
-                        </div>
-                        <div className="px-3 pt-5 pb-3">
-                          <div className="font-extrabold text-[11px] uppercase text-gray-900 leading-tight" style={{ fontFamily: 'var(--font-baloo)' }}>{bs.title}</div>
-                          <div className="font-extrabold text-sm mt-1" style={{ fontFamily: 'var(--font-baloo)', color: '#1E4D3A' }}>{bs.price}&thinsp;€</div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* ── WAVE DIVIDER ── */}
+              <svg viewBox="0 0 500 60" preserveAspectRatio="none" style={{ width: '100%', height: 50, display: 'block', marginTop: -2, background: '#1E4D3A' }}>
+                <path d="M0,60 L0,35 C40,10 110,10 150,35 C190,10 310,10 350,35 C390,10 460,10 500,35 L500,60 Z" fill="#F4F0E4" />
+              </svg>
 
-              {/* ── Menu sur fond vert avec doodle ── */}
-              <div className="px-0 pb-4" style={{ minHeight: '60vh' }}>
+              {/* ── MENU SECTION (fond crème) ── */}
+              <div style={{ background: '#F4F0E4', minHeight: '60vh' }}>
+
+                {/* Titre NOTRE CARTE */}
+                <div className="text-center px-4 pt-2 pb-4">
+                  <h1
+                    className="font-extrabold uppercase"
+                    style={{
+                      fontFamily: 'var(--font-baloo)',
+                      fontSize: 'clamp(1.8rem,6vw,2.2rem)',
+                      color: '#1A422B',
+                      textShadow: '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff',
+                    }}
+                  >
+                    NOTRE CARTE
+                  </h1>
+                </div>
+
+                {/* Best sellers */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between px-4 mb-3">
+                    <h2 className="font-extrabold text-[11px] uppercase tracking-[.12em]" style={{ fontFamily: 'var(--font-baloo)', color: '#1A422B' }}>
+                      Les plus commandés
+                    </h2>
+                    <span className="text-xs font-semibold" style={{ color: 'rgba(26,66,43,.4)' }}>5 plats</span>
+                  </div>
+                  <div className="flex gap-3 qr-noscroll qr-hscroll px-4 pb-2">
+                    {BEST_SELLERS.map((bs, i) => (
+                      <button
+                        key={bs.title}
+                        onClick={() => setSelCatId(bs.catId)}
+                        className="flex flex-col shrink-0 active:scale-95 transition-transform qr-card-in"
+                        style={{ width: 125, '--card-delay': `${i * 75}ms` } as React.CSSProperties}
+                      >
+                        <div className="bg-white rounded-3xl shadow-md overflow-visible relative">
+                          <span
+                            className="absolute top-2.5 left-2.5 z-10 text-white text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider"
+                            style={{ fontFamily: 'var(--font-baloo)', background: '#1A422B' }}
+                          >
+                            {bs.badge}
+                          </span>
+                          <div className="rounded-t-3xl overflow-hidden" style={{ background: BS_BG[i % BS_BG.length], height: 130, padding: '4px 4px 0 4px' }}>
+                            <img
+                              src={BASE + bs.img} alt={bs.title}
+                              style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                            />
+                          </div>
+                          <div className="px-3 pt-5 pb-3">
+                            <div className="font-extrabold text-[11px] uppercase text-gray-900 leading-tight" style={{ fontFamily: 'var(--font-baloo)' }}>{bs.title}</div>
+                            <div className="font-extrabold text-sm mt-1" style={{ fontFamily: 'var(--font-baloo)', color: '#1A422B' }}>{bs.price}&thinsp;€</div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Category chips — sticky */}
                 <div
                   ref={chipRowRef}
                   className="sticky z-10 pt-3 pb-3"
-                  style={{ top: showSearch ? 116 : 62, backdropFilter: 'blur(12px)', background: 'rgba(30,77,58,.85)' }}
+                  style={{ top: showSearch ? 116 : 62, backdropFilter: 'blur(12px)', background: 'rgba(244,240,228,.95)' }}
                 >
                   <div className="flex gap-2 qr-noscroll qr-hscroll" style={{ paddingLeft: 16, paddingRight: 16 }}>
                     {CATEGORIES.map(cat => {
@@ -841,9 +875,10 @@ export default function MenuQRPage() {
                           className="shrink-0 text-[10px] font-extrabold uppercase tracking-wider px-4 py-2 rounded-full whitespace-nowrap transition-all duration-300 active:scale-95"
                           style={{
                             fontFamily: 'var(--font-baloo)',
-                            background: active ? '#E8A93B' : 'rgba(255,255,255,.12)',
-                            color: active ? '#1E4D3A' : 'rgba(255,255,255,.75)',
-                            boxShadow: active ? '0 4px 16px rgba(232,169,59,.45)' : 'none',
+                            background: active ? '#1A422B' : 'white',
+                            color: active ? 'white' : '#1a1a1a',
+                            border: active ? '2px solid #1A422B' : '2px solid #e2dbc9',
+                            boxShadow: active ? '0 0 0 3px rgba(235,177,52,0.9)' : 'none',
                             transform: active ? 'scale(1.06)' : 'scale(1)',
                           }}
                         >
@@ -854,52 +889,70 @@ export default function MenuQRPage() {
                   </div>
                 </div>
 
-                {/* Items list */}
-                <div className="px-4 pt-4 pb-32">
+                {/* Items grid — 2 colonnes */}
+                <div className="px-3 pt-4 pb-32">
                   <div key={selCatId} className="qr-section-in">
                     {/* Section title */}
                     <div className="flex items-center gap-3 mb-4">
-                      <h3 className="font-extrabold text-base uppercase text-white" style={{ fontFamily: 'var(--font-baloo)', letterSpacing: '-.01em' }}>
+                      <h3 className="font-extrabold text-base uppercase" style={{ fontFamily: 'var(--font-baloo)', color: '#1A422B', letterSpacing: '-.01em' }}>
                         {selCat.label}
                       </h3>
-                      <span className="ml-auto text-[9px] font-extrabold px-2.5 py-1 rounded-full uppercase" style={{ background: 'rgba(232,169,59,.25)', color: '#E8A93B', fontFamily: 'var(--font-baloo)' }}>
+                      <span className="ml-auto text-[9px] font-extrabold px-2.5 py-1 rounded-full uppercase" style={{ background: 'rgba(26,66,43,.1)', color: '#1A422B', fontFamily: 'var(--font-baloo)' }}>
                         {selItems.length} plats
                       </span>
                     </div>
-                    {/* Cards */}
-                    <div className="space-y-2.5">
+                    {/* 2-column grid */}
+                    <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
                       {selItems.map((item, i) => (
                         <div
                           key={item.title}
                           role="button"
                           onClick={() => setSelItem(item)}
-                          className="flex items-center gap-3.5 rounded-2xl p-3 qr-item-in qr-item-hover"
+                          className="qr-item-in active:scale-[0.97] transition-transform"
                           style={{
                             '--item-delay': `${i * 35}ms`,
-                            background: 'rgba(255,255,255,.92)',
-                            boxShadow: '0 4px 20px rgba(0,0,0,.15)',
-                            backdropFilter: 'blur(8px)',
+                            borderRadius: 16,
+                            overflow: 'hidden',
+                            background: 'white',
+                            boxShadow: '0 2px 10px rgba(0,0,0,.08)',
                             cursor: 'pointer',
                             WebkitTapHighlightColor: 'transparent',
                           } as React.CSSProperties}
                         >
-                          <SmartFoodImg
-                            src={getImg(item.title, selCat.img)} alt={item.title}
-                            size={76} bg={IMG_BG[i % IMG_BG.length]}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-extrabold text-[13px] uppercase leading-tight" style={{ fontFamily: 'var(--font-baloo)', color: '#1E4D3A' }}>
-                              {item.title}
-                            </div>
-                            <div className="text-[11px] mt-0.5 line-clamp-2 leading-relaxed text-gray-500">{item.description}</div>
+                          {/* Banner */}
+                          <div style={{ background: '#123321', height: 115, borderRadius: '16px 16px 0 0', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             {item.menu_price && item.menu_price !== '' && (
-                              <span className="inline-block mt-1.5 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase" style={{ background: '#FFF3E8', color: '#E8A93B' }}>
+                              <span
+                                className="absolute top-2 right-2 z-10 text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider"
+                                style={{ fontFamily: 'var(--font-baloo)', background: 'rgba(0,0,0,.55)', color: 'white' }}
+                              >
                                 Menu {item.menu_price}&thinsp;€
                               </span>
                             )}
+                            <img
+                              src={getImg(item.title, selCat.img)}
+                              alt={item.title}
+                              style={{
+                                maxHeight: 100,
+                                maxWidth: '90%',
+                                objectFit: 'contain',
+                                display: 'block',
+                                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
+                              }}
+                              loading="lazy"
+                            />
                           </div>
-                          <div className="shrink-0 font-extrabold text-[15px]" style={{ fontFamily: 'var(--font-baloo)', color: '#1E4D3A' }}>
-                            {item.price}&thinsp;€
+                          {/* Info */}
+                          <div style={{ padding: '8px 8px 10px' }}>
+                            <div className="font-extrabold uppercase leading-tight" style={{ fontSize: 13, color: '#111827', fontFamily: 'var(--font-baloo)' }}>
+                              {item.title}
+                            </div>
+                            <div className="line-clamp-2 leading-snug mt-0.5" style={{ fontSize: 10, color: '#6b7280' }}>
+                              {item.description}
+                            </div>
+                            <div className="font-extrabold mt-1.5" style={{ fontSize: 14, color: '#1A422B', fontFamily: 'var(--font-baloo)' }}>
+                              {item.price}&thinsp;€
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -1097,6 +1150,7 @@ const QR_CSS = `
 
   @keyframes qrTabIn    { from { transform:scaleX(0); } to { transform:scaleX(1); } }
   @keyframes qrItemHover { to { transform:translateX(3px); box-shadow:0 4px 20px rgba(30,77,58,.12); } }
+  @keyframes heroFloat    { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
   @keyframes qrGoldShine {
     0%   { background-position: -200% center; }
     100% { background-position:  200% center; }
