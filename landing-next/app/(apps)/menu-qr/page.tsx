@@ -1034,52 +1034,51 @@ export default function MenuQRPage() {
             className="flex items-center relative"
             style={{
               background: 'white',
-              borderRadius: 28,
-              height: 68,
-              boxShadow: '0 8px 40px rgba(30,77,58,.25), 0 2px 8px rgba(30,77,58,.12)',
-              padding: '0 8px',
+              borderRadius: 30,
+              height: 70,
+              boxShadow: '0 -2px 20px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.1)',
+              padding: '0 12px',
               overflow: 'visible',
             }}
           >
             {/* Accueil */}
             <button
               onClick={() => { setShowSearch(false); setSearchQ(''); contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) }}
-              className="flex-1 flex flex-col items-center justify-center gap-1 h-full transition-all active:scale-90 rounded-2xl"
-              style={{ color: !showSearch ? '#1E4D3A' : '#bbb' }}
+              className="flex-1 flex flex-col items-center justify-center gap-1.5 h-full transition-all active:scale-90"
+              style={{ color: !showSearch ? '#1E4D3A' : '#C8C8C8' }}
             >
-              <div className="relative">
-                <HomeIcon size={20} />
-              </div>
-              <span className="text-[8.5px] font-extrabold uppercase tracking-wide"
-                style={{ fontFamily: 'var(--font-baloo)' }}>
+              <HomeIcon size={22} />
+              <span style={{ fontFamily: 'var(--font-baloo)', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Accueil
               </span>
             </button>
 
             {/* Centre FAB — Finir & noter */}
-            <div className="relative flex flex-col items-center justify-center" style={{ width: 80, overflow: 'visible' }}>
+            <div className="relative flex flex-col items-center justify-center" style={{ width: 88, overflow: 'visible' }}>
               <button
                 onClick={() => setShowModal(true)}
-                className="flex flex-col items-center justify-center gap-1 transition-all active:scale-90"
+                className="flex flex-col items-center justify-center gap-1.5 transition-all active:scale-90"
                 style={{ overflow: 'visible' }}
               >
-                <div
-                  style={{
-                    width: 58, height: 58, borderRadius: 20,
+                {/* Anneau blanc autour du FAB */}
+                <div style={{
+                  width: 66, height: 66, borderRadius: '50%',
+                  background: 'white',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  marginTop: -32,
+                  boxShadow: '0 0 0 3px white',
+                }}>
+                  <div style={{
+                    width: 58, height: 58, borderRadius: '50%',
                     background: 'linear-gradient(145deg, #E8A93B 0%, #d4922a 100%)',
-                    boxShadow: '0 -4px 20px rgba(232,169,59,.4), 0 6px 20px rgba(232,169,59,.35)',
+                    boxShadow: '0 4px 20px rgba(232,169,59,.5)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    marginTop: -28,
                     animation: 'fabGlow 2.5s ease-in-out infinite',
-                    position: 'relative',
-                  }}
-                >
-                  {/* Bordure verte autour du FAB */}
-                  <div style={{ position: 'absolute', inset: -3, borderRadius: 24, border: '3px solid white', zIndex: -1 }} />
-                  <GiftIcon size={26} color="#1E4D3A" />
+                  }}>
+                    <GiftIcon size={26} color="white" />
+                  </div>
                 </div>
-                <span className="text-[8px] font-extrabold uppercase tracking-wide mt-0.5"
-                  style={{ fontFamily: 'var(--font-baloo)', color: '#1E4D3A', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: 'var(--font-baloo)', fontSize: 8.5, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#1E4D3A', whiteSpace: 'nowrap' }}>
                   Finir &amp; noter
                 </span>
               </button>
@@ -1088,14 +1087,11 @@ export default function MenuQRPage() {
             {/* Recherche */}
             <button
               onClick={() => { setShowSearch(s => !s); setSearchQ('') }}
-              className="flex-1 flex flex-col items-center justify-center gap-1 h-full transition-all active:scale-90 rounded-2xl"
-              style={{ color: showSearch ? '#1E4D3A' : '#bbb' }}
+              className="flex-1 flex flex-col items-center justify-center gap-1.5 h-full transition-all active:scale-90"
+              style={{ color: showSearch ? '#1E4D3A' : '#C8C8C8' }}
             >
-              <div className="relative">
-                <SearchIcon size={20} />
-              </div>
-              <span className="text-[8.5px] font-extrabold uppercase tracking-wide"
-                style={{ fontFamily: 'var(--font-baloo)' }}>
+              <SearchIcon size={22} />
+              <span style={{ fontFamily: 'var(--font-baloo)', fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Recherche
               </span>
             </button>
