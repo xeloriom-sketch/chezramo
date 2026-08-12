@@ -184,11 +184,11 @@ function TicketPopup({ ticket, onClose }: { ticket: SavedTicket; onClose: () => 
 
       {/* Actions */}
       <div className="px-5 py-5 space-y-2.5 shrink-0">
-        <button onClick={download} className="w-full py-3 rounded-2xl border-2 border-brand/30 text-brand font-bold text-sm flex items-center justify-center gap-2 hover:border-brand transition">
+        <button onClick={download} className="w-full rounded-2xl border-2 border-brand/30 text-brand font-bold text-sm flex items-center justify-center gap-2 hover:border-brand transition" style={{ minHeight: '48px' }}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Télécharger PDF
         </button>
-        <button onClick={onClose} className="w-full py-3.5 rounded-2xl bg-brand text-cream font-extrabold text-sm tracking-wide hover:bg-[#163d2e] transition" style={{ fontFamily: 'var(--font-baloo)' }}>
+        <button onClick={onClose} className="w-full rounded-2xl bg-brand text-cream font-extrabold text-sm tracking-wide hover:bg-[#163d2e] transition flex items-center justify-center" style={{ minHeight: '52px', fontFamily: 'var(--font-baloo)' }}>
           Fermer
         </button>
       </div>
@@ -367,7 +367,7 @@ export default function CheckoutModal() {
         className="absolute inset-0 bg-black/50 backdrop-blur-[3px]"
       />
 
-      <div className="relative bg-white w-full sm:max-w-4xl rounded-t-[2rem] sm:rounded-3xl overflow-hidden flex flex-col" style={{ maxHeight: '96vh', minHeight: '60vh', boxShadow: '0 32px 80px rgba(0,0,0,0.35)' }}>
+      <div className="relative bg-white w-full sm:max-w-4xl rounded-t-[1.5rem] sm:rounded-3xl overflow-hidden flex flex-col" style={{ maxHeight: '95dvh', minHeight: 'min(60vh, 400px)', boxShadow: '0 32px 80px rgba(0,0,0,0.35)' }}>
 
         {/* Ticket popup overlay */}
         {showTicket && currentTicket && (
@@ -379,10 +379,15 @@ export default function CheckoutModal() {
           <div className="w-10 h-1 rounded-full bg-gray-200" />
         </div>
 
-        {/* Top bar */}
-        <div className="flex items-center justify-between px-5 sm:px-7 py-3 sm:py-4 border-b border-gray-100 shrink-0">
+        {/* Top bar — sticky so it stays visible when content scrolls */}
+        <div className="sticky top-0 z-10 bg-white flex items-center justify-between px-5 sm:px-7 py-3 sm:py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-brand text-base" style={{ fontFamily: 'var(--font-baloo)' }}>Chez Ramo</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {[1, 2, 3].map(i => (
+              <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${checkoutStep === i ? 'bg-brand w-6' : checkoutStep > i ? 'bg-brand/40 w-4' : 'bg-gray-200 w-4'}`} />
+            ))}
           </div>
           <div className="hidden sm:flex items-center gap-2 bg-gray-100 rounded-2xl p-1.5">
             {['1. Panier', '2. Paiement', '3. Confirmation'].map((label, i) => (
@@ -413,13 +418,13 @@ export default function CheckoutModal() {
                         <p className="text-sm font-bold text-gray-900 leading-snug">{item.name}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{money(item.price)} / unité</p>
                         <div className="flex items-center gap-3 mt-3">
-                          <button onClick={() => stepItem(idx, -1)} className="w-10 h-10 rounded-xl bg-white border border-gray-200 text-gray-700 flex items-center justify-center font-bold text-base hover:bg-gray-100 transition active:scale-90">−</button>
+                          <button onClick={() => stepItem(idx, -1)} className="w-11 h-11 rounded-xl bg-white border border-gray-200 text-gray-700 flex items-center justify-center font-bold text-base hover:bg-gray-100 transition active:scale-90">−</button>
                           <span className="text-sm font-bold text-gray-800 w-5 text-center tabular-nums">{item.qty}</span>
-                          <button onClick={() => stepItem(idx, 1)} className="w-10 h-10 rounded-xl bg-brand text-white flex items-center justify-center font-bold text-base hover:bg-[#163d2e] transition active:scale-90">+</button>
+                          <button onClick={() => stepItem(idx, 1)} className="w-11 h-11 rounded-xl bg-brand text-white flex items-center justify-center font-bold text-base hover:bg-[#163d2e] transition active:scale-90">+</button>
                         </div>
                       </div>
                       <div className="flex flex-col items-end justify-between gap-4 shrink-0">
-                        <button onClick={() => stepItem(idx, -item.qty)} className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-400 transition active:scale-90">
+                        <button onClick={() => stepItem(idx, -item.qty)} className="w-11 h-11 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-400 transition active:scale-90">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                         </button>
                         <span className="text-base font-bold text-gray-900 tabular-nums">{money(item.price * item.qty)}</span>
@@ -462,7 +467,7 @@ export default function CheckoutModal() {
         {/* Étape 2 : Paiement */}
         {checkoutStep === 2 && (
           <div className="flex-1 overflow-y-auto overscroll-contain" style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}>
-            <div className="p-4 sm:p-8 w-full max-w-lg mx-auto" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+            <div className="px-4 sm:px-8 py-4 sm:py-8 w-full max-w-lg mx-auto" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
               {paymentPhase !== 'paying' && (
                 <div className="flex items-center gap-3 mb-6">
                   <button onClick={() => goToStep(1)} className="w-11 h-11 rounded-2xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition shrink-0 active:scale-90">
@@ -509,8 +514,8 @@ export default function CheckoutModal() {
                       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Numéro de carte</label>
                       <div
                         ref={cardDivCallback}
-                        className="px-4 rounded-2xl border-2 border-brand/15 bg-white transition-opacity flex items-center"
-                        style={{ minHeight: '52px', opacity: cardReady ? 1 : 0.4 }}
+                        className="px-4 rounded-2xl border-2 border-brand/15 bg-white transition-opacity flex items-center w-full"
+                        style={{ minHeight: '52px', opacity: cardReady ? 1 : 0.4, maxWidth: '100%', boxSizing: 'border-box' }}
                       />
                     </div>
                     <button type="submit" disabled={!cardReady || paymentPhase === 'paying'} className="w-full rounded-2xl bg-brand text-white font-extrabold text-base tracking-wide hover:bg-[#163d2e] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center" style={{ height: '56px', boxShadow: '0 8px 28px rgba(30,77,58,0.28)', fontFamily: 'var(--font-baloo)' }}>
@@ -538,7 +543,7 @@ export default function CheckoutModal() {
                     <p className="text-sm font-semibold text-red-600">{paymentError || 'Paiement refusé.'}</p>
                   </div>
                   <button onClick={handleGoToPayment} className="w-full rounded-2xl bg-brand text-white font-semibold text-sm tracking-wide hover:bg-[#163d2e] transition active:scale-[.98] flex items-center justify-center" style={{ height: '52px' }}>Réessayer</button>
-                  <button onClick={() => closeCheckout()} className="w-full py-3 text-gray-400 text-sm hover:text-gray-600 transition-colors">Annuler</button>
+                  <button onClick={() => closeCheckout()} className="w-full text-gray-400 text-sm hover:text-gray-600 transition-colors flex items-center justify-center" style={{ minHeight: '44px' }}>Annuler</button>
                 </div>
               )}
             </div>
@@ -548,7 +553,7 @@ export default function CheckoutModal() {
         {/* Étape 3 : Confirmation */}
         {checkoutStep === 3 && (
           <div className="flex-1 overflow-y-auto overscroll-contain" style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}>
-            <div className="flex flex-col items-center px-6 py-8 sm:py-12 text-center" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+            <div className="flex flex-col items-center px-5 py-8 sm:py-12 text-center" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
               <div className="relative w-28 h-28 mx-auto mb-5 flex items-center justify-center">
                 <span className="absolute top-1 left-2 w-3 h-3 rounded-full bg-accent/70 animate-ping" />
                 <div className="w-20 h-20 rounded-full bg-brand flex items-center justify-center" style={{ boxShadow: '0 8px 32px rgba(30,77,58,0.32)' }}>
@@ -585,7 +590,7 @@ export default function CheckoutModal() {
                   <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   Suivre ma commande
                 </button>
-                <button onClick={() => closeCheckout()} className="w-full py-3 text-gray-400 text-sm hover:text-gray-600 transition-colors">
+                <button onClick={() => closeCheckout()} className="w-full py-3 text-gray-400 text-sm hover:text-gray-600 transition-colors flex items-center justify-center" style={{ minHeight: '44px' }}>
                   Retour à l'accueil
                 </button>
               </div>

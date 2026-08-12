@@ -14,7 +14,7 @@ export default function CartSidebar() {
     <div className="fixed inset-0 z-[90] flex items-end sm:items-stretch sm:justify-end">
       <div onClick={() => closeCart()} className="absolute inset-0 bg-brand/55 backdrop-blur-sm cursor-pointer" />
 
-      <div className="relative w-full sm:w-[min(430px,50vw)] bg-cream flex flex-col shadow-2xl anim-sheet-up rounded-t-[2rem] sm:rounded-none h-[90vh] sm:h-full border-t-2 sm:border-t-0 sm:border-l-2 border-brand">
+      <div className="relative w-full sm:w-[min(430px,50vw)] bg-cream flex flex-col shadow-2xl anim-sheet-up rounded-t-[1.5rem] sm:rounded-none sm:h-full border-t-2 sm:border-t-0 sm:border-l-2 border-brand" style={{ height: 'min(90dvh, 90vh)' }}>
         <div className="sm:hidden pt-3 pb-1 flex justify-center shrink-0">
           <div className="w-10 h-1 rounded-full bg-brand/25" />
         </div>
@@ -51,9 +51,9 @@ export default function CartSidebar() {
                   <p className="text-sm font-bold text-brand mt-1">{money(item.price)} / unité</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => stepItem(idx, -1)} className="w-10 h-10 rounded-full border-2 border-brand bg-transparent font-bold hover:bg-accent transition flex items-center justify-center text-base active:scale-90">–</button>
+                  <button onClick={() => stepItem(idx, -1)} className="w-11 h-11 rounded-full border-2 border-brand bg-transparent font-bold hover:bg-accent transition flex items-center justify-center text-base active:scale-90">–</button>
                   <span className="min-w-[24px] text-center font-extrabold text-base" style={{ fontFamily: 'var(--font-baloo)' }}>{item.qty}</span>
-                  <button onClick={() => stepItem(idx, 1)} className="w-10 h-10 rounded-full bg-brand text-cream font-bold hover:bg-accent hover:text-brand transition flex items-center justify-center text-base active:scale-90">+</button>
+                  <button onClick={() => stepItem(idx, 1)} className="w-11 h-11 rounded-full bg-brand text-cream font-bold hover:bg-accent hover:text-brand transition flex items-center justify-center text-base active:scale-90">+</button>
                 </div>
               </div>
             ))

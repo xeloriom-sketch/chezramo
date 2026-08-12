@@ -47,20 +47,18 @@ export default function DifferenceSection() {
           <h2 className="font-extrabold text-[clamp(32px,8vw,80px)] leading-[1.02] text-brand max-w-10xl mt-0 md:mt-40 mx-auto" style={{ fontFamily: 'var(--font-baloo)' }}>
             CE QUI REND<br />CHEZ RAMO UNIQUE ?
           </h2>
-          <p className="mt-2 md:mt-4 max-w-xl text-sm sm:text-xl leading-relaxed">
+          <p className="mt-2 md:mt-4 max-w-xl text-sm sm:text-xl leading-relaxed text-brand">
             Une broche artisanale qui tourne toute la journée, des sauces préparées sur place, et une équipe passionnée qui ne transige pas sur la qualité.
           </p>
         </div>
       </div>
 
-      <div className="relative max-w-9xl mx-auto px-4 md:px-24 md:-mt-10 grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center py-4">
-        <div className="mt-0 md:mt-[15vw] flex flex-col space-y-6 md:space-y-40 z-10">
-          {leftCards.map(card => (
-            <DiffCard key={card.num} card={card} />
-          ))}
-        </div>
+      {/* Desktop: 3-column layout [left-cards | burger | right-cards] */}
+      {/* Mobile: burger first, then all 4 cards in a 2-col grid */}
+      <div className="relative max-w-9xl mx-auto px-4 md:px-24 md:-mt-10 py-4">
 
-        <div className="flex items-center justify-center my-0 diff-burger-wrap">
+        {/* Burger — visible on both, but comes first on mobile via flex order */}
+        <div className="flex items-center justify-center mb-6 md:hidden diff-burger-wrap">
           <picture>
             <source srcSet={`${BASE}/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.webp`} type="image/webp" />
             <img
@@ -69,16 +67,47 @@ export default function DifferenceSection() {
               loading="lazy"
               width={1024}
               height={1024}
-              className="w-full max-w-[340px] md:w-[clamp(350px,50vw,750px)] md:max-w-none h-auto object-contain mx-auto diff-burger"
+              className="w-full max-w-[280px] sm:max-w-[320px] h-auto object-contain mx-auto diff-burger"
             />
           </picture>
         </div>
 
-        <div className="mt-0 md:mt-[15vw] flex flex-col space-y-6 md:space-y-40 z-10">
-          {rightCards.map(card => (
+        {/* Mobile: all 4 cards in a 2-col grid */}
+        <div className="grid grid-cols-2 gap-3 md:hidden z-10">
+          {cards.map(card => (
             <DiffCard key={card.num} card={card} />
           ))}
         </div>
+
+        {/* Desktop only: 3-column layout */}
+        <div className="hidden md:grid md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
+          <div className="mt-[15vw] flex flex-col space-y-40 z-10">
+            {leftCards.map(card => (
+              <DiffCard key={card.num} card={card} />
+            ))}
+          </div>
+
+          <div className="flex items-center justify-center diff-burger-wrap">
+            <picture>
+              <source srcSet={`${BASE}/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.webp`} type="image/webp" />
+              <img
+                src={`${BASE}/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.png`}
+                alt="Kebab gourmet artisanal Chez Ramo — meilleur kebab Lagnieu"
+                loading="lazy"
+                width={1024}
+                height={1024}
+                className="w-[clamp(350px,50vw,750px)] h-auto object-contain mx-auto diff-burger"
+              />
+            </picture>
+          </div>
+
+          <div className="mt-[15vw] flex flex-col space-y-40 z-10">
+            {rightCards.map(card => (
+              <DiffCard key={card.num} card={card} />
+            ))}
+          </div>
+        </div>
+
       </div>
     </section>
   )
@@ -87,12 +116,12 @@ export default function DifferenceSection() {
 function DiffCard({ card }: { card: typeof cards[0] }) {
   const isLeft = card.side === 'left'
   return (
-    <div className="relative bg-[#1E4D3A] rounded-2xl p-5 shadow-md border border-white/5">
+    <div className="relative bg-[#1E4D3A] rounded-2xl p-3 sm:p-5 shadow-md border border-white/5">
       <span className={`absolute -top-3 ${isLeft ? '-right-3' : '-left-3'} w-8 h-8 rounded-full bg-[#EBE5C2] text-[#1E4D3A] text-sm font-bold flex items-center justify-center shadow-sm`}>
         {card.num}
       </span>
-      <h3 className="flex items-center gap-3 text-sm font-bold tracking-[.08em] uppercase text-[#EBE5C2]">
-        <svg className="w-5 h-5 text-[#EBE5C2] flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <h3 className="flex items-center gap-2 text-[11px] sm:text-sm font-bold tracking-[.06em] sm:tracking-[.08em] uppercase text-[#EBE5C2]">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#EBE5C2] flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           {card.icon}
         </svg>
         {card.title}

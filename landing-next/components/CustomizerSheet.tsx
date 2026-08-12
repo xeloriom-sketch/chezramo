@@ -35,12 +35,12 @@ export default function CustomizerSheet() {
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center">
       <div onClick={() => closeCustomizer()} className="absolute inset-0 bg-brand/60 backdrop-blur-sm" />
 
-      <div ref={sheetRef} className="relative w-full sm:w-[min(500px,96vw)] bg-cream shadow-2xl rounded-t-[2rem] sm:rounded-3xl anim-sheet-up flex flex-col" style={{ maxHeight: '92vh' }}>
+      <div ref={sheetRef} className="relative w-full sm:w-[min(500px,96vw)] bg-cream shadow-2xl rounded-t-[1.5rem] sm:rounded-3xl anim-sheet-up flex flex-col" style={{ maxHeight: 'min(95dvh, 95vh)' }}>
         <div className="sm:hidden pt-3 pb-1 flex justify-center shrink-0">
           <div className="w-10 h-1 rounded-full bg-brand/25" />
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 sm:px-8 pt-2 sm:pt-6" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 sm:px-8 pt-2 sm:pt-6 pb-4" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
           {/* header */}
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
@@ -48,7 +48,7 @@ export default function CustomizerSheet() {
               <h3 className="font-extrabold text-2xl leading-tight mt-0.5" style={{ fontFamily: 'var(--font-baloo)' }}>{customizer.name}</h3>
               <p className="text-xs text-[#8A8A8A] mt-0.5">À partir de {money(customizer.price)}</p>
             </div>
-            <button onClick={() => closeCustomizer()} className="shrink-0 w-9 h-9 rounded-full border-2 border-brand hover:bg-accent transition flex items-center justify-center mt-1">
+            <button onClick={() => closeCustomizer()} className="shrink-0 w-11 h-11 rounded-full border-2 border-brand hover:bg-accent transition flex items-center justify-center mt-1">
               <svg className="w-4 h-4 text-brand" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
@@ -98,7 +98,7 @@ export default function CustomizerSheet() {
                         ? 'bg-[#1E4D3A] border-[#1E4D3A] text-[#F5ECD9] scale-105 shadow-md'
                         : 'bg-transparent border-[#1E4D3A]/40 text-[#1E4D3A] hover:border-[#1E4D3A] hover:scale-[1.03]'
                     }`}
-                    style={{ minHeight: '40px' }}
+                    style={{ minHeight: '44px' }}
                   >
                     {custDrink === drink && (
                       <svg className="w-3 h-3 text-[#F5ECD9] shrink-0" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -137,7 +137,7 @@ export default function CustomizerSheet() {
                         ? 'bg-accent border-accent text-brand scale-105 shadow-md'
                         : 'bg-transparent border-brand/50 text-brand hover:border-brand hover:scale-[1.03]'
                     }`}
-                    style={{ minHeight: '40px' }}
+                    style={{ minHeight: '44px' }}
                   >
                     {custSauces.includes(sauce) && (
                       <svg className="w-3 h-3 text-brand shrink-0" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -172,7 +172,7 @@ export default function CustomizerSheet() {
                         ? 'bg-[#C8412F] border-[#C8412F] text-cream scale-105 shadow-md'
                         : 'bg-transparent border-brand/40 text-brand hover:border-brand hover:scale-[1.03]'
                     }`}
-                    style={{ minHeight: '40px' }}
+                    style={{ minHeight: '44px' }}
                   >
                     {custRemovals.includes(ingr) && (
                       <svg className="w-3 h-3 text-cream shrink-0" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -189,9 +189,12 @@ export default function CustomizerSheet() {
               )}
             </div>
           )}
+        </div>
 
+        {/* Sticky footer — Quantité + Ajouter au panier, always visible above virtual keyboard */}
+        <div className="shrink-0 px-5 sm:px-8 pt-3 pb-4 border-t border-brand/15 bg-cream" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
           {/* Quantité */}
-          <div className="mb-7 flex items-center justify-between py-4 border-t border-b border-brand/15">
+          <div className="flex items-center justify-between py-3 mb-3">
             <p className="text-sm font-bold text-brand tracking-wide">Quantité</p>
             <div className="flex items-center gap-5">
               <button onClick={() => setCustQty(Math.max(1, custQty - 1))} className="w-11 h-11 rounded-full border-2 border-brand text-xl font-bold flex items-center justify-center hover:bg-accent transition active:scale-90">–</button>
@@ -202,8 +205,8 @@ export default function CustomizerSheet() {
 
           <button
             onClick={() => confirmCustomizer()}
-            className="w-full py-4 rounded-full bg-brand text-cream font-extrabold text-base uppercase tracking-widest hover:bg-accent hover:text-brand transition-all btn-hover-scale shadow-lg active:scale-95 flex items-center justify-center gap-2"
-            style={{ fontFamily: 'var(--font-baloo)' }}
+            className="w-full rounded-full bg-brand text-cream font-extrabold text-base uppercase tracking-widest hover:bg-accent hover:text-brand transition-all btn-hover-scale shadow-lg active:scale-95 flex items-center justify-center gap-2"
+            style={{ minHeight: '56px', fontFamily: 'var(--font-baloo)' }}
           >
             <span>Ajouter au panier</span>
             <span className="opacity-80">— {money(unitPrice * custQty)}</span>

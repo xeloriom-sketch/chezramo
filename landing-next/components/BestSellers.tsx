@@ -33,7 +33,7 @@ export default function BestSellers() {
           </a>
         </div>
 
-        <div className="mt-20 sm:mt-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-20 sm:gap-8">
+        <div className="mt-16 sm:mt-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-16 sm:gap-8">
           {/* Kebab */}
           <div className="relative pt-4 pb-6 px-5 rounded-3xl bg-brand text-cream text-center reveal-stagger card-lift" style={{ '--stagger-delay': '0ms' } as React.CSSProperties}>
             <picture>
