@@ -148,6 +148,19 @@ const BS_BG = [
   '#FFF0D9', '#D4F5EE', '#EAF4FB', '#FCE8F0', '#F0F4FF',
 ]
 
+// Couleurs claires par catégorie
+const CAT_COLORS: Record<string, { bg: string; text: string; accent: string }> = {
+  kebab:     { bg: '#E6F4EE', text: '#1E4D3A', accent: '#1E4D3A' },
+  tacos:     { bg: '#FFF0E4', text: '#A84E0E', accent: '#C8621A' },
+  burgers:   { bg: '#FFECEC', text: '#B82C2C', accent: '#D63B3B' },
+  assiettes: { bg: '#F0EAFF', text: '#5C2EA0', accent: '#7B3FC4' },
+  plats:     { bg: '#E4F3F7', text: '#14566A', accent: '#1A6B7A' },
+  salades:   { bg: '#E8F5EB', text: '#1E6430', accent: '#2E7D3C' },
+  drinks:    { bg: '#FFF4E4', text: '#8A4008', accent: '#B8560A' },
+}
+
+const BS_COLORS = ['#FFF3E0', '#E8F5E9', '#E3F2FD', '#FCE4EC', '#F3E5F5']
+
 const CATEGORIES = [
   { id: 'kebab',     label: 'KEBAB & GALETTES', img: '/uploads/cut/Kebab%20Frites.png',      cats: ['Sandwichs Vedettes','Nos Spécialités','Tradition & Galettes'] },
   { id: 'tacos',     label: 'TACOS',             img: '/uploads/cut/Maxi%20Tacos.png',         cats: ['Tacos'] },
@@ -159,11 +172,11 @@ const CATEGORIES = [
 ]
 
 const BEST_SELLERS = [
-  { title: 'Kebab Frites',   price: '9,50',  img: '/uploads/cut/Kebab%20Frites.png',      catId: 'kebab',     badge: 'Top Vente' },
-  { title: 'Maxi Tacos',     price: '15,00', img: '/uploads/cut/Maxi%20Tacos.png',         catId: 'tacos',     badge: 'Populaire' },
-  { title: 'Cheese Burger',  price: '6,00',  img: '/uploads/cut/Cheese%20Burger.png',      catId: 'burgers',   badge: 'Coup de ♥' },
-  { title: 'Assiette Kebab', price: '15,00', img: '/uploads/cut/Assiette%20Kebab.png',     catId: 'assiettes', badge: 'Spécialité' },
-  { title: 'Tiramisu',       price: '3,50',  img: '/uploads/cut/Tiramisu.png',             catId: 'drinks',    badge: 'Dessert' },
+  { title: 'Kebab Frites',   price: '9,50',  img: '/uploads/cut/Kebab%20Frites.png',   catId: 'kebab'   },
+  { title: 'Chicken Burger', price: '7,00',  img: '/uploads/cut/Chicken%20Burger.png', catId: 'burgers' },
+  { title: 'Kebab Géant',    price: '11,00', img: '/uploads/cut/Kebab%20Geant.png',    catId: 'kebab'   },
+  { title: 'Cheese Burger',  price: '6,00',  img: '/uploads/cut/Cheese%20Burger.png',  catId: 'burgers' },
+  { title: 'Miche Kebab',    price: '10,50', img: '/uploads/cut/Miche%20Kebab.png',    catId: 'kebab'   },
 ]
 
 const PRIZES = [
@@ -227,6 +240,13 @@ export default function MenuQRPage() {
   const [showReviewPopup,  setShowReviewPopup]  = useState(false)
   const [table,            setTable]            = useState('')
   const [mounted,          setMounted]          = useState(false)
+  const [screen,           setScreen]           = useState<'welcome' | 'home'>(() => {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('ramo_welcomed')) return 'home'
+    return 'welcome'
+  })
+  const [bannerIdx,        setBannerIdx]        = useState(0)
+  const bannerRef     = useRef<HTMLDivElement>(null)
+  const touchStartXRef = useRef(0)
   const [selItem,          setSelItem]          = useState<typeof MENU_DATA[0] | null>(null)
   const [closingItem,      setClosingItem]      = useState(false)
   const [stars,            setStars]            = useState(0)
@@ -237,11 +257,38 @@ export default function MenuQRPage() {
   const [wheelRot,         setWheelRot]         = useState(0)
   const [wheelSpun,        setWheelSpun]        = useState(false)
   const [confetti,         setConfetti]         = useState<ReturnType<typeof makeConfetti>>([])
-  const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const contentRef = useRef<HTMLDivElement>(null)
+  const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const contentRef  = useRef<HTMLDivElement>(null)
+  const audioCtxRef = useRef<AudioContext | null>(null)
+
+  function playTap(freq = 700) {
+    try {
+      const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+      if (!audioCtxRef.current) audioCtxRef.current = new AC()
+      const ctx = audioCtxRef.current
+      if (ctx.state === 'suspended') ctx.resume()
+      const osc  = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain); gain.connect(ctx.destination)
+      osc.frequency.setValueAtTime(freq, ctx.currentTime)
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.55, ctx.currentTime + 0.07)
+      gain.gain.setValueAtTime(0.12, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09)
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1)
+    } catch { /* silencieux si navigateur bloque */ }
+  }
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest('button, a, [role="button"]')) playTap()
+    }
+    document.addEventListener('click', handler, { capture: true })
+    return () => document.removeEventListener('click', handler, { capture: true })
   }, [])
 
   useEffect(() => {
@@ -275,6 +322,15 @@ export default function MenuQRPage() {
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
   }, [selCatId])
+
+  const BANNERS_COUNT = 4
+  useEffect(() => {
+    if (view !== 'categories' || showSearch) return
+    const id = setInterval(() => {
+      setBannerIdx(idx => (idx + 1) % BANNERS_COUNT)
+    }, 4000)
+    return () => clearInterval(id)
+  }, [view, showSearch])
 
   function scheduleModal(ms: number) {
     timerRef.current = setTimeout(() => setShowModal(true), ms)
@@ -347,101 +403,112 @@ export default function MenuQRPage() {
     <>
       <style dangerouslySetInnerHTML={{ __html: QR_CSS }} />
 
-      {/* ── LOADER CSS ───────────────────────────────────────────────────────── */}
-      <div
-        className="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-6"
-        style={{ background: '#F8F8F6', animation: 'loaderOut .6s 3.2s both', pointerEvents: 'none' }}
-      >
-        {/* Assiette / plat animé */}
-        <div style={{ position: 'relative', width: 140, height: 140 }}>
-          {/* Halo pulsant derrière */}
-          <div style={{
-            position: 'absolute', inset: -12, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(232,169,59,.18) 0%, transparent 70%)',
-            animation: 'qrPulse 2s ease-in-out infinite',
-          }} />
-          {/* Cercle vert */}
-          <div style={{
-            width: 140, height: 140, borderRadius: '50%',
-            background: 'linear-gradient(145deg, #1E4D3A 0%, #163d2e 100%)',
-            boxShadow: '0 16px 48px rgba(30,77,58,.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            overflow: 'hidden', position: 'relative',
-          }}>
-            <div className="pattern-bg" style={{ position: 'absolute', inset: 0, opacity: 0.08 }} />
+      {/* ── WELCOME SCREEN (première visite) ────────────────────────────────── */}
+      {screen === 'welcome' && mounted && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          background: '#1E4D3A',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'space-between',
+          padding: '60px 28px 48px',
+          textAlign: 'center',
+        }}>
+          <div className="pattern-bg" style={{ position: 'absolute', inset: 0, opacity: 0.06 }} />
+
+          {/* Logo */}
+          <div style={{ zIndex: 1 }}>
+            <p style={{ fontFamily: 'var(--font-baloo)', fontSize: '2rem', fontWeight: 900, color: 'white', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+              CHEZ RAMO
+            </p>
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,.4)', letterSpacing: '0.25em', textTransform: 'uppercase' as const, marginTop: 4 }}>
+              Kebab Artisanal · Lagnieu
+            </p>
+          </div>
+
+          {/* Kebab flottant */}
+          <div style={{ zIndex: 1, position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{
+              position: 'absolute', borderRadius: '50%', width: 300, height: 300,
+              background: 'radial-gradient(circle, rgba(232,169,59,.2) 0%, transparent 70%)',
+            }} />
             <img
               src={`${BASE}/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.png`}
-              alt=""
+              alt="Kebab Chez Ramo"
               style={{
-                width: 120, height: 120, objectFit: 'contain',
-                filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))',
-                animation: 'heroFloat 3s ease-in-out infinite',
+                width: 280, height: 280, objectFit: 'contain',
+                filter: 'drop-shadow(0 28px 56px rgba(0,0,0,0.55))',
+                animation: 'heroFloat 3.5s ease-in-out infinite',
                 position: 'relative', zIndex: 1,
               }}
             />
           </div>
-        </div>
 
-        {/* Branding */}
-        <div className="text-center">
-          <p className="font-extrabold uppercase" style={{ fontFamily: 'var(--font-baloo)', fontSize: '1.9rem', letterSpacing: '.2em', color: '#1E4D3A' }}>
-            Chez Ramo
-          </p>
-          <p style={{ color: 'rgba(30,77,58,.4)', fontSize: '.65rem', letterSpacing: '.28em', textTransform: 'uppercase', marginTop: 4 }}>
-            Notre carte
-          </p>
-          {/* Barre de progression */}
-          <div style={{ width: 120, height: 3, borderRadius: 99, background: '#E8E3D7', margin: '14px auto 0', overflow: 'hidden' }}>
-            <div style={{
-              height: '100%', borderRadius: 99,
-              background: 'linear-gradient(90deg, #E8A93B, #f0bc4e)',
-              animation: 'loaderBar 3.2s cubic-bezier(.4,0,.2,1) both',
-            }} />
+          {/* Texte + CTA */}
+          <div style={{ zIndex: 1, width: '100%' }}>
+            <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(22px,6vw,30px)', fontWeight: 900, color: 'white', lineHeight: 1.1, marginBottom: 10 }}>
+              Bienvenue{table ? ` — Table ${table}` : ' chez Ramo !'}
+            </h2>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', lineHeight: 1.7, marginBottom: 28, letterSpacing: '0.02em' }}>
+              Broche artisanale · Sauces maison · Kebab généreux
+            </p>
+            <button
+              onClick={() => { playTap(600); sessionStorage.setItem('ramo_welcomed', '1'); setScreen('home') }}
+              style={{
+                width: '100%', background: '#E8A93B', color: '#1E4D3A',
+                fontFamily: 'var(--font-baloo)', fontWeight: 900,
+                fontSize: 15, textTransform: 'uppercase' as const, letterSpacing: '0.08em',
+                border: 'none', borderRadius: 99, padding: '18px 24px',
+                boxShadow: '0 8px 28px rgba(232,169,59,.45)',
+                cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              Voir la carte
+            </button>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ── PHASE OVERLAYS ───────────────────────────────────────────────────── */}
       {phase !== 'menu' && (
-        <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto qr-noscroll" style={{ background: '#1E4D3A' }}>
-          <div className="flex items-center justify-between px-5 py-4 bg-white/10 border-b border-white/20 shrink-0">
-            <span className="font-extrabold text-base text-white tracking-wide" style={{ fontFamily: 'var(--font-baloo)' }}>CHEZ RAMO</span>
-            <div className="flex items-center gap-1.5">
+        <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto qr-noscroll" style={{ background: 'white' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #F0F0F0', flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--font-baloo)', fontSize: 15, fontWeight: 900, color: '#111', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>Chez Ramo</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               {(['rating','roulette','prize'] as Phase[]).map(p => (
-                <div key={p} className="h-1.5 rounded-full transition-all duration-500"
-                  style={{ width: (phase === p || (p === 'prize' && phase === 'thanks')) ? 20 : 6, background: (phase === p || (p === 'prize' && phase === 'thanks')) ? '#E8A93B' : 'rgba(255,255,255,.3)' }} />
+                <div key={p} style={{ height: 5, borderRadius: 99, transition: 'all .5s', width: (phase === p || (p === 'prize' && phase === 'thanks')) ? 20 : 5, background: (phase === p || (p === 'prize' && phase === 'thanks')) ? '#111' : '#E0E0E0' }} />
               ))}
             </div>
           </div>
 
           {phase === 'rating' && (
-            <div className="flex flex-col items-center justify-center flex-1 px-6 py-12 gap-6 text-center">
-              <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center shadow-2xl qr-bounce-in">
-                <StarOutlineIcon size={42} color="#1E4D3A" />
+            <div className="flex flex-col items-center justify-center flex-1 px-6 py-12 gap-7 text-center">
+              <div style={{ width: 72, height: 72, borderRadius: 24, background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="qr-bounce-in">
+                <StarOutlineIcon size={36} color="white" />
               </div>
               <div className="qr-slide-up" style={{ '--reveal-delay': '.1s' } as React.CSSProperties}>
-                <p className="text-[10px] font-bold tracking-[.22em] uppercase mb-2 text-white/70">Votre avis compte</p>
-                <h2 className="font-extrabold leading-none uppercase text-white" style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(28px,8vw,44px)' }}>
+                <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: '#AAA', marginBottom: 8 }}>Votre avis compte</p>
+                <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(26px,8vw,42px)', fontWeight: 900, color: '#111', lineHeight: 1.05, textTransform: 'uppercase' as const }}>
                   Comment s&apos;est<br/>passé votre repas ?
                 </h2>
-                <p className="mt-3 text-white/60 text-sm max-w-xs mx-auto leading-relaxed">
+                <p style={{ marginTop: 12, color: '#999', fontSize: 13, lineHeight: 1.6 }}>
                   Notez votre expérience et aidez-nous à nous améliorer
                 </p>
               </div>
-              <div className="flex gap-3 bg-white/15 rounded-full px-6 py-4 border border-white/20 qr-slide-up" style={{ '--reveal-delay': '.2s' } as React.CSSProperties}>
+              <div style={{ '--reveal-delay': '.2s', display: 'flex', gap: 10, background: '#F5F5F5', borderRadius: 99, padding: '14px 20px' } as React.CSSProperties} className="qr-slide-up">
                 {[1,2,3,4,5].map(s => (
                   <button key={s} onClick={() => setStars(s)} onMouseEnter={() => setHovered(s)} onMouseLeave={() => setHovered(0)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, WebkitTapHighlightColor: 'transparent', transform: stars === s ? 'scale(1.3)' : 'scale(1)', transition: 'transform 150ms' }}
                     aria-label={`${s} étoile${s > 1 ? 's' : ''}`}
                   >
-                    <StarFilledIcon size={36} color={((hovered || stars) >= s) ? '#FFD700' : 'white'} opacity={((hovered || stars) >= s) ? 1 : 0.3} />
+                    <StarFilledIcon size={36} color={((hovered || stars) >= s) ? '#F5A623' : '#D5D5D5'} opacity={1} />
                   </button>
                 ))}
               </div>
-              {stars > 0 && <p className="font-bold text-white text-sm tracking-wide qr-fade-in">{starLabels[stars]}</p>}
+              {stars > 0 && <p style={{ fontWeight: 700, color: '#111', fontSize: 14, letterSpacing: '0.03em' }} className="qr-fade-in">{starLabels[stars]}</p>}
               <button onClick={onRate} disabled={!stars}
-                className="w-full max-w-xs font-extrabold uppercase tracking-widest text-sm py-4 rounded-full shadow-lg disabled:opacity-25 disabled:cursor-not-allowed active:scale-[.98] transition-transform qr-slide-up"
-                style={{ '--reveal-delay': '.3s', fontFamily: 'var(--font-baloo)', background: '#E8A93B', color: '#1E4D3A' } as React.CSSProperties}
+                className="w-full max-w-xs active:scale-[.98] transition-transform qr-slide-up"
+                style={{ '--reveal-delay': '.3s', fontFamily: 'var(--font-baloo)', background: '#111', color: 'white', border: 'none', borderRadius: 99, padding: '16px 24px', fontSize: 13, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', cursor: 'pointer', opacity: stars ? 1 : 0.25, boxShadow: '0 6px 20px rgba(0,0,0,.18)' } as React.CSSProperties}
               >
                 Valider mon avis
               </button>
@@ -450,27 +517,19 @@ export default function MenuQRPage() {
 
           {phase === 'roulette' && (
             <div className="flex flex-col items-center justify-center flex-1 px-4 py-8 gap-6 text-center">
-              {/* Titre */}
               <div className="qr-slide-up">
-                <p className="text-[10px] font-bold tracking-[.22em] uppercase mb-2 text-white/60">Tentez votre chance</p>
-                <h2 className="font-extrabold leading-none uppercase text-white" style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(26px,7vw,38px)' }}>
+                <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: '#AAA', marginBottom: 8 }}>Tentez votre chance</p>
+                <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(24px,7vw,36px)', fontWeight: 900, color: '#111', lineHeight: 1.05, textTransform: 'uppercase' as const }}>
                   La roue<br/>de la chance
                 </h2>
               </div>
 
-              {/* Roue SVG */}
               <div className="relative qr-pop-in" style={{ '--reveal-delay': '.15s' } as React.CSSProperties}>
-                {/* Halo extérieur */}
-                <div style={{ position: 'absolute', inset: -16, borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,169,59,.2) 0%, transparent 70%)', filter: 'blur(12px)', animation: 'qrPulse 2s ease-in-out infinite' }} />
-                <svg width={270} height={270} viewBox="-135 -135 270 270" style={{ display: 'block', filter: 'drop-shadow(0 12px 32px rgba(0,0,0,.4))' }}>
-                  {/* Roue rotative */}
-                  <g style={{
-                    transform: `rotate(${wheelRot}deg)`,
-                    transition: wheelSpun ? 'transform 5.5s cubic-bezier(.15,.7,.05,1)' : 'none',
-                  }}>
+                <div style={{ position: 'absolute', inset: -16, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,0,0,.06) 0%, transparent 70%)', filter: 'blur(12px)', animation: 'qrPulse 2s ease-in-out infinite' }} />
+                <svg width={270} height={270} viewBox="-135 -135 270 270" style={{ display: 'block', filter: 'drop-shadow(0 8px 24px rgba(0,0,0,.15))' }}>
+                  <g style={{ transform: `rotate(${wheelRot}deg)`, transition: wheelSpun ? 'transform 5.5s cubic-bezier(.15,.7,.05,1)' : 'none' }}>
                     {WHEEL_SEGS.map((seg, i) => {
-                      const N = WHEEL_SEGS.length
-                      const R = 120
+                      const N = WHEEL_SEGS.length, R = 120
                       const a1 = (i * 360/N - 90) * Math.PI / 180
                       const a2 = ((i+1) * 360/N - 90) * Math.PI / 180
                       const x1 = R * Math.cos(a1), y1 = R * Math.sin(a1)
@@ -480,46 +539,35 @@ export default function MenuQRPage() {
                       const tRot = (i + 0.5) * 360/N
                       return (
                         <g key={i}>
-                          <path d={`M 0 0 L ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2} Z`}
-                            fill={seg.bg} stroke="white" strokeWidth="2.5" />
+                          <path d={`M 0 0 L ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2} Z`} fill={seg.bg} stroke="white" strokeWidth="2.5" />
                           <g transform={`translate(${tx},${ty}) rotate(${tRot})`}>
                             {seg.label.map((line, li) => (
-                              <text key={li} y={(li - (seg.label.length - 1) / 2) * 10}
-                                fill={seg.fg} fontSize="8" fontWeight="800" textAnchor="middle" dominantBaseline="middle"
-                                style={{ letterSpacing: '0.03em' }}>
-                                {line}
-                              </text>
+                              <text key={li} y={(li - (seg.label.length - 1) / 2) * 10} fill={seg.fg} fontSize="8" fontWeight="800" textAnchor="middle" dominantBaseline="middle" style={{ letterSpacing: '0.03em' }}>{line}</text>
                             ))}
                           </g>
                         </g>
                       )
                     })}
-                    {/* Cercle central */}
-                    <circle r={26} fill="white" stroke="rgba(0,0,0,.06)" strokeWidth="2" />
+                    <circle r={26} fill="white" stroke="rgba(0,0,0,.08)" strokeWidth="2" />
                     <text textAnchor="middle" dominantBaseline="middle" fontSize="20" y={1}>🎁</text>
                   </g>
-                  {/* Pointeur fixe en haut */}
-                  <polygon points="-12,-120 12,-120 0,-92" fill="#E8A93B" stroke="white" strokeWidth="2" strokeLinejoin="round"
-                    style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,.3))' }} />
-                  {/* Bordure extérieure */}
-                  <circle r={122} fill="none" stroke="rgba(255,255,255,.25)" strokeWidth="4" />
-                  <circle r={118} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="2" />
+                  <polygon points="-12,-120 12,-120 0,-92" fill="#111" stroke="white" strokeWidth="2" strokeLinejoin="round" />
+                  <circle r={122} fill="none" stroke="#E0E0E0" strokeWidth="3" />
                 </svg>
               </div>
 
-              {/* Bouton / Loading */}
               {!wheelSpun ? (
                 <button onClick={spinWheel}
-                  className="font-extrabold uppercase tracking-widest text-sm py-4 px-10 rounded-full active:scale-95 transition-transform qr-slide-up"
-                  style={{ '--reveal-delay': '.3s', fontFamily: 'var(--font-baloo)', background: '#E8A93B', color: '#1E4D3A', boxShadow: '0 8px 32px rgba(232,169,59,.5)' } as React.CSSProperties}>
+                  className="font-extrabold uppercase tracking-widest text-sm active:scale-95 transition-transform qr-slide-up"
+                  style={{ '--reveal-delay': '.3s', fontFamily: 'var(--font-baloo)', background: '#111', color: 'white', border: 'none', borderRadius: 99, padding: '16px 36px', fontSize: 13, fontWeight: 800, letterSpacing: '0.1em', cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,.18)' } as React.CSSProperties}>
                   Tourner la roue !
                 </button>
               ) : (
                 <div className="flex flex-col items-center gap-3 qr-fade-in">
-                  <div style={{ width: 160, height: 3, borderRadius: 99, background: 'rgba(255,255,255,.15)', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', background: 'linear-gradient(90deg, #E8A93B, #fff)', borderRadius: 99, animation: 'loaderBar 5.5s linear both' }} />
+                  <div style={{ width: 160, height: 3, borderRadius: 99, background: '#EBEBEB', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', background: '#111', borderRadius: 99, animation: 'loaderBar 5.5s linear both' }} />
                   </div>
-                  <p className="text-xs font-bold tracking-widest uppercase text-white/40">Ça tourne…</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#BBB' }}>Ça tourne…</p>
                 </div>
               )}
             </div>
@@ -531,32 +579,30 @@ export default function MenuQRPage() {
                 <div key={i} style={{ position: 'fixed', top: 0, left: c.left, width: c.size, height: c.size, background: c.color, borderRadius: c.round, zIndex: 60, pointerEvents: 'none', animation: `confetti ${c.dur} ease ${c.delay} forwards` }} />
               ))}
               <div className="text-center qr-slide-up">
-                <p className="text-[10px] font-bold tracking-[.22em] uppercase mb-2 text-white/70">Vous avez gagné</p>
-                <h2 className="font-extrabold leading-none uppercase text-white" style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(32px,9vw,52px)' }}>Félicitations !</h2>
+                <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: '#AAA', marginBottom: 8 }}>Vous avez gagné</p>
+                <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(30px,9vw,50px)', fontWeight: 900, color: '#111', textTransform: 'uppercase' as const }}>Félicitations !</h2>
               </div>
               <div className="w-full relative mt-10 qr-pop-in" style={{ maxWidth: 320, '--reveal-delay': '.15s' } as React.CSSProperties}>
-                <div className="absolute -translate-x-1/2 -top-10 w-20 h-20 rounded-2xl flex items-center justify-center shadow-2xl z-10"
-                  style={{ left: '50%', background: prize.color, boxShadow: `0 8px 32px ${prize.color}70`, animation: 'float 3s ease-in-out infinite' }}>
+                <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: -40, width: 80, height: 80, borderRadius: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, background: prize.color, boxShadow: `0 8px 32px ${prize.color}70`, animation: 'float 3s ease-in-out infinite' }}>
                   <PrizeSlotIcon id={prize.id} size={38} />
                 </div>
-                <div className="rounded-3xl pt-14 pb-7 px-6 text-center shadow-2xl bg-white">
-                  <div className="font-extrabold text-xl mb-1 uppercase tracking-wide text-gray-900" style={{ fontFamily: 'var(--font-baloo)' }}>{prize.label}</div>
-                  <p className="text-gray-500 text-sm leading-relaxed mb-5">{prize.desc}</p>
-                  <div className="flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-xs font-bold tracking-wide border border-green-100 bg-green-50 text-gray-700">
-                    <PhoneIcon size={13} color="#1E4D3A" />
+                <div style={{ borderRadius: 28, paddingTop: 56, paddingBottom: 28, paddingLeft: 24, paddingRight: 24, textAlign: 'center', boxShadow: '0 4px 32px rgba(0,0,0,.08)', border: '1px solid #F0F0F0', background: 'white' }}>
+                  <p style={{ fontFamily: 'var(--font-baloo)', fontWeight: 900, fontSize: 18, textTransform: 'uppercase' as const, color: '#111', marginBottom: 6 }}>{prize.label}</p>
+                  <p style={{ color: '#999', fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>{prize.desc}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 99, padding: '10px 16px', fontSize: 12, fontWeight: 700, background: '#F5F5F5', color: '#444' }}>
+                    <PhoneIcon size={13} color="#111" />
                     Montrez cet écran à la caisse
                   </div>
                 </div>
               </div>
-              <div className="w-full rounded-3xl p-5 shadow-xl bg-white qr-slide-up" style={{ maxWidth: 320, '--reveal-delay': '.35s' } as React.CSSProperties}>
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="flex gap-0.5">{[...Array(5)].map((_,i) => <StarFilledIcon key={i} size={13} color="#FFD700" opacity={1} />)}</div>
-                  <span className="font-extrabold text-sm text-gray-900" style={{ fontFamily: 'var(--font-baloo)' }}>Partagez votre avis</span>
+              <div style={{ '--reveal-delay': '.35s', width: '100%', maxWidth: 320, borderRadius: 28, padding: 20, border: '1px solid #F0F0F0', background: 'white' } as React.CSSProperties} className="qr-slide-up">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <div style={{ display: 'flex', gap: 2 }}>{[...Array(5)].map((_,i) => <StarFilledIcon key={i} size={13} color="#F5A623" opacity={1} />)}</div>
+                  <span style={{ fontFamily: 'var(--font-baloo)', fontWeight: 900, fontSize: 13, color: '#111' }}>Partagez votre avis</span>
                 </div>
-                <p className="text-gray-400 text-xs leading-relaxed mb-4">Un avis Google nous aide vraiment. Ça prend 30 secondes !</p>
+                <p style={{ color: '#BBB', fontSize: 11, lineHeight: 1.6, marginBottom: 16 }}>Un avis Google nous aide vraiment. Ça prend 30 secondes !</p>
                 <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 text-white font-extrabold text-xs uppercase tracking-widest py-3.5 rounded-full w-full hover:opacity-90 transition-opacity"
-                  style={{ fontFamily: 'var(--font-baloo)', background: '#4285F4' }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'white', fontFamily: 'var(--font-baloo)', fontWeight: 800, fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.08em', padding: '14px 0', borderRadius: 99, width: '100%', background: '#4285F4', textDecoration: 'none' }}
                 >
                   <GoogleIcon />
                   Laisser un avis Google
@@ -566,16 +612,16 @@ export default function MenuQRPage() {
           )}
 
           {phase === 'thanks' && (
-            <div className="flex flex-col items-center justify-center flex-1 px-6 py-12 gap-6 text-center">
-              <div className="w-20 h-20 rounded-3xl bg-white/20 border-2 border-white/40 flex items-center justify-center shadow-xl qr-bounce-in">
-                <HeartIcon size={40} color="white" />
+            <div className="flex flex-col items-center justify-center flex-1 px-6 py-12 gap-7 text-center">
+              <div style={{ width: 72, height: 72, borderRadius: 24, background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="qr-bounce-in">
+                <HeartIcon size={36} color="white" />
               </div>
               <div className="qr-slide-up">
-                <p className="text-[10px] font-bold tracking-[.22em] uppercase mb-2 text-white/70">Merci</p>
-                <h2 className="font-extrabold leading-none uppercase text-white" style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(28px,8vw,44px)' }}>
+                <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: '#AAA', marginBottom: 8 }}>Merci</p>
+                <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(26px,8vw,42px)', fontWeight: 900, color: '#111', lineHeight: 1.05, textTransform: 'uppercase' as const }}>
                   Votre retour<br/>nous touche
                 </h2>
-                <p className="mt-3 text-white/60 text-sm max-w-xs mx-auto leading-relaxed">
+                <p style={{ marginTop: 12, color: '#999', fontSize: 13, lineHeight: 1.6 }}>
                   Nous allons tout mettre en œuvre pour vous satisfaire lors de votre prochaine visite.
                 </p>
               </div>
@@ -583,20 +629,20 @@ export default function MenuQRPage() {
                 <>
                   <textarea value={feedback} onChange={e => setFeedback(e.target.value)}
                     placeholder="Comment améliorer votre expérience ? (facultatif)" rows={3}
-                    className="w-full max-w-sm rounded-2xl p-4 text-sm resize-none outline-none qr-slide-up placeholder:text-white/40"
-                    style={{ '--reveal-delay': '.2s', background: 'rgba(255,255,255,.15)', border: '2px solid rgba(255,255,255,.25)', color: 'white' } as React.CSSProperties}
+                    className="w-full max-w-sm qr-slide-up"
+                    style={{ '--reveal-delay': '.2s', background: '#F5F5F5', border: '2px solid #E8E8E8', borderRadius: 20, padding: 16, fontSize: 14, resize: 'none', outline: 'none', color: '#111' } as React.CSSProperties}
                   />
                   <button onClick={() => setSent(true)}
-                    className="w-full max-w-sm font-extrabold uppercase tracking-widest text-sm py-4 rounded-full shadow-lg active:scale-[.98] transition-transform qr-slide-up"
-                    style={{ '--reveal-delay': '.3s', fontFamily: 'var(--font-baloo)', background: '#E8A93B', color: '#1E4D3A' } as React.CSSProperties}
+                    className="w-full max-w-sm active:scale-[.98] transition-transform qr-slide-up"
+                    style={{ '--reveal-delay': '.3s', fontFamily: 'var(--font-baloo)', background: '#111', color: 'white', border: 'none', borderRadius: 99, padding: '16px 24px', fontSize: 13, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,.18)' } as React.CSSProperties}
                   >
                     Envoyer
                   </button>
                 </>
               ) : (
-                <div className="flex items-center gap-3 rounded-full px-6 py-3 qr-bounce-in bg-white/20 border border-white/30">
-                  <CheckIcon size={20} color="white" />
-                  <span className="font-bold text-white text-sm">Message envoyé — merci !</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderRadius: 99, padding: '12px 24px', background: '#F5F5F5', border: '1px solid #E8E8E8' }} className="qr-bounce-in">
+                  <CheckIcon size={20} color="#111" />
+                  <span style={{ fontWeight: 700, color: '#111', fontSize: 14 }}>Message envoyé — merci !</span>
                 </div>
               )}
             </div>
@@ -672,7 +718,7 @@ export default function MenuQRPage() {
             style={{ borderRadius: '2rem 2rem 0 0', animation: closingItem ? 'itemSheetDown .38s ease-in-out both' : 'itemSheetUp .45s ease-in-out both' }}
             onClick={e => e.stopPropagation()}>
             {/* Image */}
-            <div className="relative" style={{ height: 230, background: IMG_BG[MENU_DATA.findIndex(m => m.title === selItem.title) % IMG_BG.length] }}>
+            <div className="relative" style={{ height: 230, background: 'white' }}>
               <SmartFoodImg
                 src={getImg(selItem.title, '')} alt={selItem.title}
                 size={230} bg="transparent" radius={0}
@@ -715,189 +761,325 @@ export default function MenuQRPage() {
       )}
 
       {/* ── APP SHELL ───────────────────────────────────────────────────────── */}
-      <div className="min-h-screen flex flex-col antialiased relative" style={{ background: '#F8F8F6' }}>
+      <div className="min-h-screen flex flex-col antialiased relative qr-shell" style={{ background: 'white', colorScheme: 'light' }}>
 
-        {/* HEADER */}
-        <header className="sticky top-0 z-40 shrink-0 relative" style={{ background: 'rgba(30,77,58,.92)', backdropFilter: 'blur(12px)' }}>
-          <div className="relative flex items-center justify-between px-4 py-3.5">
-            <div className="flex flex-col">
-              <div className="font-extrabold text-white uppercase tracking-[.08em]" style={{ fontFamily: 'var(--font-baloo)', fontSize: '1.1rem' }}>Chez Ramo</div>
-              <div className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,.55)' }}>
-                {table ? `Table ${table}` : 'Bienvenue !'}
-              </div>
-            </div>
-            <button
-              onClick={() => { setShowSearch(s => !s); setSearchQ('') }}
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90"
-              style={{ background: showSearch ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,.2)', color: 'white' }}
-            >
-              {showSearch ? <CloseIcon size={18} /> : <SearchIcon size={18} />}
-            </button>
-          </div>
-          {showSearch && (
-            <div className="px-4 pb-4 qr-slide-down">
-              <div className="bg-white rounded-2xl flex items-center gap-2.5 px-4 py-3.5 shadow-lg">
-                <SearchIcon size={16} color="#1E4D3A" />
+        {/* SEARCH OVERLAY — plein écran quand actif */}
+        {showSearch && (
+          <div className="fixed inset-0 z-50 flex flex-col" style={{ background: 'white' }}>
+            <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #F0F0F0', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button onClick={() => { setShowSearch(false); setSearchQ('') }} style={{ width: 38, height: 38, border: 'none', background: '#F4F4F4', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: '#F4F4F4', borderRadius: 14, padding: '10px 14px' }}>
+                <SearchIcon size={15} color="#999" />
                 <input
                   autoFocus
                   value={searchQ}
                   onChange={e => setSearchQ(e.target.value)}
                   placeholder="Kebab, tacos, burger…"
-                  className="flex-1 text-sm text-gray-800 outline-none placeholder:text-gray-300 bg-transparent"
+                  style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 14, color: '#111', outline: 'none' }}
                 />
-                {searchQ && (
-                  <button onClick={() => setSearchQ('')}>
-                    <CloseIcon size={15} color="#ccc" />
-                  </button>
-                )}
+                {searchQ && <button onClick={() => setSearchQ('')} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}><CloseIcon size={14} color="#999" /></button>}
               </div>
             </div>
-          )}
-        </header>
+            <div className="flex-1 overflow-y-auto qr-noscroll" style={{ padding: '16px 16px 100px' }}>
+              {searchQ.length > 1 ? (
+                <>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: '#999', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 14 }}>
+                    {searchResults.length} résultat{searchResults.length !== 1 ? 's' : ''}
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {searchResults.length > 0 ? searchResults.map((item) => {
+                      const cat = CATEGORIES.find(c => c.cats.includes(item.category))
+                      return (
+                        <div key={item.title} onClick={() => { playTap(); setSelItem(item) }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0', borderBottom: '1px solid #F5F5F5', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+                          <div style={{ width: 64, height: 64, background: '#F7F7F7', borderRadius: 14, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <img src={getImg(item.title, cat?.img ?? '')} alt={item.title} style={{ width: 56, height: 56, objectFit: 'contain' }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 13, fontWeight: 800, color: '#111', textTransform: 'uppercase' as const }}>{item.title}</div>
+                            <div style={{ fontSize: 11, color: '#999', marginTop: 2, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>{item.description}</div>
+                          </div>
+                          <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 14, fontWeight: 900, color: '#1E4D3A', flexShrink: 0 }}>{item.price}&thinsp;€</div>
+                        </div>
+                      )
+                    }) : (
+                      <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                        <SearchIcon size={36} color="#E0E0E0" />
+                        <p style={{ fontSize: 14, color: '#999', marginTop: 12 }}>Aucun résultat pour «&nbsp;{searchQ}&nbsp;»</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '60px 0', color: '#CCC' }}>
+                  <SearchIcon size={36} color="#E0E0E0" />
+                  <p style={{ fontSize: 13, marginTop: 12 }}>Tapez pour chercher…</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* CONTENT */}
-        <div ref={contentRef} className="flex-1 overflow-y-auto qr-noscroll" style={{ background: 'white' }}>
+        <div ref={contentRef} className="flex-1 overflow-y-auto qr-noscroll qr-shell" style={{ background: 'white', color: '#111' }}>
 
-          {/* ── SEARCH RESULTS ── */}
-          {showSearch && searchQ.length > 1 && (
-            <div className="min-h-screen qr-section-in px-4 pt-4 pb-32" style={{ background: 'white' }}>
-              <p className="text-[10px] font-extrabold uppercase tracking-[.14em] mb-3" style={{ fontFamily: 'var(--font-baloo)', color: '#111' }}>
-                {searchResults.length} résultat{searchResults.length !== 1 ? 's' : ''} pour «&nbsp;{searchQ}&nbsp;»
-              </p>
-              <div className="space-y-2.5">
-                {searchResults.length > 0 ? searchResults.map((item, i) => {
-                  const cat = CATEGORIES.find(c => c.cats.includes(item.category))
-                  return (
-                    <div key={item.title} className="flex items-center gap-3 rounded-2xl p-3 qr-item-in"
-                      style={{ '--item-delay': `${i * 30}ms`, background: 'white', border: '1.5px solid #EEECE8', boxShadow: '0 2px 8px rgba(0,0,0,.04)' } as React.CSSProperties}>
-                      <SmartFoodImg
-                        src={getImg(item.title, cat?.img ?? '')} alt={item.title}
-                        size={76} bg={IMG_BG[i % IMG_BG.length]}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-extrabold text-sm uppercase truncate" style={{ fontFamily: 'var(--font-baloo)', color: '#111' }}>{item.title}</div>
-                        <div className="text-xs truncate mt-0.5" style={{ color: '#888' }}>{item.description}</div>
-                      </div>
-                      <div className="font-extrabold text-sm shrink-0" style={{ fontFamily: 'var(--font-baloo)', color: '#111' }}>{item.price}&thinsp;€</div>
-                    </div>
-                  )
-                }) : (
-                  <div className="text-center py-20">
-                    <SearchIcon size={40} color="rgba(0,0,0,.15)" />
-                    <p className="text-sm font-semibold mt-3" style={{ color: '#888' }}>Aucun résultat</p>
-                    <p className="text-xs mt-1" style={{ color: '#aaa' }}>Essayez «&nbsp;kebab&nbsp;» ou «&nbsp;tacos&nbsp;»</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
-          {/* ── VUE CATÉGORIES — style McDonald's ── */}
+          {/* ── VUE HOME ── */}
           {view === 'categories' && !showSearch && (
-            <div style={{ padding: '16px', paddingBottom: 100 }}>
+            <div style={{ paddingBottom: 100 }}>
 
-              {/* Greeting */}
-              <div style={{ marginBottom: 20 }}>
-                <p style={{ fontSize: 11, color: '#999', fontWeight: 600, marginBottom: 4 }}>
-                  {table ? `Table ${table}` : 'Bienvenue !'}
-                </p>
-                <h1 style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(22px,6vw,28px)', fontWeight: 900, color: '#111', lineHeight: 1.1 }}>
-                  Que souhaitez-vous<br/>manger ?
-                </h1>
-              </div>
+              {/* ── BANNERS CAROUSEL + HEADER INTÉGRÉ ── */}
+              <div style={{ position: 'relative' }}>
 
-              {/* Grille 2×N catégories */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                {CATEGORIES.map((cat, i) => {
-                  const count = catItems(cat.cats).length
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => { setSelCatId(cat.id); setView('items') }}
-                      className="qr-card-in"
-                      style={{
-                        '--card-delay': `${i * 60}ms`,
-                        background: 'white',
-                        borderRadius: 20,
-                        padding: '16px 12px 14px',
-                        border: '1.5px solid #F0EDE8',
-                        boxShadow: '0 2px 12px rgba(0,0,0,.06)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 10,
-                        cursor: 'pointer',
-                        WebkitTapHighlightColor: 'transparent',
-                        transition: 'transform 0.15s ease',
-                      } as React.CSSProperties}
-                    >
-                      {/* Image food */}
-                      <div style={{
-                        width: 88, height: 88,
-                        background: IMG_BG[i % IMG_BG.length],
-                        borderRadius: 16,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        overflow: 'hidden',
+                {/* Outer — overflow hidden + swipe touch */}
+                <div
+                  style={{ overflow: 'hidden' }}
+                  onTouchStart={e => { touchStartXRef.current = e.touches[0].clientX }}
+                  onTouchEnd={e => {
+                    const dx = e.changedTouches[0].clientX - touchStartXRef.current
+                    if (dx < -40) setBannerIdx(i => Math.min(i + 1, BANNERS_COUNT - 1))
+                    if (dx > 40)  setBannerIdx(i => Math.max(i - 1, 0))
+                  }}
+                >
+                  {/* Sliding track — transform-based, fluide */}
+                  <div style={{
+                    display: 'flex',
+                    transform: `translateX(-${bannerIdx * 100}%)`,
+                    transition: 'transform 0.52s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    willChange: 'transform',
+                  }}>
+                    {([
+                      { bg: '#D4501E', badgeBg: '#FDEEA3', badgeColor: '#5C2800', badge: '★ Spécialité', title: 'Kebab Artisanal', sub: 'Broche tournée, sauces maison, viande fraîche tranchée à la minute.', btnBg: '#FDEEA3', btnColor: '#5C2800', catId: 'kebab', img: `/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.png`, scale: 1 },
+                      { bg: '#1E4D3A', badgeBg: '#E8A93B', badgeColor: '#1E4D3A', badge: 'Nouveau', title: 'Maxi Tacos', sub: 'Généreux, fondant, garni à votre goût avec nos sauces exclusives.', btnBg: '#E8A93B', btnColor: '#1E4D3A', catId: 'tacos', img: `/uploads/cut/Maxi%20Tacos.png`, scale: 1.5 },
+                      { bg: '#C2385A', badgeBg: '#FDEEA3', badgeColor: '#5C0020', badge: 'Finger Food', title: 'Burgers & Chicken', sub: 'Croustillant, juteux, cuit à la demande — nuggets, tenders et burgers.', btnBg: '#FDEEA3', btnColor: '#5C0020', catId: 'burgers', img: `/uploads/cut/Chicken%20Burger.png`, scale: 1.5 },
+                      { bg: '#2C5F8A', badgeBg: '#E8A93B', badgeColor: '#0D2340', badge: 'Gourmet', title: 'Assiettes Complètes', sub: 'Plat complet grillé à la commande, avec accompagnements et salades.', btnBg: '#E8A93B', btnColor: '#0D2340', catId: 'assiettes', img: `/uploads/cut/Assiette%20Kebab.png`, scale: 1.5 },
+                    ] as const).map((b, idx) => (
+                      <div key={idx} style={{
+                        flexShrink: 0, width: '100%',
+                        background: b.bg, position: 'relative', overflow: 'hidden',
+                        display: 'flex', alignItems: 'center',
+                        minHeight: 260, paddingTop: 52,
                       }}>
-                        <img
-                          src={BASE + cat.img}
-                          alt={cat.label}
-                          loading="lazy"
-                          style={{ width: 80, height: 80, objectFit: 'contain', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.15))' }}
-                        />
-                      </div>
-                      {/* Label */}
-                      <div style={{ textAlign: 'center' }}>
+                        {/* Doodle pattern */}
                         <div style={{
-                          fontFamily: 'var(--font-baloo)',
-                          fontSize: 12, fontWeight: 800,
-                          color: '#111', textTransform: 'uppercase' as const,
-                          letterSpacing: '0.04em', lineHeight: 1.25,
-                          marginBottom: 3,
-                        }}>
-                          {cat.label.split(' & ')[0]}
+                          position: 'absolute', inset: 0,
+                          backgroundImage: `url(${BASE}/uploads/depositphotos_107470690-stock-illustration-various-food-doodle-seamless-background.webp)`,
+                          backgroundSize: '280px', backgroundRepeat: 'repeat',
+                          opacity: 0.15, mixBlendMode: 'overlay' as const,
+                        }} />
+                        {/* Gradient lisibilité */}
+                        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to right, ${b.bg}EE 0%, ${b.bg}99 50%, transparent 100%)` }} />
+
+                        {/* Texte — entre avec animation quand ce slide devient actif */}
+                        <div
+                          key={idx === bannerIdx ? `active-${bannerIdx}` : `idle-txt-${idx}`}
+                          style={{
+                            position: 'relative', zIndex: 2, flex: '0 0 56%',
+                            padding: '20px 0 28px 22px',
+                            display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8,
+                            animation: idx === bannerIdx ? 'bannerTxtIn .48s cubic-bezier(.25,.46,.45,.94) .04s both' : 'none',
+                          }}
+                        >
+                          <span style={{ background: b.badgeBg, color: b.badgeColor, fontSize: 8, fontWeight: 800, fontFamily: 'var(--font-baloo)', padding: '3px 11px', borderRadius: 99, textTransform: 'uppercase' as const, letterSpacing: '0.1em', backdropFilter: 'blur(4px)' }}>
+                            {b.badge}
+                          </span>
+                          <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 21, fontWeight: 900, color: 'white', lineHeight: 1.1, margin: 0 }}>
+                            {b.title}
+                          </h2>
+                          <p style={{ fontSize: 10.5, color: 'rgba(255,255,255,.72)', lineHeight: 1.55, margin: 0, fontWeight: 500 }}>
+                            {b.sub}
+                          </p>
+                          <button
+                            onClick={() => { playTap(); setSelCatId(b.catId); setView('items') }}
+                            style={{ background: b.btnBg, color: b.btnColor, fontFamily: 'var(--font-baloo)', fontSize: 10, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.07em', border: 'none', borderRadius: 99, padding: '10px 20px', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', marginTop: 4, boxShadow: '0 4px 16px rgba(0,0,0,.2)' }}
+                          >
+                            Voir le menu →
+                          </button>
                         </div>
-                        <div style={{ fontSize: 10, color: '#AAA', fontWeight: 600 }}>
-                          {count} plats
+
+                        {/* Image — entre depuis la droite quand ce slide devient actif */}
+                        <div
+                          key={idx === bannerIdx ? `active-img-${bannerIdx}` : `idle-img-${idx}`}
+                          style={{
+                            position: 'absolute', zIndex: 2, right: 0, top: 0, bottom: 0, width: '52%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            padding: '8px 6px 8px 0',
+                            animation: idx === bannerIdx ? 'bannerImgIn .56s cubic-bezier(.25,.46,.45,.94) .08s both' : 'none',
+                          }}
+                        >
+                          <img src={BASE + b.img} alt={b.title}
+                            style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center center', transform: `scale(${b.scale})`, transformOrigin: 'center center' }} />
                         </div>
                       </div>
-                    </button>
-                  )
-                })}
+                    ))}
+                  </div>
+                </div>
+
+                {/* Header transparent superposé sur le carousel */}
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'linear-gradient(to bottom, rgba(0,0,0,.32) 0%, transparent 100%)' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-baloo)', fontSize: '1rem', fontWeight: 900, color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase' as const, lineHeight: 1 }}>Chez Ramo</div>
+                    {table && <div style={{ fontSize: 9, color: 'rgba(255,255,255,.6)', marginTop: 2 }}>Table {table}</div>}
+                  </div>
+                  <button onClick={() => { setShowSearch(true); setSearchQ('') }}
+                    style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,.22)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', backdropFilter: 'blur(8px)' }}>
+                    <SearchIcon size={15} color="white" />
+                  </button>
+                </div>
+
+                {/* Dots */}
+                <div style={{ position: 'absolute', bottom: 14, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 5, zIndex: 5 }}>
+                  {Array.from({ length: BANNERS_COUNT }).map((_, i) => (
+                    <button key={i}
+                      onClick={() => setBannerIdx(i)}
+                      style={{ width: bannerIdx === i ? 18 : 5, height: 5, borderRadius: 99, border: 'none', cursor: 'pointer', padding: 0, WebkitTapHighlightColor: 'transparent', background: bannerIdx === i ? 'white' : 'rgba(255,255,255,.4)', transition: 'width .3s ease' }}
+                    />
+                  ))}
+                </div>
               </div>
 
-              {/* Best sellers — en dessous de la grille */}
-              <div style={{ marginTop: 28 }}>
-                <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 12, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#111', marginBottom: 14 }}>
-                  Les plus commandés
-                </h2>
-                <div className="qr-noscroll qr-hscroll" style={{ display: 'flex', gap: 12, paddingBottom: 4 }}>
-                  {BEST_SELLERS.map((bs, i) => (
-                    <button
-                      key={bs.title}
-                      onClick={() => { setSelCatId(bs.catId); setView('items') }}
-                      className="qr-card-in"
-                      style={{ '--card-delay': `${i * 60}ms`, flexShrink: 0, width: 115, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' } as React.CSSProperties}
-                    >
-                      <div style={{ background: 'white', borderRadius: 18, border: '1.5px solid #F0EDE8', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,.05)' }}>
-                        <div style={{ background: BS_BG[i % BS_BG.length], height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                          <span style={{
-                            position: 'absolute', top: 7, left: 7,
-                            background: '#1E4D3A', color: 'white',
-                            fontSize: 8, fontWeight: 800, fontFamily: 'var(--font-baloo)',
-                            padding: '2px 7px', borderRadius: 99, textTransform: 'uppercase' as const,
-                          }}>
-                            {bs.badge}
-                          </span>
-                          <img src={BASE + bs.img} alt={bs.title} style={{ width: '85%', height: '85%', objectFit: 'contain' }} />
+              {/* ── CATÉGORIES SCROLL HORIZONTAL ── */}
+              <div style={{ padding: '20px 0 0' }}>
+                <h4 style={{ fontFamily: 'var(--font-baloo)', fontSize: 16, fontWeight: 900, color: '#111', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 14, paddingLeft: 14 }}>
+                  Nos catégories
+                </h4>
+                <div className="qr-noscroll qr-hscroll" style={{ display: 'flex', gap: 11, paddingLeft: 14, paddingRight: 14, paddingBottom: 6 }}>
+                  {CATEGORIES.map((cat, i) => {
+                    const c = CAT_COLORS[cat.id] ?? { bg: '#E6F4EE', text: '#1E4D3A', accent: '#1E4D3A' }
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => { playTap(); setSelCatId(cat.id); setView('items') }}
+                        className="qr-card-in"
+                        style={{
+                          '--card-delay': `${i * 50}ms`,
+                          flexShrink: 0,
+                          background: '#F3F3F3',
+                          borderRadius: 22,
+                          padding: 0,
+                          border: 'none',
+                          boxShadow: '0 2px 8px rgba(0,0,0,.06)',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center',
+                          cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                          width: 120, overflow: 'hidden',
+                        } as React.CSSProperties}
+                      >
+                        {/* Zone image — centrée, grande */}
+                        <div style={{ width: '100%', height: 118, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 8px 0' }}>
+                          <img
+                            src={BASE + cat.img} alt={cat.label} loading="lazy"
+                            style={{ width: 104, height: 104, objectFit: 'contain', objectPosition: 'center', display: 'block' }}
+                          />
                         </div>
-                        <div style={{ padding: '8px 10px 10px' }}>
-                          <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 10, fontWeight: 800, textTransform: 'uppercase' as const, color: '#111', lineHeight: 1.2, marginBottom: 3 }}>{bs.title}</div>
-                          <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 13, fontWeight: 900, color: '#1E4D3A' }}>{bs.price}&thinsp;€</div>
+                        {/* Label */}
+                        <div style={{ width: '100%', padding: '6px 8px 13px', textAlign: 'center' }}>
+                          <span style={{ fontSize: 11, fontWeight: 900, color: '#111', fontFamily: 'var(--font-baloo)', textTransform: 'uppercase' as const, letterSpacing: '0.03em', whiteSpace: 'nowrap' as const, display: 'block' }}>
+                            {cat.label.split(' & ')[0].split(' ')[0]}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* ── LES PLUS COMMANDÉS 2-COL ── */}
+              <div style={{ padding: '40px 0 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, padding: '0 14px' }}>
+                  <h4 style={{ fontFamily: 'var(--font-baloo)', fontSize: 16, fontWeight: 900, color: '#0A0A0A', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+                    Les plus commandés
+                  </h4>
+                  <button onClick={() => { playTap(); setSelCatId('kebab'); setView('items') }}
+                    style={{ fontSize: 14, fontWeight: 700, color: '#1E4D3A', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-baloo)', padding: 0 }}>
+                    Voir tout ›
+                  </button>
+                </div>
+                <div className="qr-noscroll qr-hscroll" style={{ display: 'flex', gap: 14, paddingLeft: 14, paddingRight: 14, paddingBottom: 8 }}>
+                  {BEST_SELLERS.map((bs, i) => {
+                    const item = MENU_DATA.find(m => m.title === bs.title)
+                    return (
+                      <div
+                        key={bs.title}
+                        role="button"
+                        onClick={() => { if (item) { playTap(); setSelItem(item) } }}
+                        className="qr-card-in"
+                        style={{
+                          '--card-delay': `${i * 60}ms`,
+                          flexShrink: 0, width: 'calc(50vw - 21px)',
+                          minWidth: 160, maxWidth: 200,
+                          background: 'white', borderRadius: 22,
+                          border: '1.5px solid #EFEFEF',
+                          boxShadow: '0 3px 16px rgba(0,0,0,.07)',
+                          overflow: 'hidden', cursor: 'pointer',
+                          WebkitTapHighlightColor: 'transparent',
+                          display: 'flex', flexDirection: 'column',
+                        } as React.CSSProperties}
+                      >
+                        {/* Image — ratio 3:2 exact comme les fichiers PNG (420×280) */}
+                        <div style={{ background: 'white', position: 'relative', width: '100%', paddingTop: '66.67%' }}>
+                          <img
+                            src={BASE + bs.img} alt={bs.title}
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '10px 8px 4px' }}
+                          />
+                        </div>
+                        <div style={{ height: 1, background: '#F5F5F5', margin: '0 14px' }} />
+                        {/* Infos centrées */}
+                        <div style={{ padding: '13px 14px 16px', textAlign: 'center' }}>
+                          <p style={{ fontFamily: 'var(--font-baloo)', fontSize: 13, fontWeight: 800, color: '#0A0A0A', textTransform: 'uppercase' as const, lineHeight: 1.2, marginBottom: 7 }}>
+                            {bs.title}
+                          </p>
+                          <p style={{ fontFamily: 'var(--font-baloo)', fontSize: 20, fontWeight: 900, color: '#1E4D3A' }}>
+                            {bs.price}&thinsp;€
+                          </p>
                         </div>
                       </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* ── NOS ACCOMPAGNEMENTS ── */}
+              <div style={{ padding: '40px 0 0' }}>
+                <div style={{ marginBottom: 16, padding: '0 14px' }}>
+                  <h4 style={{ fontFamily: 'var(--font-baloo)', fontSize: 16, fontWeight: 900, color: '#0A0A0A', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+                    Nos accompagnements
+                  </h4>
+                </div>
+                <div className="qr-noscroll qr-hscroll" style={{ display: 'flex', gap: 12, paddingLeft: 14, paddingRight: 14, paddingBottom: 8 }}>
+                  {[
+                    { label: 'Frites',        menuTitle: 'Frites',       price: '3,00', img: '/uploads/cut/Frites.png',              catId: 'extras'  },
+                    { label: 'Boisson 33cl',  menuTitle: 'Boissons 33cl',price: '2,00', img: '/uploads/cut/Boissons%2033cl.png',     catId: 'drinks'  },
+                    { label: 'Nuggets (x7)',  menuTitle: 'Nuggets (x7)', price: '5,50', img: '/uploads/cut/Nuggets%20(x7).png',      catId: 'burgers' },
+                    { label: 'Tiramisu',      menuTitle: 'Tiramisu',     price: '3,50', img: '/uploads/cut/Tiramisu.png',            catId: 'drinks'  },
+                    { label: 'Wings (x4)',    menuTitle: 'Wings (x4)',   price: '5,00', img: '/uploads/cut/Wings%20(x8).png',        catId: 'burgers' },
+                  ].map((acc) => {
+                    const menuItem = MENU_DATA.find(m => m.title === acc.menuTitle)
+                    return (
+                    <button
+                      key={acc.label}
+                      onClick={() => { if (menuItem) setSelItem(menuItem); else { setSelCatId(acc.catId); setView('items') } }}
+                      style={{
+                        flexShrink: 0, width: 110,
+                        background: '#F8F8F8', borderRadius: 20,
+                        border: '1.5px solid #EFEFEF',
+                        padding: 0, cursor: 'pointer',
+                        WebkitTapHighlightColor: 'transparent',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div style={{ width: '100%', paddingTop: '66.67%', position: 'relative', background: 'white' }}>
+                        <img src={BASE + acc.img} alt={acc.label}
+                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '8px 6px 4px' }} />
+                      </div>
+                      <div style={{ padding: '8px 8px 12px', textAlign: 'center', width: '100%' }}>
+                        <p style={{ fontFamily: 'var(--font-baloo)', fontSize: 10, fontWeight: 900, color: '#111', textTransform: 'uppercase' as const, lineHeight: 1.2, marginBottom: 3 }}>{acc.label}</p>
+                        <p style={{ fontFamily: 'var(--font-baloo)', fontSize: 14, fontWeight: 900, color: '#1E4D3A' }}>{acc.price}&thinsp;€</p>
+                      </div>
                     </button>
-                  ))}
+                  )})}
                 </div>
               </div>
 
@@ -910,15 +1092,15 @@ export default function MenuQRPage() {
 
               {/* Bouton retour + chips catégories */}
               <div style={{
-                position: 'sticky', top: 62,
-                background: 'rgba(255,255,255,.95)', backdropFilter: 'blur(12px)',
+                position: 'sticky', top: 0,
+                background: 'rgba(255,255,255,.97)', backdropFilter: 'blur(16px)',
                 zIndex: 10, paddingTop: 12, paddingBottom: 10,
                 borderBottom: '1px solid #F0EDE8',
               }}>
                 {/* Ligne 1: back + nom catégorie */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 16, paddingRight: 16, marginBottom: 10 }}>
                   <button
-                    onClick={() => setView('categories')}
+                    onClick={() => { playTap(500); setView('categories') }}
                     style={{
                       width: 34, height: 34, borderRadius: '50%',
                       background: '#F0EDE8', border: 'none',
@@ -971,7 +1153,7 @@ export default function MenuQRPage() {
                   <div
                     key={item.title}
                     role="button"
-                    onClick={() => setSelItem(item)}
+                    onClick={() => { playTap(); setSelItem(item) }}
                     className="qr-item-in"
                     style={{
                       '--item-delay': `${i * 25}ms`,
@@ -992,7 +1174,7 @@ export default function MenuQRPage() {
                     }}>
                       <SmartFoodImg
                         src={getImg(item.title, selCat.img)} alt={item.title}
-                        size={76} bg="transparent" radius={0}
+                        size={76} bg="white" radius={0}
                       />
                     </div>
                     {/* Infos */}
@@ -1031,55 +1213,63 @@ export default function MenuQRPage() {
 
         </div>
 
-        {/* ── BOTTOM NAV — flat compact icon bar ───────────────────────────── */}
+        {/* ── BOTTOM NAV ───────────────────────────────────────────────────── */}
         <div style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-          background: 'white',
-          borderTop: '1px solid #EEECE8',
-          boxShadow: '0 -2px 12px rgba(0,0,0,.05)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          display: 'flex', alignItems: 'center',
-          height: 54,
+          padding: '0 16px calc(12px + env(safe-area-inset-bottom, 0px))',
+          pointerEvents: 'none',
         }}>
-          {/* Accueil */}
-          <button
-            onClick={() => { setShowSearch(false); setSearchQ(''); setView('categories'); contentRef.current?.scrollTo({ top: 0 }) }}
-            style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              <HomeIcon size={20} color={view === 'categories' && !showSearch ? '#1E4D3A' : '#C0C0C0'} />
-              <span style={{ fontSize: 8, fontWeight: 700, fontFamily: 'var(--font-baloo)', textTransform: 'uppercase', letterSpacing: '0.05em', color: view === 'categories' && !showSearch ? '#1E4D3A' : '#C0C0C0' }}>Menu</span>
-            </div>
-          </button>
-
-          {/* Centre — Finir & noter */}
-          <button
-            onClick={() => setShowModal(true)}
-            style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              <div style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: 'linear-gradient(145deg, #E8A93B, #d4922a)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 10px rgba(232,169,59,.4)',
-              }}>
-                <GiftIcon size={18} color="white" />
+          <div style={{
+            background: 'white',
+            borderRadius: 28,
+            boxShadow: '0 4px 24px rgba(0,0,0,.10)',
+            border: '1px solid #EFEFEF',
+            display: 'flex', alignItems: 'center',
+            height: 68,
+            pointerEvents: 'auto',
+          }}>
+            {/* Accueil */}
+            <button
+              onClick={() => { setShowSearch(false); setSearchQ(''); setView('categories'); contentRef.current?.scrollTo({ top: 0 }) }}
+              style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent', borderRadius: '28px 0 0 28px' }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <HomeIcon size={22} color={view === 'categories' && !showSearch ? '#111' : '#D0D0D0'} />
+                <span style={{ fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-baloo)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: view === 'categories' && !showSearch ? '#111' : '#D0D0D0' }}>Accueil</span>
               </div>
-              <span style={{ fontSize: 7.5, fontWeight: 700, fontFamily: 'var(--font-baloo)', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#E8A93B', whiteSpace: 'nowrap' }}>Avis &amp; cadeau</span>
-            </div>
-          </button>
+            </button>
 
-          {/* Recherche */}
-          <button
-            onClick={() => { setShowSearch(s => !s); setSearchQ('') }}
-            style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              <SearchIcon size={20} color={showSearch ? '#1E4D3A' : '#C0C0C0'} />
-              <span style={{ fontSize: 8, fontWeight: 700, fontFamily: 'var(--font-baloo)', textTransform: 'uppercase', letterSpacing: '0.05em', color: showSearch ? '#1E4D3A' : '#C0C0C0' }}>Chercher</span>
-            </div>
-          </button>
+            {/* Centre — FAB cadeau */}
+            <button
+              onClick={() => setShowModal(true)}
+              style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{
+                  width: 50, height: 50, borderRadius: '50%',
+                  background: '#111',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 4px 16px rgba(0,0,0,.22)',
+                  marginTop: -26,
+                }}>
+                  <GiftIcon size={22} color="white" />
+                </div>
+                <span style={{ fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-baloo)', textTransform: 'uppercase' as const, letterSpacing: '0.05em', color: '#999', whiteSpace: 'nowrap' as const }}>Cadeau</span>
+              </div>
+            </button>
+
+            {/* Recherche */}
+            <button
+              onClick={() => { setShowSearch(true); setSearchQ('') }}
+              style={{ flex: 1, height: '100%', border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent', borderRadius: '0 28px 28px 0' }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <SearchIcon size={22} color={showSearch ? '#111' : '#D0D0D0'} />
+                <span style={{ fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-baloo)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: showSearch ? '#111' : '#D0D0D0' }}>Chercher</span>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     </>
@@ -1133,8 +1323,19 @@ function PrizeSlotIcon({ id, size = 28 }: { id: string; size?: number }) {
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 const QR_CSS = `
+  /* Force light mode — empêche Safari/Brave de forcer le dark mode */
+  :root { color-scheme: light only; }
+  * { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+  /* Taille de texte minimum pour l'accessibilité */
+  body { min-height: 100dvh; }
+
   .qr-noscroll::-webkit-scrollbar { display: none; }
   .qr-noscroll { -ms-overflow-style: none; scrollbar-width: none; }
+  /* Empêche Safari de coloriser le fond en dark */
+  @media (prefers-color-scheme: dark) {
+    .qr-shell { background: white !important; color: #111 !important; }
+  }
 
   /* Scroll horizontal fluide sur mobile */
   .qr-hscroll {
@@ -1200,6 +1401,8 @@ const QR_CSS = `
   }
   @keyframes itemSheetUp   { from { transform:translateY(100%); } to { transform:translateY(0); } }
   @keyframes itemSheetDown { from { transform:translateY(0); }   to { transform:translateY(100%); } }
+  @keyframes bannerTxtIn   { from { opacity:0; transform:translateX(-22px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes bannerImgIn   { from { opacity:0; transform:translateX(22px) scale(.94); } to { opacity:1; transform:translateX(0) scale(1); } }
 
   .qr-slide-up      { animation: qrSlideUp   .55s ease-in-out var(--reveal-delay,0s) both; }
   .qr-slide-down    { animation: qrSlideDown .4s  ease-in-out both; }

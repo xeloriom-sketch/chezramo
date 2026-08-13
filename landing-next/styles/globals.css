@@ -15,11 +15,8 @@ body {
 
 ::selection { background: #E8A93B; color: #1E4D3A; }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #F0E2BA; }
-::-webkit-scrollbar-thumb { background: #1E4D3A; border-radius: 99px; border: 2px solid #F0E2BA; }
-::-webkit-scrollbar-thumb:hover { background: #E8A93B; }
-* { scrollbar-width: thin; scrollbar-color: #1E4D3A #F0E2BA; }
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; -ms-overflow-style: none; }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
