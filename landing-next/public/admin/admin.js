@@ -367,10 +367,17 @@ function renderAdmin() {
   updateStats();
 }
 
+function imgSrc(url) {
+  if (!url) return '';
+  if (url.indexOf('://') !== -1) return url;   // URL absolue (http/https)
+  if (url.charAt(0) === '/') return url;        // Chemin absolu (/uploads/…)
+  return '../' + url;                           // Relatif (uploads/…) → ../uploads/…
+}
+
 function renderItem(item) {
   var ch    = pendingChanges[item.id] || {};
   var isMod = Object.keys(ch).length > 0;
-  var thumb = item.url || '';
+  var thumb = imgSrc(item.url || '');
   var sid   = esc(item.id);
   return (
     '<div class="item-card' + (isMod ? ' has-changes' : '') +
@@ -778,7 +785,7 @@ function previewModalImage() {
   var ph   = document.getElementById('modal-photo-placeholder');
   if (!prev) return;
   if (url) {
-    prev.src = url;
+    prev.src = imgSrc(url);
     prev.style.display = 'block';
     if (ph) ph.style.display = 'none';
   } else {
