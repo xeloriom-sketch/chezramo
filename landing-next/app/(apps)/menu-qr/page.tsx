@@ -19,7 +19,34 @@ declare global {
 
 const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=VOTRE_PLACE_ID'
 
-const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+const BASE    = process.env.NEXT_PUBLIC_BASE_PATH    ?? ''
+const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+const SB_KEY  = process.env.NEXT_PUBLIC_SUPABASE_KEY ?? ''
+
+async function saveFeedback(stars: number, message: string, table_num: string, prize: string | null) {
+  try {
+    // Appel direct Supabase (fonctionne depuis la page statique GitHub Pages)
+    if (SB_URL && SB_KEY) {
+      await fetch(`${SB_URL}/rest/v1/feedbacks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SB_KEY,
+          Authorization: `Bearer ${SB_KEY}`,
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ stars, message: message.trim() || null, table_num: table_num || null, prize }),
+      })
+    } else {
+      // Fallback : route API Next.js (dev local)
+      await fetch('/api/feedbacks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stars, message, table_num, prize }),
+      })
+    }
+  } catch { /* silencieux */ }
+}
 
 const ITEM_IMG: Record<string, string> = {
   // Sandwichs & galettes
@@ -645,7 +672,7 @@ export default function MenuQRPage() {
                     className="w-full max-w-sm qr-slide-up"
                     style={{ '--reveal-delay': '.2s', background: '#F5F5F5', border: '2px solid #E8E8E8', borderRadius: 20, padding: 16, fontSize: 14, resize: 'none', outline: 'none', color: '#111' } as React.CSSProperties}
                   />
-                  <button onClick={() => setSent(true)}
+                  <button onClick={() => { setSent(true); saveFeedback(stars, feedback, table ?? '', prize?.label ?? null) }}
                     className="w-full max-w-sm active:scale-[.98] transition-transform qr-slide-up"
                     style={{ '--reveal-delay': '.3s', fontFamily: 'var(--font-baloo)', background: '#111', color: 'white', border: 'none', borderRadius: 99, padding: '16px 24px', fontSize: 13, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,.18)' } as React.CSSProperties}
                   >
