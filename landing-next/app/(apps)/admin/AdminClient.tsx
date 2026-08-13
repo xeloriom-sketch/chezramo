@@ -718,7 +718,7 @@ function SettingsTab({ soundEnabled, onSoundChange, notifEnabled, notifPermissio
         <h1 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0 }}>Réglages</h1>
         <p style={{ color: '#94A3B8', fontSize: 13, marginTop: 2 }}>Configuration du panneau d&apos;administration</p>
       </div>
-      <div className="settings-wrap" style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 560 }}>
+      <div className="settings-wrap" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Notifications */}
         <div style={{ background: 'white', borderRadius: 16, border: '1px solid #F3F4F6', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.05)' }}>
@@ -860,7 +860,7 @@ function FeedbacksTab({ feedbacks, onRefresh }: { feedbacks: Feedback[]; onRefre
     : '—'
 
   return (
-    <div style={{ padding: '28px 28px 60px', maxWidth: 800 }}>
+    <div style={{ padding: '28px 28px 60px' }}>
       {/* En-tête */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
@@ -942,7 +942,7 @@ function NewsletterTab({ subs, onRefresh }: { subs: NewsletterSub[]; onRefresh: 
   }
 
   return (
-    <div style={{ padding: '28px 28px 60px', maxWidth: 800 }}>
+    <div style={{ padding: '28px 28px 60px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <h2 style={{ fontFamily: "'Baloo 2', system-ui", fontSize: 22, fontWeight: 800, color: '#111827', margin: 0 }}>Newsletter</h2>
