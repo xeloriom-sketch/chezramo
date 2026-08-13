@@ -288,23 +288,30 @@ export default function MenuQRPage() {
   const contentRef  = useRef<HTMLDivElement>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
 
+  function getAC() {
+    const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    if (!audioCtxRef.current) audioCtxRef.current = new AC()
+    return audioCtxRef.current
+  }
+
   function playTap(freq = 700) {
     try {
-      const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-      if (!audioCtxRef.current) audioCtxRef.current = new AC()
-      const ctx = audioCtxRef.current
-      // iOS Safari : resume() doit être appelé dans la gesture, sans await
-      // On schedule avec +10ms pour laisser le temps au context de vraiment démarrer
-      if (ctx.state !== 'running') void ctx.resume()
-      const t = ctx.currentTime + 0.01
-      const osc  = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain); gain.connect(ctx.destination)
-      osc.frequency.setValueAtTime(freq, t)
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.55, t + 0.07)
-      gain.gain.setValueAtTime(0.12, t)
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09)
-      osc.start(t); osc.stop(t + 0.11)
+      const ctx = getAC()
+      const doPlay = () => {
+        const t = ctx.currentTime + 0.005
+        const osc  = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain); gain.connect(ctx.destination)
+        osc.frequency.setValueAtTime(freq, t)
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.55, t + 0.07)
+        gain.gain.setValueAtTime(0.12, t)
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09)
+        osc.start(t); osc.stop(t + 0.11)
+      }
+      // Si le context est déjà running : joue immédiatement
+      // Sinon : resume() d'abord (le context a déjà été unlocked par le touchstart)
+      if (ctx.state === 'running') { doPlay() }
+      else { ctx.resume().then(doPlay).catch(() => {}) }
     } catch { /* silencieux si navigateur bloque */ }
   }
 
@@ -313,10 +320,13 @@ export default function MenuQRPage() {
   }, [])
 
   useEffect(() => {
-    // Réveille le contexte audio dès le premier toucher (iOS exige une gesture)
+    // Crée et unlock le context dès le premier toucher — iOS exige que
+    // la création + resume() se fassent dans une gesture utilisateur
     const wakeCtx = () => {
-      if (!audioCtxRef.current) return
-      if (audioCtxRef.current.state !== 'running') void audioCtxRef.current.resume()
+      try {
+        const ctx = getAC()
+        if (ctx.state !== 'running') void ctx.resume()
+      } catch { /* ignore */ }
     }
     document.addEventListener('touchstart', wakeCtx, { passive: true, capture: true })
 
