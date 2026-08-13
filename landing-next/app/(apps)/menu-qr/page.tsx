@@ -266,15 +266,18 @@ export default function MenuQRPage() {
       const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
       if (!audioCtxRef.current) audioCtxRef.current = new AC()
       const ctx = audioCtxRef.current
-      if (ctx.state === 'suspended') ctx.resume()
+      // iOS Safari : resume() doit être appelé dans la gesture, sans await
+      // On schedule avec +10ms pour laisser le temps au context de vraiment démarrer
+      if (ctx.state !== 'running') void ctx.resume()
+      const t = ctx.currentTime + 0.01
       const osc  = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.connect(gain); gain.connect(ctx.destination)
-      osc.frequency.setValueAtTime(freq, ctx.currentTime)
-      osc.frequency.exponentialRampToValueAtTime(freq * 0.55, ctx.currentTime + 0.07)
-      gain.gain.setValueAtTime(0.12, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.09)
-      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1)
+      osc.frequency.setValueAtTime(freq, t)
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.55, t + 0.07)
+      gain.gain.setValueAtTime(0.12, t)
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09)
+      osc.start(t); osc.stop(t + 0.11)
     } catch { /* silencieux si navigateur bloque */ }
   }
 
@@ -283,12 +286,22 @@ export default function MenuQRPage() {
   }, [])
 
   useEffect(() => {
+    // Réveille le contexte audio dès le premier toucher (iOS exige une gesture)
+    const wakeCtx = () => {
+      if (!audioCtxRef.current) return
+      if (audioCtxRef.current.state !== 'running') void audioCtxRef.current.resume()
+    }
+    document.addEventListener('touchstart', wakeCtx, { passive: true, capture: true })
+
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement
       if (target.closest('button, a, [role="button"]')) playTap()
     }
     document.addEventListener('click', handler, { capture: true })
-    return () => document.removeEventListener('click', handler, { capture: true })
+    return () => {
+      document.removeEventListener('touchstart', wakeCtx, { capture: true })
+      document.removeEventListener('click', handler, { capture: true })
+    }
   }, [])
 
   useEffect(() => {
@@ -652,28 +665,31 @@ export default function MenuQRPage() {
 
       {/* ── MODAL "Fini ?" ──────────────────────────────────────────────────── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(4px)' }} onClick={() => setShowModal(false)}>
-          <div className="w-full max-w-md bg-white rounded-t-[2rem] flex flex-col items-center gap-5 text-center anim-sheet-up relative" style={{ padding: '2.5rem 1.5rem calc(2rem + env(safe-area-inset-bottom,0px))' }} onClick={e => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-gray-200 rounded-full absolute top-3" />
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-xl mt-2" style={{ background: '#1E4D3A' }}>
-              <UtensilsIcon size={30} color="white" />
+        <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(6px)' }} onClick={() => setShowModal(false)}>
+          <div className="w-full max-w-md anim-sheet-up relative" style={{ background: 'white', borderRadius: '28px 28px 0 0', padding: '2.5rem 1.5rem calc(2rem + env(safe-area-inset-bottom,0px))', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+            {/* Handle */}
+            <div style={{ width: 40, height: 4, borderRadius: 99, background: '#E0E0E0', position: 'absolute', top: 12 }} />
+            {/* Icône */}
+            <div style={{ width: 64, height: 64, borderRadius: 20, background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 20px rgba(0,0,0,.18)', marginTop: 8 }}>
+              <UtensilsIcon size={28} color="white" />
             </div>
+            {/* Texte */}
             <div>
-              <p className="text-[10px] font-bold tracking-[.22em] uppercase mb-1" style={{ color: '#E8A93B' }}>Moment de vérité</p>
-              <h3 className="font-extrabold text-2xl uppercase text-gray-900" style={{ fontFamily: 'var(--font-baloo)' }}>
+              <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#AAA', marginBottom: 8 }}>Moment de vérité</p>
+              <h3 style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(22px,6vw,28px)', fontWeight: 900, color: '#111', textTransform: 'uppercase', lineHeight: 1.1 }}>
                 Avez-vous fini<br/>de manger ?
               </h3>
-              <p className="mt-2 text-gray-400 text-sm">Donnez votre avis et tentez de gagner un cadeau !</p>
+              <p style={{ marginTop: 10, color: '#999', fontSize: 13, lineHeight: 1.5 }}>Donnez votre avis et tentez de gagner un cadeau !</p>
             </div>
-            <div className="w-full flex flex-col gap-3 mt-1">
+            {/* Boutons */}
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button onClick={onFinished}
-                className="w-full text-white font-extrabold uppercase tracking-widest text-sm py-4 rounded-full shadow-lg active:scale-[.98] transition-transform"
-                style={{ fontFamily: 'var(--font-baloo)', background: '#1E4D3A', boxShadow: '0 8px 24px rgba(30,77,58,.35)' }}
+                style={{ width: '100%', fontFamily: 'var(--font-baloo)', background: '#111', color: 'white', border: 'none', borderRadius: 99, padding: '16px 24px', fontSize: 13, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', boxShadow: '0 6px 20px rgba(0,0,0,.2)' }}
               >
                 Oui, j&apos;ai fini
               </button>
               <button onClick={() => setShowModal(false)}
-                className="w-full font-semibold py-3.5 rounded-full text-sm border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600"
+                style={{ width: '100%', fontFamily: 'var(--font-baloo)', background: 'white', color: '#888', border: '1.5px solid #E8E8E8', borderRadius: 99, padding: '14px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
               >
                 Non, je suis encore là
               </button>
