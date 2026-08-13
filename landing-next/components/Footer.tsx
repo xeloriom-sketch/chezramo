@@ -17,7 +17,7 @@ export default function Footer() {
     setSending(true)
     try {
       if (SB_URL && SB_KEY) {
-        await fetch(`${SB_URL}/rest/v1/newsletter`, {
+        const res = await fetch(`${SB_URL}/rest/v1/newsletter`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -27,6 +27,12 @@ export default function Footer() {
           },
           body: JSON.stringify({ email: input.value.toLowerCase().trim() }),
         })
+        if (res.status === 409) {
+          setNewsletterMsg('Vous êtes déjà inscrit !')
+          input.value = ''
+          setSending(false)
+          return
+        }
       }
     } catch { /* silencieux */ }
     setNewsletterMsg('Merci, vous êtes inscrit !')
