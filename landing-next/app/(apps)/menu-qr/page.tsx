@@ -870,7 +870,7 @@ export default function MenuQRPage() {
                       { bg: '#D4501E', badgeBg: '#FDEEA3', badgeColor: '#5C2800', badge: '★ Spécialité', title: 'Kebab Artisanal', sub: 'Broche tournée, sauces maison, viande fraîche tranchée à la minute.', btnBg: '#FDEEA3', btnColor: '#5C2800', catId: 'kebab', img: `/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.png`, scale: 1 },
                       { bg: '#1E4D3A', badgeBg: '#E8A93B', badgeColor: '#1E4D3A', badge: 'Nouveau', title: 'Maxi Tacos', sub: 'Généreux, fondant, garni à votre goût avec nos sauces exclusives.', btnBg: '#E8A93B', btnColor: '#1E4D3A', catId: 'tacos', img: `/uploads/cut/Maxi%20Tacos.png`, scale: 1.5 },
                       { bg: '#C2385A', badgeBg: '#FDEEA3', badgeColor: '#5C0020', badge: 'Finger Food', title: 'Burgers & Chicken', sub: 'Croustillant, juteux, cuit à la demande — nuggets, tenders et burgers.', btnBg: '#FDEEA3', btnColor: '#5C0020', catId: 'burgers', img: `/uploads/cut/Chicken%20Burger.png`, scale: 1.5 },
-                      { bg: '#2C5F8A', badgeBg: '#E8A93B', badgeColor: '#0D2340', badge: 'Gourmet', title: 'Assiettes Complètes', sub: 'Plat complet grillé à la commande, avec accompagnements et salades.', btnBg: '#E8A93B', btnColor: '#0D2340', catId: 'assiettes', img: `/uploads/cut/Assiette%20Kebab.png`, scale: 1.5 },
+                      { bg: '#2C5F8A', badgeBg: '#E8A93B', badgeColor: '#0D2340', badge: 'Gourmet', title: 'Assiettes\nComplètes', sub: 'Plat complet grillé à la commande, avec accompagnements et salades.', btnBg: '#E8A93B', btnColor: '#0D2340', catId: 'assiettes', img: `/uploads/cut/Assiette%20Kebab.png`, scale: 1.5 },
                     ] as const).map((b, idx) => (
                       <div key={idx} style={{
                         flexShrink: 0, width: '100%',
@@ -901,7 +901,7 @@ export default function MenuQRPage() {
                           <span style={{ background: b.badgeBg, color: b.badgeColor, fontSize: 8, fontWeight: 800, fontFamily: 'var(--font-baloo)', padding: '3px 11px', borderRadius: 99, textTransform: 'uppercase' as const, letterSpacing: '0.1em', backdropFilter: 'blur(4px)' }}>
                             {b.badge}
                           </span>
-                          <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 21, fontWeight: 900, color: 'white', lineHeight: 1.1, margin: 0 }}>
+                          <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 21, fontWeight: 900, color: 'white', lineHeight: 1.1, margin: 0, whiteSpace: 'pre-line' }}>
                             {b.title}
                           </h2>
                           <p style={{ fontSize: 10.5, color: 'rgba(255,255,255,.72)', lineHeight: 1.55, margin: 0, fontWeight: 500 }}>
