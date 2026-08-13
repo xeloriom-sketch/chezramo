@@ -286,33 +286,50 @@ export default function MenuQRPage() {
   const [confetti,         setConfetti]         = useState<ReturnType<typeof makeConfetti>>([])
   const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
   const contentRef  = useRef<HTMLDivElement>(null)
-  const audioCtxRef = useRef<AudioContext | null>(null)
+  const audioCtxRef  = useRef<AudioContext | null>(null)
+  const audioBufRef  = useRef<AudioBuffer | null>(null)
 
-  function getAC() {
-    const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-    if (!audioCtxRef.current) audioCtxRef.current = new AC()
-    return audioCtxRef.current
+  // Crée le contexte + pré-génère le buffer (appelé dans une gesture)
+  function initAudio() {
+    try {
+      if (audioCtxRef.current) return audioCtxRef.current
+      const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+      const ctx = new AC()
+      audioCtxRef.current = ctx
+      // Génère un beep 700Hz → 385Hz en 90ms, décroissance exponentielle
+      const sr  = ctx.sampleRate
+      const len = Math.ceil(sr * 0.09)
+      const buf = ctx.createBuffer(1, len, sr)
+      const dat = buf.getChannelData(0)
+      for (let i = 0; i < len; i++) {
+        const t   = i / sr
+        const freq = 700 * Math.pow(0.55, t / 0.07)   // même courbe que avant
+        const env  = Math.exp(-t * 38)
+        dat[i] = Math.sin(2 * Math.PI * freq * t) * env * 0.14
+      }
+      audioBufRef.current = buf
+      return ctx
+    } catch { return null }
   }
 
-  function playTap(freq = 700) {
+  function playTap() {
     try {
-      const ctx = getAC()
-      const doPlay = () => {
-        const t = ctx.currentTime + 0.005
-        const osc  = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.connect(gain); gain.connect(ctx.destination)
-        osc.frequency.setValueAtTime(freq, t)
-        osc.frequency.exponentialRampToValueAtTime(freq * 0.55, t + 0.07)
-        gain.gain.setValueAtTime(0.12, t)
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09)
-        osc.start(t); osc.stop(t + 0.11)
+      // Crée le contexte ici si pas encore fait (PC : pas de touchstart avant le click)
+      if (!audioCtxRef.current) initAudio()
+      const ctx = audioCtxRef.current
+      const buf = audioBufRef.current
+      if (!ctx || !buf) return
+      const fire = () => {
+        try {
+          const src = ctx.createBufferSource()
+          src.buffer = buf
+          src.connect(ctx.destination)
+          src.start(ctx.currentTime)
+        } catch { /* ignore */ }
       }
-      // Si le context est déjà running : joue immédiatement
-      // Sinon : resume() d'abord (le context a déjà été unlocked par le touchstart)
-      if (ctx.state === 'running') { doPlay() }
-      else { ctx.resume().then(doPlay).catch(() => {}) }
-    } catch { /* silencieux si navigateur bloque */ }
+      if (ctx.state === 'running') fire()
+      else ctx.resume().then(fire).catch(() => {})
+    } catch { /* silencieux */ }
   }
 
   useEffect(() => {
@@ -320,24 +337,31 @@ export default function MenuQRPage() {
   }, [])
 
   useEffect(() => {
-    // Crée et unlock le context dès le premier toucher — iOS exige que
-    // la création + resume() se fassent dans une gesture utilisateur
-    const wakeCtx = () => {
-      try {
-        const ctx = getAC()
-        if (ctx.state !== 'running') void ctx.resume()
-      } catch { /* ignore */ }
+    // Premier touchstart = gesture iOS → on crée + unlock le context ici
+    const onFirstTouch = () => {
+      const ctx = initAudio()
+      if (ctx && ctx.state !== 'running') void ctx.resume()
     }
-    document.addEventListener('touchstart', wakeCtx, { passive: true, capture: true })
+    // Premier click = aussi une gesture valide (desktop ou si touchstart raté)
+    const onFirstClick = () => {
+      if (!audioCtxRef.current) {
+        const ctx = initAudio()
+        if (ctx && ctx.state !== 'running') void ctx.resume()
+      }
+    }
+    document.addEventListener('touchstart', onFirstTouch, { passive: true, capture: true })
+    document.addEventListener('click',      onFirstClick, { capture: true })
 
-    const handler = (e: MouseEvent) => {
+    const clickHandler = (e: MouseEvent) => {
       const target = e.target as HTMLElement
       if (target.closest('button, a, [role="button"]')) playTap()
     }
-    document.addEventListener('click', handler, { capture: true })
+    document.addEventListener('click', clickHandler, { capture: true })
+
     return () => {
-      document.removeEventListener('touchstart', wakeCtx, { capture: true })
-      document.removeEventListener('click', handler, { capture: true })
+      document.removeEventListener('touchstart', onFirstTouch, { capture: true })
+      document.removeEventListener('click',      onFirstClick, { capture: true })
+      document.removeEventListener('click',      clickHandler, { capture: true })
     }
   }, [])
 
@@ -502,7 +526,7 @@ export default function MenuQRPage() {
               Broche artisanale · Sauces maison · Kebab généreux
             </p>
             <button
-              onClick={() => { playTap(600); sessionStorage.setItem('ramo_welcomed', '1'); setScreen('home') }}
+              onClick={() => { playTap(); sessionStorage.setItem('ramo_welcomed', '1'); setScreen('home') }}
               style={{
                 width: '100%', background: '#E8A93B', color: '#1E4D3A',
                 fontFamily: 'var(--font-baloo)', fontWeight: 900,
@@ -830,7 +854,7 @@ export default function MenuQRPage() {
                   value={searchQ}
                   onChange={e => setSearchQ(e.target.value)}
                   placeholder="Kebab, tacos, burger…"
-                  style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 14, color: '#111', outline: 'none' }}
+                  style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 16, color: '#111', outline: 'none' }}
                 />
                 {searchQ && <button onClick={() => setSearchQ('')} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer' }}><CloseIcon size={14} color="#999" /></button>}
               </div>
@@ -1029,7 +1053,7 @@ export default function MenuQRPage() {
                         {/* Label */}
                         <div style={{ width: '100%', padding: '6px 8px 13px', textAlign: 'center' }}>
                           <span style={{ fontSize: 11, fontWeight: 900, color: '#111', fontFamily: 'var(--font-baloo)', textTransform: 'uppercase' as const, letterSpacing: '0.03em', whiteSpace: 'nowrap' as const, display: 'block' }}>
-                            {cat.label.split(' & ')[0].split(' ')[0]}
+                            {cat.label.split(' & ')[0]}
                           </span>
                         </div>
                       </button>
@@ -1153,7 +1177,7 @@ export default function MenuQRPage() {
                 {/* Ligne 1: back + nom catégorie */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 16, paddingRight: 16, marginBottom: 10 }}>
                   <button
-                    onClick={() => { playTap(500); setView('categories') }}
+                    onClick={() => { playTap(); setView('categories') }}
                     style={{
                       width: 34, height: 34, borderRadius: '50%',
                       background: '#F0EDE8', border: 'none',
@@ -1193,7 +1217,7 @@ export default function MenuQRPage() {
                           WebkitTapHighlightColor: 'transparent',
                         }}
                       >
-                        {cat.label.split(' & ')[0].split(' ')[0]}
+                        {cat.label.split(' & ')[0]}
                       </button>
                     )
                   })}
