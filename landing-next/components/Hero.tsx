@@ -7,7 +7,7 @@ export default function Hero() {
   ]
 
   return (
-    <section className="relative bg-brand pt-36 pb-0 overflow-hidden hero-section" aria-label="Chez Ramo — Restaurant kebab tacos à Lagnieu">
+    <section className="relative bg-brand pb-0 overflow-hidden hero-section" style={{ paddingTop: 'calc(9rem + env(safe-area-inset-top))' }} aria-label="Chez Ramo — Restaurant kebab tacos à Lagnieu">
       <div className="absolute inset-0 pattern-bg" />
       {/* Texte sémantique pour le SEO — visible par les moteurs, intégré au design */}
 

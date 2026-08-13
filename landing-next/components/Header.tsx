@@ -68,6 +68,7 @@ export default function Header() {
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none transition-all duration-300 ${hidden && !navMenuOpen ? '-translate-y-full' : 'translate-y-0'}`}
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div
           className={`pointer-events-auto transition-all duration-400 ease-[cubic-bezier(.16,1,.3,1)] w-full ${
@@ -168,7 +169,7 @@ export default function Header() {
           className={`${closing ? 'nav-close' : 'nav-open'} fixed inset-0 z-[200] bg-[#163828] flex flex-col md:hidden overflow-hidden`}
           onKeyDown={e => e.key === 'Escape' && closeMenu()}
         >
-          <div className={`flex items-center justify-between px-6 pt-5 pb-4 shrink-0${closing ? '' : ' nav-link-in'}`} style={{ animationDelay: '0ms' }}>
+          <div className={`flex items-center justify-between px-6 pb-4 shrink-0${closing ? '' : ' nav-link-in'}`} style={{ animationDelay: '0ms', paddingTop: 'calc(1.25rem + env(safe-area-inset-top))' }}>
             <span className="font-extrabold text-xl text-cream tracking-wide" style={{ fontFamily: 'var(--font-baloo)' }}>CHEZ RAMO</span>
             <button onClick={closeMenu} className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center active:scale-95 transition-transform" aria-label="Fermer">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>

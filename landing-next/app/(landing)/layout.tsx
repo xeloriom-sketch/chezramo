@@ -92,6 +92,7 @@ export const viewport: Viewport = {
   themeColor: '#1E4D3A',
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -123,7 +124,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="shortcut icon" href={`${BASE_PATH}/favicon.svg`} />
       </head>
       <body style={{ fontFamily: 'var(--font-dm), system-ui, sans-serif' }}>
-        {children}
+        {/* overflow-x ici (pas sur body) — évite le bug iOS Safari position:fixed */}
+        <div style={{ overflowX: 'hidden', position: 'relative' }}>
+          {children}
+        </div>
       </body>
     </html>
   )

@@ -10,7 +10,7 @@ body {
   background: #F5ECD9;
   color: #1E4D3A;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  /* overflow-x: hidden sur body brise position:fixed sur iOS Safari — mis sur wrapper div */
 }
 
 ::selection { background: #E8A93B; color: #1E4D3A; }
@@ -177,12 +177,11 @@ body {
 /* ── Floating cart ── */
 .float-cart {
   position: fixed;
-  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  bottom: max(1.5rem, env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   z-index: 80;
   animation: sheet-fade 0.3s ease forwards;
-  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* ── Pattern bg ── */
