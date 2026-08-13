@@ -267,10 +267,7 @@ export default function MenuQRPage() {
   const [showReviewPopup,  setShowReviewPopup]  = useState(false)
   const [table,            setTable]            = useState('')
   const [mounted,          setMounted]          = useState(false)
-  const [screen,           setScreen]           = useState<'welcome' | 'home'>(() => {
-    if (typeof window !== 'undefined' && sessionStorage.getItem('ramo_welcomed')) return 'home'
-    return 'welcome'
-  })
+  const [screen] = useState<'home'>('home')
   const [bannerIdx,        setBannerIdx]        = useState(0)
   const bannerRef     = useRef<HTMLDivElement>(null)
   const touchStartXRef = useRef(0)
@@ -483,70 +480,6 @@ export default function MenuQRPage() {
     <>
       <style dangerouslySetInnerHTML={{ __html: QR_CSS }} />
 
-      {/* ── WELCOME SCREEN (première visite) ────────────────────────────────── */}
-      {screen === 'welcome' && mounted && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 200,
-          background: '#1E4D3A',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'space-between',
-          padding: '60px 28px 48px',
-          textAlign: 'center',
-        }}>
-          <div className="pattern-bg" style={{ position: 'absolute', inset: 0, opacity: 0.06 }} />
-
-          {/* Logo */}
-          <div style={{ zIndex: 1 }}>
-            <p style={{ fontFamily: 'var(--font-baloo)', fontSize: '2rem', fontWeight: 900, color: 'white', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-              CHEZ RAMO
-            </p>
-            <p style={{ fontSize: 10, color: 'rgba(255,255,255,.4)', letterSpacing: '0.25em', textTransform: 'uppercase' as const, marginTop: 4 }}>
-              Kebab Artisanal · Lagnieu
-            </p>
-          </div>
-
-          {/* Kebab flottant */}
-          <div style={{ zIndex: 1, position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{
-              position: 'absolute', borderRadius: '50%', width: 300, height: 300,
-              background: 'radial-gradient(circle, rgba(232,169,59,.2) 0%, transparent 70%)',
-            }} />
-            <img
-              src={`${BASE}/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.png`}
-              alt="Kebab Chez Ramo"
-              style={{
-                width: 280, height: 280, objectFit: 'contain',
-                filter: 'drop-shadow(0 28px 56px rgba(0,0,0,0.55))',
-                animation: 'heroFloat 3.5s ease-in-out infinite',
-                position: 'relative', zIndex: 1,
-              }}
-            />
-          </div>
-
-          {/* Texte + CTA */}
-          <div style={{ zIndex: 1, width: '100%' }}>
-            <h2 style={{ fontFamily: 'var(--font-baloo)', fontSize: 'clamp(22px,6vw,30px)', fontWeight: 900, color: 'white', lineHeight: 1.1, marginBottom: 10 }}>
-              Bienvenue{table ? ` — Table ${table}` : ' chez Ramo !'}
-            </h2>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', lineHeight: 1.7, marginBottom: 28, letterSpacing: '0.02em' }}>
-              Broche artisanale · Sauces maison · Kebab généreux
-            </p>
-            <button
-              onClick={() => { playTap(); sessionStorage.setItem('ramo_welcomed', '1'); setScreen('home') }}
-              style={{
-                width: '100%', background: '#E8A93B', color: '#1E4D3A',
-                fontFamily: 'var(--font-baloo)', fontWeight: 900,
-                fontSize: 15, textTransform: 'uppercase' as const, letterSpacing: '0.08em',
-                border: 'none', borderRadius: 99, padding: '18px 24px',
-                boxShadow: '0 8px 28px rgba(232,169,59,.45)',
-                cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-              }}
-            >
-              Voir la carte
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── PHASE OVERLAYS ───────────────────────────────────────────────────── */}
       {phase !== 'menu' && (

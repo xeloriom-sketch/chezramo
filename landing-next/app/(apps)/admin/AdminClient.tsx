@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Script from 'next/script'
 
 const FUNCTIONS_BASE = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? ''
+const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+const SB_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY ?? ''
 const ADMIN_TOKEN_KEY = 'ramo_admin_token'
 
 function adminToken() { return typeof window !== 'undefined' ? localStorage.getItem(ADMIN_TOKEN_KEY) ?? '' : '' }
@@ -546,10 +548,35 @@ function BtnCollected({ onClick }: { onClick: () => void }) {
   )
 }
 function BtnCancel({ onClick }: { onClick: () => void }) {
+  const [confirming, setConfirming] = useState(false)
+  if (confirming) return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <span style={{ fontSize: 11, color: '#374151', fontWeight: 600 }}>Annuler ?</span>
+      <button onClick={() => { onClick(); setConfirming(false) }} style={{ padding: '4px 10px', background: '#DC2626', color: 'white', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Oui</button>
+      <button onClick={() => setConfirming(false)} style={{ padding: '4px 8px', background: 'white', color: '#6B7280', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Non</button>
+    </span>
+  )
   return (
-    <button onClick={() => { if (window.confirm('Annuler cette commande ?')) onClick() }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+    <button onClick={() => setConfirming(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       Annuler
+    </button>
+  )
+}
+function BtnDeleteRes({ onDelete, card }: { onDelete: () => void; card?: boolean }) {
+  const [confirming, setConfirming] = useState(false)
+  if (confirming) return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <span style={{ fontSize: 11, color: '#374151', fontWeight: 600 }}>Supprimer ?</span>
+      <button onClick={() => { onDelete(); setConfirming(false) }} style={{ padding: card ? '7px 12px' : '4px 10px', background: '#DC2626', color: 'white', border: 'none', borderRadius: 10, fontSize: card ? 13 : 11, fontWeight: 700, cursor: 'pointer' }}>Oui</button>
+      <button onClick={() => setConfirming(false)} style={{ padding: card ? '7px 12px' : '4px 8px', background: 'white', color: '#6B7280', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: card ? 13 : 11, fontWeight: 600, cursor: 'pointer' }}>Non</button>
+    </span>
+  )
+  return (
+    <button onClick={() => setConfirming(true)}
+      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: card ? '9px 12px' : '5px 8px', background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: card ? 10 : 8, fontSize: card ? 13 : 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+      title="Supprimer définitivement">
+      <IconTrash />
     </button>
   )
 }
@@ -635,11 +662,7 @@ function ResCard({ r, updateResStatus, deleteRes }: { r: Reservation; updateResS
             Réouvrir
           </button>
         )}
-        <button onClick={() => deleteRes(r.id)}
-          style={{ padding: '9px 12px', background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          title="Supprimer">
-          <IconTrash />
-        </button>
+        <BtnDeleteRes onDelete={() => deleteRes(r.id)} card />
       </div>
     </div>
   )
@@ -1368,11 +1391,7 @@ function ReservationsTab({ reservations, updateResStatus, deleteRes }: {
                               Réouvrir
                             </button>
                           )}
-                          <button onClick={() => deleteRes(r.id)}
-                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '5px 8px', background: '#FEF2F2', color: '#EF4444', border: 'none', borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                            title="Supprimer définitivement">
-                            <IconTrash />
-                          </button>
+                          <BtnDeleteRes onDelete={() => deleteRes(r.id)} />
                         </div>
                       </td>
                     </tr>
@@ -1505,7 +1524,6 @@ export default function AdminClient() {
   }, [fetchReservations])
 
   const deleteReservation = useCallback(async (id: number) => {
-    if (!window.confirm('Supprimer définitivement cette réservation ?')) return
     const url = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/admin-reservations?id=${id}` : `/api/reservations?id=${id}`
     await fetch(url, { method: 'DELETE', headers: adminFetchHeaders() })
     fetchReservations()
@@ -1536,8 +1554,15 @@ export default function AdminClient() {
 
   const fetchFeedbacks = useCallback(async () => {
     try {
-      const url = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/feedbacks` : '/api/feedbacks'
-      const res = await fetch(url, { headers: adminFetchHeaders() })
+      // Feedbacks sont public-read → Supabase REST fonctionne en prod et en local
+      if (SB_URL && SB_KEY) {
+        const res = await fetch(`${SB_URL}/rest/v1/feedbacks?select=*&order=created_at.desc`, {
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+        })
+        if (res.ok) { const data: Feedback[] = await res.json(); if (Array.isArray(data)) { setFeedbacks(data); return } }
+      }
+      // Fallback local API
+      const res = await fetch('/api/feedbacks', { headers: adminFetchHeaders() })
       if (!res.ok) return
       const data: Feedback[] = await res.json()
       if (Array.isArray(data)) setFeedbacks(data)
@@ -1546,8 +1571,15 @@ export default function AdminClient() {
 
   const fetchNewsletter = useCallback(async () => {
     try {
-      const url = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/newsletter` : '/api/newsletter'
-      const res = await fetch(url, { headers: adminFetchHeaders() })
+      // Newsletter est public-read → Supabase REST fonctionne en prod et en local
+      if (SB_URL && SB_KEY) {
+        const res = await fetch(`${SB_URL}/rest/v1/newsletter?select=*&order=created_at.desc`, {
+          headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+        })
+        if (res.ok) { const data: NewsletterSub[] = await res.json(); if (Array.isArray(data)) { setNewsletter(data); return } }
+      }
+      // Fallback local API
+      const res = await fetch('/api/newsletter', { headers: adminFetchHeaders() })
       if (!res.ok) return
       const data: NewsletterSub[] = await res.json()
       if (Array.isArray(data)) setNewsletter(data)
