@@ -1057,7 +1057,7 @@ export default function MenuQRPage() {
               </div>
 
               {/* ── NOS ACCOMPAGNEMENTS ── */}
-              <div style={{ padding: '40px 0 0' }}>
+              <div style={{ padding: '40px 0 48px' }}>
                 <div style={{ marginBottom: 16, padding: '0 14px' }}>
                   <h4 style={{ fontFamily: 'var(--font-baloo)', fontSize: 16, fontWeight: 900, color: '#0A0A0A', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
                     Nos accompagnements
