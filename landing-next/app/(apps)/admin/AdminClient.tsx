@@ -36,13 +36,18 @@ type Reservation = {
   status: 'pending' | 'confirmed' | 'cancelled'
   created_at: string
 }
-type Tab = 'dashboard' | 'commandes' | 'reservations' | 'feedbacks' | 'menu' | 'tvs' | 'settings'
+type Tab = 'dashboard' | 'commandes' | 'reservations' | 'feedbacks' | 'newsletter' | 'menu' | 'tvs' | 'settings'
 type Feedback = {
   id: number
   stars: number
   message: string | null
   table_num: string | null
   prize: string | null
+  created_at: string
+}
+type NewsletterSub = {
+  id: number
+  email: string
   created_at: string
 }
 
@@ -328,6 +333,9 @@ function IconHamburger() {
 function IconX() {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 }
+function IconMail() {
+  return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+}
 
 /* ─── sidebar ────────────────────────────────────────────────── */
 type NavItem = { id: Tab; label: string; icon: React.ReactNode; badge?: number }
@@ -340,6 +348,7 @@ function Sidebar({ tab, setTab, logout, pendingCount, pendingResCount, mobileOpe
     { id: 'commandes',     label: 'Commandes',    icon: <IconOrders />,  badge: pendingCount || undefined },
     { id: 'reservations',  label: 'Réservations', icon: <IconCalendar />, badge: pendingResCount || undefined },
     { id: 'feedbacks',     label: 'Avis clients', icon: <IconStar />     },
+    { id: 'newsletter',    label: 'Newsletter',   icon: <IconMail />     },
     { id: 'menu',          label: 'Menu',         icon: <IconMenu />     },
     { id: 'tvs',           label: 'TVs',          icon: <IconTV />       },
     { id: 'settings',      label: 'Réglages',     icon: <IconSettings /> },
@@ -921,6 +930,65 @@ function FeedbacksTab({ feedbacks, onRefresh }: { feedbacks: Feedback[]; onRefre
   )
 }
 
+function NewsletterTab({ subs, onRefresh }: { subs: NewsletterSub[]; onRefresh: () => void }) {
+  const [copied, setCopied] = useState(false)
+
+  const copyAll = () => {
+    const txt = subs.map(s => s.email).join('\n')
+    navigator.clipboard.writeText(txt).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {})
+  }
+
+  return (
+    <div style={{ padding: '28px 28px 60px', maxWidth: 800 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div>
+          <h2 style={{ fontFamily: "'Baloo 2', system-ui", fontSize: 22, fontWeight: 800, color: '#111827', margin: 0 }}>Newsletter</h2>
+          <p style={{ fontSize: 13, color: '#9CA3AF', marginTop: 4 }}>{subs.length} inscrits</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={copyAll} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid #E5E7EB', background: copied ? '#D1FAE5' : 'white', cursor: 'pointer', fontSize: 13, color: copied ? '#065F46' : '#374151', fontWeight: 600, transition: 'all .2s' }}>
+            {copied ? '✓ Copié !' : 'Copier tous les emails'}
+          </button>
+          <button onClick={onRefresh} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: '1px solid #E5E7EB', background: 'white', cursor: 'pointer', fontSize: 13, color: '#374151', fontWeight: 500 }}>
+            <IconRefresh /> Actualiser
+          </button>
+        </div>
+      </div>
+
+      {subs.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '80px 0', color: '#9CA3AF' }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: 12, opacity: .4 }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <p style={{ fontSize: 14 }}>Aucun inscrit pour l&apos;instant</p>
+        </div>
+      ) : (
+        <div style={{ background: 'white', border: '1px solid #F3F4F6', borderRadius: 16, overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
+                <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '.08em', textTransform: 'uppercase' }}>Email</th>
+                <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subs.map(s => (
+                <tr key={s.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={{ padding: '12px 16px', fontSize: 13, color: '#111827' }}>{s.email}</td>
+                  <td style={{ padding: '12px 16px', fontSize: 12, color: '#6B7280', whiteSpace: 'nowrap' }}>
+                    {new Date(s.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function DashboardTab({ orders, updateStatus, onGoToCommandes }: {
   orders: Order[]; updateStatus: (id: number, s: string) => void; onGoToCommandes: () => void
 }) {
@@ -1326,6 +1394,7 @@ export default function AdminClient() {
   const [orders, setOrders] = useState<Order[]>([])
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
+  const [newsletter, setNewsletter] = useState<NewsletterSub[]>([])
   const [mobileOpen, setMobileOpen] = useState(false)
   const [newOrderCount, setNewOrderCount] = useState(0)
   const [newResCount, setNewResCount] = useState(0)
@@ -1475,16 +1544,27 @@ export default function AdminClient() {
     } catch { /* silent */ }
   }, [])
 
+  const fetchNewsletter = useCallback(async () => {
+    try {
+      const url = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/newsletter` : '/api/newsletter'
+      const res = await fetch(url, { headers: adminFetchHeaders() })
+      if (!res.ok) return
+      const data: NewsletterSub[] = await res.json()
+      if (Array.isArray(data)) setNewsletter(data)
+    } catch { /* silent */ }
+  }, [])
+
   useEffect(() => {
     if (!authed) return
     fetchOrders()
     fetchReservations()
     fetchFeedbacks()
+    fetchNewsletter()
     const iv = setInterval(fetchOrders, 5000)
     const iv2 = setInterval(fetchReservations, 5000)
     const iv3 = setInterval(fetchFeedbacks, 30000)
     return () => { clearInterval(iv); clearInterval(iv2); clearInterval(iv3) }
-  }, [authed, fetchOrders, fetchReservations, fetchFeedbacks])
+  }, [authed, fetchOrders, fetchReservations, fetchFeedbacks, fetchNewsletter])
 
   // Force le nouveau SW à prendre le contrôle sans intervention DevTools
   useEffect(() => {
@@ -2005,7 +2085,7 @@ export default function AdminClient() {
               <IconHamburger />
             </button>
             <div style={{ flex: 1, fontWeight: 700, fontSize: 15, color: '#111827' }}>
-              {{ dashboard: 'Dashboard', commandes: 'Commandes', reservations: 'Réservations', feedbacks: 'Avis clients', menu: 'Menu', tvs: 'TVs', settings: 'Réglages' }[tab]}
+              {{ dashboard: 'Dashboard', commandes: 'Commandes', reservations: 'Réservations', feedbacks: 'Avis clients', newsletter: 'Newsletter', menu: 'Menu', tvs: 'TVs', settings: 'Réglages' }[tab]}
             </div>
             {pendingCount > 0 && (
               <button onClick={goToCommandes}
@@ -2060,6 +2140,7 @@ export default function AdminClient() {
             {tab === 'commandes'    && <CommandesTab orders={orders} updateStatus={updateStatus} />}
             {tab === 'reservations' && <ReservationsTab reservations={reservations} updateResStatus={updateResStatus} deleteRes={deleteReservation} />}
             {tab === 'feedbacks'    && <FeedbacksTab feedbacks={feedbacks} onRefresh={fetchFeedbacks} />}
+            {tab === 'newsletter'   && <NewsletterTab subs={newsletter} onRefresh={fetchNewsletter} />}
             {tab === 'settings'     && <SettingsTab soundEnabled={soundEnabled} onSoundChange={handleSoundChange} notifEnabled={notifEnabled} notifPermission={notifPermission} onNotifChange={handleNotifChange} onRequestNotif={requestNotifPermission} />}
 
             <div id="admin-legacy-wrap" className={isAdminJsTab ? 'admin-legacy-active' : ''} style={{ display: isAdminJsTab ? 'block' : 'none', minHeight: '100%' }}>
