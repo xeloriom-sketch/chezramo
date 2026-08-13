@@ -4,7 +4,7 @@
 
 /* ── Base ── */
 * { box-sizing: border-box; }
-html { scroll-behavior: auto; }
+html { scroll-behavior: auto; color-scheme: light; }
 body {
   font-family: 'DM Sans', system-ui, sans-serif;
   background: #F5ECD9;
@@ -14,9 +14,6 @@ body {
 }
 
 ::selection { background: #E8A93B; color: #1E4D3A; }
-
-::-webkit-scrollbar { display: none; }
-* { scrollbar-width: none; -ms-overflow-style: none; }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

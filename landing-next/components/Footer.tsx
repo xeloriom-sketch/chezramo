@@ -2,18 +2,36 @@
 
 import { useState } from 'react'
 
-const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+const BASE   = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+const SB_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY ?? ''
 
 export default function Footer() {
   const [newsletterMsg, setNewsletterMsg] = useState('Inscrivez-vous pour recevoir nos promos et nouveautés Chez Ramo.')
+  const [sending, setSending] = useState(false)
 
-  const handleNewsletter = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleNewsletter = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const input = e.currentTarget.querySelector('input')
-    if (input?.value) {
-      setNewsletterMsg('Merci, vous êtes inscrit !')
-      input.value = ''
-    }
+    const input = e.currentTarget.querySelector('input') as HTMLInputElement
+    if (!input?.value) return
+    setSending(true)
+    try {
+      if (SB_URL && SB_KEY) {
+        await fetch(`${SB_URL}/rest/v1/newsletter`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: SB_KEY,
+            Authorization: `Bearer ${SB_KEY}`,
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify({ email: input.value.toLowerCase().trim() }),
+        })
+      }
+    } catch { /* silencieux */ }
+    setNewsletterMsg('Merci, vous êtes inscrit !')
+    input.value = ''
+    setSending(false)
   }
 
   return (
@@ -90,9 +108,12 @@ export default function Footer() {
               type="email"
               placeholder="Votre email"
               required
-              className="flex-1 min-w-0 px-4 py-3.5 rounded-full border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-brand"
+              disabled={sending}
+              className="flex-1 min-w-0 px-4 py-3.5 rounded-full border-2 border-brand bg-transparent text-sm text-brand placeholder:text-[#A0A0A0] focus:outline-none focus:border-brand disabled:opacity-60"
             />
-            <button type="submit" className="px-5 py-3.5 rounded-full border-2 border-brand bg-brand text-cream text-xs font-bold uppercase tracking-wider hover:bg-accent hover:text-brand transition">OK</button>
+            <button type="submit" disabled={sending} className="px-5 py-3.5 rounded-full border-2 border-brand bg-brand text-cream text-xs font-bold uppercase tracking-wider hover:bg-accent hover:text-brand transition disabled:opacity-60">
+              {sending ? '…' : 'OK'}
+            </button>
           </form>
           <p className="text-sm text-brand/85 mb-4">{newsletterMsg}</p>
           <div className="space-y-2.5 text-sm">

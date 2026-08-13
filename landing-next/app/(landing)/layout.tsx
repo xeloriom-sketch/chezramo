@@ -115,6 +115,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Language */}
         <meta httpEquiv="content-language" content="fr-FR" />
 
+        {/* Force light mode — empêche Brave/Chrome de forcer le dark mode */}
+        <meta name="color-scheme" content="light" />
+
         {/* Favicon — explicit avec base path pour GitHub Pages */}
         <link rel="icon" href={`${BASE_PATH}/favicon.svg`} type="image/svg+xml" />
         <link rel="shortcut icon" href={`${BASE_PATH}/favicon.svg`} />

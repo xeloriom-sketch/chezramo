@@ -337,31 +337,37 @@ export default function MenuQRPage() {
   }, [])
 
   useEffect(() => {
-    // Premier touchstart = gesture iOS → on crée + unlock le context ici
-    const onFirstTouch = () => {
-      const ctx = initAudio()
-      if (ctx && ctx.state !== 'running') void ctx.resume()
-    }
-    // Premier click = aussi une gesture valide (desktop ou si touchstart raté)
-    const onFirstClick = () => {
-      if (!audioCtxRef.current) {
-        const ctx = initAudio()
-        if (ctx && ctx.state !== 'running') void ctx.resume()
-      }
-    }
-    document.addEventListener('touchstart', onFirstTouch, { passive: true, capture: true })
-    document.addEventListener('click',      onFirstClick, { capture: true })
+    let lastTouchAt = 0
 
-    const clickHandler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      if (target.closest('button, a, [role="button"]')) playTap()
+    // iOS: créer + unllocker l'AudioContext dès le premier touchstart
+    const onTouchStart = () => {
+      const ctx = initAudio()
+      if (ctx?.state === 'suspended') ctx.resume().catch(() => {})
     }
-    document.addEventListener('click', clickHandler, { capture: true })
+
+    // iOS: jouer le son sur touchend — c'est une gesture directe, plus fiable que click
+    const onTouchEnd = (e: TouchEvent) => {
+      lastTouchAt = Date.now()
+      const t = e.target as HTMLElement
+      if (t?.closest?.('button, a, [role="button"]')) playTap()
+    }
+
+    // Desktop: jouer le son sur click (pas de touchend sur souris)
+    const onClick = (e: MouseEvent) => {
+      if (Date.now() - lastTouchAt < 500) return // touchend vient de jouer
+      if (!audioCtxRef.current) initAudio()
+      const t = e.target as HTMLElement
+      if (t.closest('button, a, [role="button"]')) playTap()
+    }
+
+    document.addEventListener('touchstart', onTouchStart, { passive: true, capture: true })
+    document.addEventListener('touchend',   onTouchEnd,   { passive: true, capture: true })
+    document.addEventListener('click',      onClick,      { capture: true })
 
     return () => {
-      document.removeEventListener('touchstart', onFirstTouch, { capture: true })
-      document.removeEventListener('click',      onFirstClick, { capture: true })
-      document.removeEventListener('click',      clickHandler, { capture: true })
+      document.removeEventListener('touchstart', onTouchStart, { capture: true })
+      document.removeEventListener('touchend',   onTouchEnd,   { capture: true })
+      document.removeEventListener('click',      onClick,      { capture: true })
     }
   }, [])
 
@@ -838,7 +844,7 @@ export default function MenuQRPage() {
       )}
 
       {/* ── APP SHELL ───────────────────────────────────────────────────────── */}
-      <div className="min-h-screen flex flex-col antialiased relative qr-shell" style={{ background: 'white', colorScheme: 'light' }}>
+      <div className="min-h-screen flex flex-col antialiased relative qr-shell qr-outer" style={{ background: 'white', colorScheme: 'light' }}>
 
         {/* SEARCH OVERLAY — plein écran quand actif */}
         {showSearch && (
@@ -1404,8 +1410,13 @@ const QR_CSS = `
   :root { color-scheme: light only; }
   * { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
-  /* Taille de texte minimum pour l'accessibilité */
+  /* Hauteur dynamique — iOS Safari address bar */
   body { min-height: 100dvh; }
+  @supports (min-height: 100dvh) { .qr-outer { min-height: 100dvh !important; } }
+
+  /* Masquer la scrollbar sur le shell (pas sur la page globale) */
+  .qr-shell::-webkit-scrollbar { display: none; }
+  .qr-shell { scrollbar-width: none; -ms-overflow-style: none; }
 
   .qr-noscroll::-webkit-scrollbar { display: none; }
   .qr-noscroll { -ms-overflow-style: none; scrollbar-width: none; }
