@@ -8,7 +8,6 @@
 var SUPABASE_URL = 'https://hqfewokpvjmxezhnurbm.supabase.co';
 var SUPABASE_KEY = 'sb_publishable_NmIfxaQb5ncapzCtzI5uNQ_tHdCwAyc';
 var TABLE        = 'menu_items';
-var ADMIN_PASS   = 'ramo2024';
 
 /* ── Mapping champs JS ↔ colonnes Supabase ──────────────────
    Le tableau Supabase utilise "description" et "menu_price".
@@ -814,24 +813,17 @@ function closeSidebar() {
 
 /* ── Login ───────────────────────────────────────────────── */
 function doLogin() {
-  var pw = document.getElementById('login-pw');
-  if (!pw) return;
-  if (pw.value === ADMIN_PASS) {
-    try { localStorage.setItem('admin_auth', 'ramo_ok'); } catch(e) {}
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    isLoggedIn = true;
-    fetchMenu();
-    try {
-      if (!localStorage.getItem('tuto_seen')) setTimeout(showTuto, 800);
-    } catch(e) { setTimeout(showTuto, 800); }
-  } else {
-    showToast('Mot de passe incorrect', 'error');
-    pw.classList.add('shake');
-    setTimeout(function() { pw.classList.remove('shake'); }, 500);
-    pw.value = '';
-    pw.focus();
-  }
+  // Auth gérée par AdminClient.tsx qui wrappe ce panel — on auto-valide
+  try { localStorage.setItem('admin_auth', 'ramo_ok'); } catch(e) {}
+  var ls = document.getElementById('login-screen');
+  var ap = document.getElementById('app');
+  if (ls) ls.style.display = 'none';
+  if (ap) ap.style.display = 'flex';
+  isLoggedIn = true;
+  fetchMenu();
+  try {
+    if (!localStorage.getItem('tuto_seen')) setTimeout(showTuto, 800);
+  } catch(e) { setTimeout(showTuto, 800); }
 }
 
 /* ═══════════════════════════════════════════════════════════

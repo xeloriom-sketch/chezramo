@@ -16,27 +16,29 @@ export default function Footer() {
     if (!input?.value) return
     setSending(true)
     try {
-      if (SB_URL && SB_KEY) {
-        const res = await fetch(`${SB_URL}/rest/v1/newsletter`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: SB_KEY,
-            Authorization: `Bearer ${SB_KEY}`,
-            Prefer: 'return=minimal',
-          },
-          body: JSON.stringify({ email: input.value.toLowerCase().trim() }),
-        })
-        if (res.status === 409) {
-          setNewsletterMsg('Vous êtes déjà inscrit !')
-          input.value = ''
-          setSending(false)
-          return
-        }
+      if (!SB_URL || !SB_KEY) throw new Error('config')
+      const res = await fetch(`${SB_URL}/rest/v1/newsletter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SB_KEY,
+          Authorization: `Bearer ${SB_KEY}`,
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ email: input.value.toLowerCase().trim() }),
+      })
+      if (res.status === 409) {
+        setNewsletterMsg('Vous êtes déjà inscrit !')
+        input.value = ''
+        setSending(false)
+        return
       }
-    } catch { /* silencieux */ }
-    setNewsletterMsg('Merci, vous êtes inscrit !')
-    input.value = ''
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setNewsletterMsg('Merci, vous êtes inscrit !')
+      input.value = ''
+    } catch {
+      setNewsletterMsg("Erreur d'envoi, réessayez plus tard.")
+    }
     setSending(false)
   }
 

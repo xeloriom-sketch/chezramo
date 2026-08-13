@@ -7,13 +7,6 @@ const FUNCTIONS_BASE = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? ''
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 const SB_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY ?? ''
 const ADMIN_TOKEN_KEY = 'ramo_admin_token'
-// Auth client-side pour GitHub Pages (données déjà public-read via RLS Supabase)
-const CA_USER = process.env.NEXT_PUBLIC_ADMIN_USER ?? ''
-const CA_PASS = process.env.NEXT_PUBLIC_ADMIN_PASS ?? ''
-const CA_KEY = 'ramo_cadmin'
-function caStore() { try { sessionStorage.setItem(CA_KEY, '1') } catch { /* silent */ } }
-function caCheck() { try { return sessionStorage.getItem(CA_KEY) === '1' } catch { return false } }
-function caClear() { try { sessionStorage.removeItem(CA_KEY) } catch { /* silent */ } }
 
 function adminToken() { return typeof window !== 'undefined' ? localStorage.getItem(ADMIN_TOKEN_KEY) ?? '' : '' }
 function adminFetchHeaders(withBody = false): Record<string, string> {
@@ -1445,13 +1438,7 @@ export default function AdminClient() {
         }).then(r => r.ok ? r.json() : null).then(d => { if (d?.ok) setAuthed(true) }).catch(() => {})
       }
     } else {
-      fetch('/api/admin/verify')
-        .then(r => {
-          if (r.ok) { setAuthed(true); return }
-          // GitHub Pages: pas d'API routes → vérifier session client-side
-          if (caCheck()) setAuthed(true)
-        })
-        .catch(() => { if (caCheck()) setAuthed(true) })
+      fetch('/api/admin/verify').then(r => { if (r.ok) setAuthed(true) }).catch(() => {})
     }
     const v = localStorage.getItem('sound_enabled')
     if (v !== null) { const e = v !== 'false'; setSoundEnabled(e); soundEnabledRef.current = e }
@@ -1608,7 +1595,8 @@ export default function AdminClient() {
     const iv = setInterval(fetchOrders, 5000)
     const iv2 = setInterval(fetchReservations, 5000)
     const iv3 = setInterval(fetchFeedbacks, 30000)
-    return () => { clearInterval(iv); clearInterval(iv2); clearInterval(iv3) }
+    const iv4 = setInterval(fetchNewsletter, 60000)
+    return () => { clearInterval(iv); clearInterval(iv2); clearInterval(iv3); clearInterval(iv4) }
   }, [authed, fetchOrders, fetchReservations, fetchFeedbacks, fetchNewsletter])
 
   // Force le nouveau SW à prendre le contrôle sans intervention DevTools
@@ -1678,16 +1666,7 @@ export default function AdminClient() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user, pass: pw }),
         })
-        if (res.ok) {
-          // Dev local : cookie httpOnly posé par le serveur
-        } else {
-          // GitHub Pages (404) ou mauvais identifiants : vérifier côté client
-          if (CA_USER && CA_PASS && user === CA_USER && pw === CA_PASS) {
-            caStore()
-          } else {
-            return false
-          }
-        }
+        if (!res.ok) return false
       }
       setAuthed(true)
       warmupAudio()
@@ -1697,7 +1676,6 @@ export default function AdminClient() {
 
   const logout = async () => {
     localStorage.removeItem(ADMIN_TOKEN_KEY)
-    caClear()
     if (!FUNCTIONS_BASE) await fetch('/api/admin/logout', { method: 'POST' }).catch(() => {})
     setAuthed(false)
   }

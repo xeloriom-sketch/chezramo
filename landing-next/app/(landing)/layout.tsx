@@ -19,10 +19,11 @@ const dmSans = DM_Sans({
 
 const SITE_URL  = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.chezramo.fr'
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
-const OG_IMAGE  = `${SITE_URL}${BASE_PATH}/og-image.png`
+const FULL_URL  = SITE_URL + BASE_PATH   // ex: https://xeloriom-sketch.github.io/chezramo
+const OG_IMAGE  = `${FULL_URL}/og-image.png`
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: new URL(FULL_URL + '/'),
 
   title: {
     default: 'Chez Ramo — Kebab, Tacos & Restaurant à Lagnieu (01150)',
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'fr_FR',
-    url: SITE_URL,
+    url: FULL_URL,
     siteName: 'Chez Ramo',
     title: 'Chez Ramo — Kebab, Tacos & Restaurant à Lagnieu',
     description:
@@ -75,8 +76,8 @@ export const metadata: Metadata = {
   },
 
   alternates: {
-    canonical: `${SITE_URL}/`,
-    languages: { 'fr-FR': `${SITE_URL}/` },
+    canonical: `${FULL_URL}/`,
+    languages: { 'fr-FR': `${FULL_URL}/` },
   },
 
   icons: {

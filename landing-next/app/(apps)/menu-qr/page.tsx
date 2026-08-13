@@ -17,7 +17,7 @@ declare global {
   }
 }
 
-const GOOGLE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=VOTRE_PLACE_ID'
+const GOOGLE_REVIEW_URL = 'https://www.google.com/maps/search/Chez+Ramo+32+Rue+Pasteur+Lagnieu'
 
 const BASE    = process.env.NEXT_PUBLIC_BASE_PATH    ?? ''
 const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
