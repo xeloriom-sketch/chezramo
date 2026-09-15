@@ -370,7 +370,7 @@ function imgSrc(url) {
   if (!url) return '';
   if (url.indexOf('://') !== -1) return url;   // URL absolue (http/https)
   if (url.charAt(0) === '/') return url;        // Chemin absolu (/uploads/…)
-  return '../' + url;                           // Relatif (uploads/…) → ../uploads/…
+  return '/' + url;                             // Relatif (uploads/…) → /uploads/…
 }
 
 function renderItem(item) {
