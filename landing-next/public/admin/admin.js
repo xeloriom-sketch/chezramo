@@ -368,9 +368,10 @@ function renderAdmin() {
 
 function imgSrc(url) {
   if (!url) return '';
-  if (url.indexOf('://') !== -1) return url;   // URL absolue (http/https)
-  if (url.charAt(0) === '/') return url;        // Chemin absolu (/uploads/…)
-  return '/' + url;                             // Relatif (uploads/…) → /uploads/…
+  if (url.indexOf('://') !== -1) return url;              // URL absolue (http/https)
+  var base = (window.ADMIN_BASE_PATH || '');
+  if (url.charAt(0) === '/') return base + url;           // /uploads/… → /chezramo/uploads/…
+  return base + '/' + url;                                // uploads/… → /chezramo/uploads/…
 }
 
 function renderItem(item) {
