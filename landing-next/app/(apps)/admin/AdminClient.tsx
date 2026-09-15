@@ -2325,8 +2325,6 @@ export default function AdminClient() {
       )}
 
       <link rel="stylesheet" href={`${BASE}/admin/admin.css`} />
-      {/* Expose basePath so admin.js can build correct image URLs */}
-      <script dangerouslySetInnerHTML={{ __html: `window.ADMIN_BASE_PATH = '${BASE}';` }} />
       <Script
         src={`${BASE}/admin/admin.js`}
         strategy="afterInteractive"

@@ -4,6 +4,21 @@
    nettoyage payload null, retry, logs d'erreur détaillés.
    ═══════════════════════════════════════════════════════════ */
 
+/* ── Détection basePath (ex: /chezramo sur GitHub Pages) ── */
+var ADMIN_BASE_PATH = (function () {
+  var scripts = document.getElementsByTagName('script');
+  for (var i = scripts.length - 1; i >= 0; i--) {
+    var src = scripts[i].src || '';
+    var idx = src.indexOf('/admin/admin.js');
+    if (idx !== -1) {
+      var prefix = src.substring(0, idx);                       // "https://host/chezramo"
+      var hostEnd = prefix.indexOf('/', prefix.indexOf('://') + 3);
+      return hostEnd !== -1 ? prefix.substring(hostEnd) : '';   // "/chezramo" ou ""
+    }
+  }
+  return '';
+}());
+
 /* ── Configuration Supabase ─────────────────────────────── */
 var SUPABASE_URL = 'https://hqfewokpvjmxezhnurbm.supabase.co';
 var SUPABASE_KEY = 'sb_publishable_NmIfxaQb5ncapzCtzI5uNQ_tHdCwAyc';
@@ -368,10 +383,9 @@ function renderAdmin() {
 
 function imgSrc(url) {
   if (!url) return '';
-  if (url.indexOf('://') !== -1) return url;              // URL absolue (http/https)
-  var base = (window.ADMIN_BASE_PATH || '');
-  if (url.charAt(0) === '/') return base + url;           // /uploads/… → /chezramo/uploads/…
-  return base + '/' + url;                                // uploads/… → /chezramo/uploads/…
+  if (url.indexOf('://') !== -1) return url;                      // URL absolue (http/https)
+  if (url.charAt(0) === '/') return ADMIN_BASE_PATH + url;        // /uploads/… → /chezramo/uploads/…
+  return ADMIN_BASE_PATH + '/' + url;                             // uploads/… → /chezramo/uploads/…
 }
 
 function renderItem(item) {
