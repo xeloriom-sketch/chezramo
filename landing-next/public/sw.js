@@ -3,7 +3,7 @@
    Offline-first · Cache agressif · Pre-cache total
    ═══════════════════════════════════════════════ */
 
-var CACHE = 'ramo-v5';
+var CACHE = 'ramo-v6';
 var STATIC = [
   '/tv',
   '/tv/menu.js',
