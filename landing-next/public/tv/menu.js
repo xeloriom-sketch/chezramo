@@ -495,12 +495,12 @@ var defaultMenu = [
     { title: "Salade Shope",     description: "Saladerie fraîche maison",                   price: "6,00",  url: "/uploads/Salade_Shope.png" }
   ]},
   { category: "Salades & Burek", info: "Spécialités maison", items: [
-    { title: "Burek Fromage",  description: "Burek au fromage, feuilleté maison",    price: "3,50",  url: "/uploads/Burek_Fromage.png" },
-    { title: "Burek Epinards", description: "Burek aux épinards et fromage",         price: "3,50",  url: "/uploads/Burek_Épinards.png" }
+    { title: "Burek Fromage",  description: "Burek au fromage, feuilleté maison",    price: "3,50",  badge: "SUR COMMANDE", url: "/uploads/Burek_Fromage.png" },
+    { title: "Burek Epinards", description: "Burek aux épinards et fromage",         price: "3,50",  badge: "SUR COMMANDE", url: "/uploads/Burek_Épinards.png" }
   ]},
   { category: "Burek & Specialites", info: "Recettes traditionnelles", items: [
-    { title: "Burek Viande", description: "Burek à la viande, feuilleté croustillant", price: "4,00", url: "/uploads/Burek_Viande.png" },
-    { title: "Fli - Flija",  description: "Fli traditionnel maison",                   price: "4,00", url: "/uploads/Fli_-_Flija.png" },
+    { title: "Burek Viande", description: "Burek à la viande, feuilleté croustillant", price: "4,00", badge: "SUR COMMANDE", url: "/uploads/Burek_Viande.png" },
+    { title: "Fli - Flija",  description: "Fli traditionnel maison",                   price: "4,00", badge: "SUR COMMANDE", url: "/uploads/Fli_-_Flija.png" },
     { title: "Makarona",     description: "Penne, sauce tomate, fromage râpé",         price: "8,50", url: "/uploads/Makarona.png" }
   ]},
   { category: "Plats Maison", info: "Cuisine faite maison chaque jour", items: [
