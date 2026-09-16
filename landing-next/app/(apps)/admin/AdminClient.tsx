@@ -956,8 +956,8 @@ function MenuTab() {
                       <div style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: 'Baloo 2, system-ui', lineHeight: 1.2 }}>{item.title}</div>
                       {item.description && <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.4, WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.description}</div>}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                        <span style={{ fontSize: 16, fontWeight: 900, color: '#1E4D3A', fontFamily: 'Baloo 2, system-ui' }}>{item.price.toFixed(2).replace('.', ',')} €</span>
-                        {item.menu_price && <span style={{ fontSize: 12, color: '#9CA3AF' }}>menu {item.menu_price.toFixed(2).replace('.', ',')} €</span>}
+                        <span style={{ fontSize: 16, fontWeight: 900, color: '#1E4D3A', fontFamily: 'Baloo 2, system-ui' }}>{parseFloat(String(item.price).replace(',', '.')).toFixed(2).replace('.', ',')} €</span>
+                        {item.menu_price && <span style={{ fontSize: 12, color: '#9CA3AF' }}>menu {parseFloat(String(item.menu_price).replace(',', '.')).toFixed(2).replace('.', ',')} €</span>}
                       </div>
                     </>
                   )}
