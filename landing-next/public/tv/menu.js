@@ -1296,6 +1296,12 @@ function fetchMenu() {
       if (row.menu_price !== undefined && row.menuPrice === undefined) row.menuPrice = row.menu_price;
       if (row.url && row.url.indexOf("/") !== 0) row.url = "/" + row.url;
       if (row.menu_price !== undefined && row.menuPrice === undefined) row.menuPrice = row.menu_price;
+      /* Badge "SUR COMMANDE" pour Burek et Fli-Flija */
+      var SUR_CMD = ['burek', 'fli'];
+      var titleNorm = normCat(row.title || '');
+      if (!row.badge && SUR_CMD.some(function(k) { return titleNorm.indexOf(k) !== -1; })) {
+        row.badge = 'SUR COMMANDE';
+      }
       cats[row.category].items.push(row);
     }
     var fresh = Object.values(cats);

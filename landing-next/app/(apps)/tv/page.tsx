@@ -44,23 +44,30 @@ export default function TVPage() {
       {/* Service Worker registration */}
       <Script id="sw-init" strategy="afterInteractive">{`
         if ('serviceWorker' in navigator) {
-          var swPath = '${process.env.NEXT_PUBLIC_BASE_PATH || ''}/sw.js';
-          window.addEventListener('load', function() {
-            navigator.serviceWorker.register(swPath).then(function(reg) {
-              reg.addEventListener('updatefound', function() {
-                var newSW = reg.installing;
-                newSW.addEventListener('statechange', function() {
-                  if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-                    newSW.postMessage('SKIP_WAITING');
-                  }
-                });
-              });
-            }).catch(function() {});
-            var refreshing = false;
-            navigator.serviceWorker.addEventListener('controllerchange', function() {
-              if (!refreshing) { refreshing = true; location.reload(true); }
+          if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            /* En dev local : désinstaller tout SW existant pour éviter le cache */
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              regs.forEach(function(r) { r.unregister(); });
             });
-          });
+          } else {
+            var swPath = '${process.env.NEXT_PUBLIC_BASE_PATH || ''}/sw.js';
+            window.addEventListener('load', function() {
+              navigator.serviceWorker.register(swPath).then(function(reg) {
+                reg.addEventListener('updatefound', function() {
+                  var newSW = reg.installing;
+                  newSW.addEventListener('statechange', function() {
+                    if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                      newSW.postMessage('SKIP_WAITING');
+                    }
+                  });
+                });
+              }).catch(function() {});
+              var refreshing = false;
+              navigator.serviceWorker.addEventListener('controllerchange', function() {
+                if (!refreshing) { refreshing = true; location.reload(true); }
+              });
+            });
+          }
         }
       `}</Script>
     </>
