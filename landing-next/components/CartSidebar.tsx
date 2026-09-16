@@ -14,7 +14,7 @@ export default function CartSidebar() {
     <div className="fixed inset-0 z-[90] flex items-end sm:items-stretch sm:justify-end">
       <div onClick={() => closeCart()} className="absolute inset-0 bg-brand/55 backdrop-blur-sm cursor-pointer" />
 
-      <div className="relative w-full sm:w-[min(430px,50vw)] bg-cream flex flex-col shadow-2xl anim-sheet-up rounded-t-[1.5rem] sm:rounded-none sm:h-full border-t-2 sm:border-t-0 sm:border-l-2 border-brand" style={{ height: 'min(90dvh, 90vh)' }}>
+      <div className="relative w-full sm:w-[min(430px,50vw)] bg-cream flex flex-col shadow-2xl anim-sheet-up rounded-t-[1.5rem] sm:rounded-none max-h-[90dvh] sm:max-h-none sm:h-screen border-t-2 sm:border-t-0 sm:border-l-2 border-brand">
         <div className="sm:hidden pt-3 pb-1 flex justify-center shrink-0">
           <div className="w-10 h-1 rounded-full bg-brand/25" />
         </div>

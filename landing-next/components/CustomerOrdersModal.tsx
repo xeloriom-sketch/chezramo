@@ -209,8 +209,9 @@ export default function CustomerOrdersModal({ open, onClose }: { open: boolean; 
   if (!open) return null
 
   const activeOrders  = orders.filter(o => !['collected', 'cancelled'].includes(o.status))
-  const historyOrders = orders.filter(o =>  ['collected', 'cancelled'].includes(o.status))
+  const historyOrders = orders.filter(o => o.status === 'cancelled')
   const hasActive = activeOrders.length > 0
+  const hasVisible = activeOrders.length > 0 || historyOrders.length > 0
   const needsNotif = notifPerm !== 'granted' && orders.some(o => ['pending', 'preparing'].includes(o.status))
 
   return (
@@ -307,7 +308,7 @@ export default function CustomerOrdersModal({ open, onClose }: { open: boolean; 
               ))}
             </div>
 
-          ) : orders.length === 0 ? (
+          ) : !hasVisible ? (
             /* Empty state */
             <div className="py-16 text-center">
               <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-brand/5 flex items-center justify-center">

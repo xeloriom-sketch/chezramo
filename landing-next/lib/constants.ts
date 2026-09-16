@@ -5,7 +5,7 @@ export const SAUCES = [
   'Curry','Barbecue','Andalouse','Tartare','Burger','Harissa','Moutarde',
 ]
 
-export const REMOVABLES = ['Tomate','Oignon','Salade','Cornichon','Poivron']
+export const REMOVABLES = ['Tomate','Oignon','Salade']
 
 export const DRINKS = [
   'Coca-Cola','Fanta Orange','Fanta Citron','Sprite',

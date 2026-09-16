@@ -4,7 +4,8 @@
 import { useStore } from '@/lib/store'
 import { useRef, useEffect, useState, useCallback } from 'react'
 
-const API_BASE = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? '/api'
+const _FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL
+const API_BASE = (_FUNCTIONS_URL && _FUNCTIONS_URL.length > 0) ? _FUNCTIONS_URL : '/api'
 
 function money(n: number) { return n.toFixed(2).replace('.', ',') + ' €' }
 
@@ -268,8 +269,8 @@ export default function CheckoutModal() {
       const cardEl = elements.create('card', {
         hidePostalCode: true,
         style: {
-          base: { color: '#1E4D3A', fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '16px', fontSmoothing: 'antialiased', '::placeholder': { color: 'rgba(30,77,58,0.38)' }, iconColor: '#1E4D3A' },
-          invalid: { color: '#C8412F', iconColor: '#C8412F' },
+          base: { color: '#111111', fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: '16px', fontSmoothing: 'antialiased', '::placeholder': { color: '#6b7280' }, iconColor: '#111111' },
+          invalid: { color: '#ef4444', iconColor: '#ef4444' },
         },
       })
 
@@ -514,8 +515,8 @@ export default function CheckoutModal() {
                       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Numéro de carte</label>
                       <div
                         ref={cardDivCallback}
-                        className="px-4 rounded-2xl border-2 border-brand/15 bg-white transition-opacity flex items-center w-full"
-                        style={{ minHeight: '52px', opacity: cardReady ? 1 : 0.4, maxWidth: '100%', boxSizing: 'border-box' }}
+                        className="px-4 py-4 rounded-2xl border-2 border-brand/15 bg-white w-full block"
+                        style={{ maxWidth: '100%', boxSizing: 'border-box' }}
                       />
                     </div>
                     <button type="submit" disabled={!cardReady || paymentPhase === 'paying'} className="w-full rounded-2xl bg-brand text-white font-extrabold text-base tracking-wide hover:bg-[#163d2e] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center" style={{ height: '56px', boxShadow: '0 8px 28px rgba(30,77,58,0.28)', fontFamily: 'var(--font-baloo)' }}>
