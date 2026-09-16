@@ -134,7 +134,7 @@ function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => Promi
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(REMEMBER_KEY) || 'null')
-      if (saved?.user) { setUser(saved.user); setPw(saved.pw ?? ''); setRemember(true) }
+      if (saved?.user) { setUser(saved.user); setRemember(true) }
     } catch { /* ignore */ }
   }, [])
 
@@ -156,7 +156,7 @@ function LoginScreen({ onLogin }: { onLogin: (user: string, pw: string) => Promi
     const ok = await onLogin(user, pw)
     setLoading(false)
     if (ok) {
-      if (remember) localStorage.setItem(REMEMBER_KEY, JSON.stringify({ user, pw }))
+      if (remember) localStorage.setItem(REMEMBER_KEY, JSON.stringify({ user }))
       else localStorage.removeItem(REMEMBER_KEY)
     } else {
       const next = attempts + 1
@@ -720,6 +720,272 @@ function OrdersTable({ orders, updateStatus, compact, emptyMsg }: {
       </table>
       </div>
     </>
+  )
+}
+
+/* ─── menu tab ──────────────────────────────────────────────── */
+type MenuItem = {
+  id: number; category: string; title: string; description: string | null
+  price: number; menu_price: number | null; badge: string | null; url: string | null; sort_order: number
+}
+
+const CAT_COLORS: Record<string, string> = {
+  'Sandwichs': '#D97706', 'Burgers': '#7C3AED', 'Tacos': '#DC2626', 'Salades': '#059669',
+  'Boissons': '#2563EB', 'Desserts': '#DB2777', 'Menus': '#1E4D3A',
+}
+function catColor(cat: string) { return CAT_COLORS[cat] ?? '#6B7280' }
+
+function MenuTab() {
+  const [items, setItems] = useState<MenuItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [err, setErr] = useState('')
+  const [editId, setEditId] = useState<number | null>(null)
+  const [editForm, setEditForm] = useState<Partial<MenuItem>>({})
+  const [saving, setSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [filterCat, setFilterCat] = useState('all')
+  const [showAdd, setShowAdd] = useState(false)
+  const [newForm, setNewForm] = useState<Partial<MenuItem>>({ category: 'Sandwichs', price: 0 })
+
+  const sbHeaders = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' }
+
+  const loadItems = useCallback(async () => {
+    setLoading(true); setErr('')
+    try {
+      const res = await fetch(`${SB_URL}/rest/v1/menu_items?select=*&order=category.asc,sort_order.asc`, { headers: sbHeaders })
+      if (!res.ok) throw new Error()
+      setItems(await res.json())
+    } catch { setErr('Impossible de charger le menu.') }
+    finally { setLoading(false) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => { loadItems() }, [loadItems])
+
+  const cats = ['all', ...Array.from(new Set(items.map(i => i.category)))]
+  const visible = filterCat === 'all' ? items : items.filter(i => i.category === filterCat)
+
+  const startEdit = (item: MenuItem) => { setEditId(item.id); setEditForm({ ...item }) }
+  const cancelEdit = () => { setEditId(null); setEditForm({}) }
+
+  const saveEdit = async () => {
+    if (!editId) return
+    setSaving(true)
+    try {
+      const res = await fetch(`${SB_URL}/rest/v1/menu_items?id=eq.${editId}`, {
+        method: 'PATCH',
+        headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({
+          title: editForm.title, description: editForm.description || null,
+          price: Number(editForm.price), menu_price: editForm.menu_price ? Number(editForm.menu_price) : null,
+          badge: editForm.badge || null, category: editForm.category, url: editForm.url || null,
+        }),
+      })
+      if (!res.ok) throw new Error()
+      await loadItems(); cancelEdit()
+    } catch { alert('Erreur lors de la sauvegarde.') }
+    finally { setSaving(false) }
+  }
+
+  const deleteItem = async (id: number) => {
+    if (!confirm('Supprimer cet article ?')) return
+    setDeletingId(id)
+    try {
+      await fetch(`${SB_URL}/rest/v1/menu_items?id=eq.${id}`, { method: 'DELETE', headers: sbHeaders })
+      await loadItems()
+    } finally { setDeletingId(null) }
+  }
+
+  const addItem = async () => {
+    if (!newForm.title || !newForm.category) return
+    setSaving(true)
+    try {
+      const maxOrd = items.filter(i => i.category === newForm.category).reduce((m, i) => Math.max(m, i.sort_order), 0)
+      const res = await fetch(`${SB_URL}/rest/v1/menu_items`, {
+        method: 'POST',
+        headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({
+          title: newForm.title, description: newForm.description || null,
+          price: Number(newForm.price ?? 0), menu_price: newForm.menu_price ? Number(newForm.menu_price) : null,
+          badge: newForm.badge || null, category: newForm.category, url: newForm.url || null,
+          sort_order: maxOrd + 1,
+        }),
+      })
+      if (!res.ok) throw new Error()
+      await loadItems(); setShowAdd(false); setNewForm({ category: 'Sandwichs', price: 0 })
+    } catch { alert('Erreur lors de la création.') }
+    finally { setSaving(false) }
+  }
+
+  const inputStyle: React.CSSProperties = { width: '100%', border: '1px solid #E5E7EB', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none', background: '#F9FAFB', color: '#111827' }
+  const labelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }
+
+  function EditFields({ form, setForm }: { form: Partial<MenuItem>; setForm: (f: Partial<MenuItem>) => void }) {
+    const cats2 = ['Sandwichs', 'Burgers', 'Tacos', 'Salades', 'Boissons', 'Desserts', 'Menus']
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+        <div>
+          <label style={labelStyle}>Nom *</label>
+          <input style={inputStyle} value={form.title ?? ''} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Nom du plat" />
+        </div>
+        <div>
+          <label style={labelStyle}>Catégorie</label>
+          <select style={inputStyle} value={form.category ?? ''} onChange={e => setForm({ ...form, category: e.target.value })}>
+            {cats2.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div>
+            <label style={labelStyle}>Prix €</label>
+            <input style={inputStyle} type="number" step="0.1" value={form.price ?? ''} onChange={e => setForm({ ...form, price: parseFloat(e.target.value) || 0 })} placeholder="0.00" />
+          </div>
+          <div>
+            <label style={labelStyle}>Prix menu €</label>
+            <input style={inputStyle} type="number" step="0.1" value={form.menu_price ?? ''} onChange={e => setForm({ ...form, menu_price: parseFloat(e.target.value) || null })} placeholder="—" />
+          </div>
+        </div>
+        <div>
+          <label style={labelStyle}>Description</label>
+          <input style={inputStyle} value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Ingrédients, saveurs…" />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div>
+            <label style={labelStyle}>Badge</label>
+            <input style={inputStyle} value={form.badge ?? ''} onChange={e => setForm({ ...form, badge: e.target.value })} placeholder="Nouveau, Populaire…" />
+          </div>
+          <div>
+            <label style={labelStyle}>Image URL</label>
+            <input style={inputStyle} value={form.url ?? ''} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://…" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ padding: '28px 24px 80px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0 }}>Menu</h1>
+          <p style={{ color: '#94A3B8', fontSize: 13, marginTop: 2 }}>{items.length} article{items.length > 1 ? 's' : ''}</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => loadItems()} style={{ fontSize: 13, fontWeight: 600, color: '#6B7280', border: '1px solid #E5E7EB', background: 'white', borderRadius: 10, padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <IconRefresh /> Actualiser
+          </button>
+          <button onClick={() => { setShowAdd(true); setFilterCat('all') }} style={{ fontSize: 13, fontWeight: 700, color: 'white', background: '#1E4D3A', border: 'none', borderRadius: 10, padding: '8px 16px', cursor: 'pointer' }}>
+            + Ajouter
+          </button>
+        </div>
+      </div>
+
+      {/* Category filter chips */}
+      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 20 }}>
+        {cats.map(c => (
+          <button key={c} onClick={() => setFilterCat(c)}
+            style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, padding: '5px 14px', borderRadius: 99, border: 'none', cursor: 'pointer',
+              background: filterCat === c ? (c === 'all' ? '#1E4D3A' : catColor(c)) : '#F3F4F6',
+              color: filterCat === c ? 'white' : '#6B7280', transition: 'all .15s' }}>
+            {c === 'all' ? 'Tout' : c}
+          </button>
+        ))}
+      </div>
+
+      {/* Add form */}
+      {showAdd && (
+        <div style={{ background: 'white', borderRadius: 16, border: '2px solid #1E4D3A', padding: 18, marginBottom: 20, boxShadow: '0 4px 16px rgba(30,77,58,.12)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#1E4D3A' }}>Nouvel article</span>
+            <button onClick={() => setShowAdd(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 18, lineHeight: 1 }}>✕</button>
+          </div>
+          <EditFields form={newForm} setForm={setNewForm} />
+          <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
+            <button onClick={() => setShowAdd(false)} style={{ fontSize: 13, fontWeight: 600, color: '#6B7280', border: '1px solid #E5E7EB', background: 'white', borderRadius: 8, padding: '7px 14px', cursor: 'pointer' }}>Annuler</button>
+            <button onClick={addItem} disabled={saving || !newForm.title} style={{ fontSize: 13, fontWeight: 700, color: 'white', background: '#1E4D3A', border: 'none', borderRadius: 8, padding: '7px 16px', cursor: 'pointer', opacity: saving || !newForm.title ? .5 : 1 }}>
+              {saving ? 'Création…' : 'Créer'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* States */}
+      {loading && <div style={{ textAlign: 'center', padding: '60px 0', color: '#9CA3AF', fontSize: 14 }}>Chargement…</div>}
+      {err && <div style={{ textAlign: 'center', padding: '40px 0', color: '#EF4444', fontSize: 14 }}>{err}</div>}
+
+      {/* Cards grid */}
+      {!loading && !err && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 16 }}>
+          {visible.map(item => {
+            const isEditing = editId === item.id
+            const isDeleting = deletingId === item.id
+            return (
+              <div key={item.id}
+                style={{ background: 'white', borderRadius: 16, border: isEditing ? '2px solid #1E4D3A' : '1px solid #F3F4F6',
+                  boxShadow: isEditing ? '0 4px 16px rgba(30,77,58,.12)' : '0 1px 4px rgba(0,0,0,.05)',
+                  overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'box-shadow .15s' }}>
+
+                {/* Image */}
+                {item.url && !isEditing && (
+                  <div style={{ height: 130, overflow: 'hidden', background: '#F3F4F6' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={item.url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                )}
+
+                {/* Content */}
+                <div style={{ padding: 14, flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {/* Category + badge */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: catColor(item.category), background: catColor(item.category) + '18', padding: '3px 8px', borderRadius: 6, textTransform: 'uppercase', letterSpacing: '.06em' }}>{item.category}</span>
+                    {item.badge && <span style={{ fontSize: 10, fontWeight: 700, color: '#D97706', background: '#FEF3C7', padding: '2px 7px', borderRadius: 6 }}>{item.badge}</span>}
+                  </div>
+
+                  {isEditing ? (
+                    <>
+                      <EditFields form={editForm} setForm={setEditForm} />
+                      <div style={{ display: 'flex', gap: 8, marginTop: 10, justifyContent: 'flex-end' }}>
+                        <button onClick={cancelEdit} style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', border: '1px solid #E5E7EB', background: 'white', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>Annuler</button>
+                        <button onClick={saveEdit} disabled={saving} style={{ fontSize: 12, fontWeight: 700, color: 'white', background: '#1E4D3A', border: 'none', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', opacity: saving ? .5 : 1 }}>
+                          {saving ? 'Sauvegarde…' : 'Enregistrer'}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: 'Baloo 2, system-ui', lineHeight: 1.2 }}>{item.title}</div>
+                      {item.description && <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.4, WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.description}</div>}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                        <span style={{ fontSize: 16, fontWeight: 900, color: '#1E4D3A', fontFamily: 'Baloo 2, system-ui' }}>{item.price.toFixed(2).replace('.', ',')} €</span>
+                        {item.menu_price && <span style={{ fontSize: 12, color: '#9CA3AF' }}>menu {item.menu_price.toFixed(2).replace('.', ',')} €</span>}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Actions */}
+                {!isEditing && (
+                  <div style={{ display: 'flex', borderTop: '1px solid #F9FAFB' }}>
+                    <button onClick={() => startEdit(item)}
+                      style={{ flex: 1, padding: '10px 0', fontSize: 12, fontWeight: 700, color: '#1E4D3A', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                      ✏️ Modifier
+                    </button>
+                    <div style={{ width: 1, background: '#F3F4F6' }} />
+                    <button onClick={() => deleteItem(item.id)} disabled={isDeleting}
+                      style={{ flex: 1, padding: '10px 0', fontSize: 12, fontWeight: 700, color: isDeleting ? '#9CA3AF' : '#EF4444', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                      {isDeleting ? '…' : '🗑 Supprimer'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+          {visible.length === 0 && !loading && (
+            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px 0', color: '#9CA3AF', fontSize: 14 }}>Aucun article dans cette catégorie.</div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -1627,16 +1893,12 @@ export default function AdminClient() {
   const tabRef = useRef<Tab>(tab)
   useEffect(() => { tabRef.current = tab }, [tab])
 
-  // When switching to a legacy tab, call showTab() + fetchMenu() directly
+  // When switching to a legacy tab, call showTab()
   useEffect(() => {
     if (!authed) return
-    if (!(['menu', 'tvs'] as Tab[]).includes(tab)) return
+    if (tab !== 'tvs') return
     const call = () => {
       const w = window as unknown as Record<string, unknown>
-      // Reload menu data every time Menu tab is opened (ensures fresh data)
-      if (tab === 'menu' && typeof w.fetchMenu === 'function') {
-        (w.fetchMenu as () => void)()
-      }
       if (typeof w.showTab === 'function') {
         (w.showTab as (t: string) => void)(tab)
       }
@@ -1707,7 +1969,7 @@ export default function AdminClient() {
   // Badge = toutes les commandes actives non finalisées (en attente + en préparation)
   const pendingCount = orders.filter(o => o.status === 'pending' || o.status === 'preparing').length
   const pendingResCount = reservations.filter(r => r.status === 'pending').length
-  const isAdminJsTab = tab === 'menu' || tab === 'tvs'
+  const isAdminJsTab = tab === 'tvs'
 
   if (!authed) return <LoginScreen onLogin={login} />
 
@@ -1743,60 +2005,82 @@ export default function AdminClient() {
           transform: none !important;
         }
 
-        /* ═══ Menu panel — light table layout ═══ */
+        /* ═══ Menu panel — card grid layout ═══ */
         #admin-legacy-wrap #content {
-          padding: 24px !important; background: #F8F9FB !important; min-height: 100% !important;
+          padding: 20px !important; background: #F8F9FB !important; min-height: 100% !important;
         }
         #admin-legacy-wrap .cat-section {
-          background: white !important; border-radius: 16px !important;
-          border: 1px solid #F3F4F6 !important; box-shadow: 0 1px 4px rgba(0,0,0,.05) !important;
-          margin-bottom: 20px !important; overflow: hidden !important;
+          background: transparent !important; border-radius: 0 !important;
+          border: none !important; box-shadow: none !important;
+          margin-bottom: 32px !important; overflow: visible !important;
         }
         #admin-legacy-wrap .cat-header {
-          background: white !important; border-bottom: 2px solid #F3F4F6 !important; padding: 14px 20px !important;
+          background: transparent !important; border-bottom: none !important;
+          padding: 0 0 14px 0 !important; display: flex !important;
+          align-items: center !important; justify-content: space-between !important;
         }
         #admin-legacy-wrap .cat-name {
-          font-family: 'Baloo 2', system-ui !important; font-size: 15px !important;
-          font-weight: 800 !important; color: #1E4D3A !important; letter-spacing: 0 !important;
+          font-family: 'Baloo 2', system-ui !important; font-size: 16px !important;
+          font-weight: 800 !important; color: #111827 !important; letter-spacing: 0 !important;
         }
-        #admin-legacy-wrap .cat-count { color: #9CA3AF !important; font-size: 11px !important; }
+        #admin-legacy-wrap .cat-count {
+          color: #9CA3AF !important; font-size: 12px !important; font-weight: 500 !important;
+          margin-top: 1px !important;
+        }
 
-        /* Items list = TABLE */
+        /* Items list = CARD GRID */
         #admin-legacy-wrap .items-list {
-          display: table !important; width: 100% !important;
-          border-collapse: collapse !important; flex-direction: unset !important; gap: 0 !important;
+          display: grid !important;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+          gap: 14px !important; flex-direction: unset !important;
+          width: 100% !important; border-collapse: unset !important;
         }
         #admin-legacy-wrap .item-card {
-          display: table-row !important; background: white !important;
-          border: none !important; border-radius: 0 !important;
-          padding: 0 !important; min-height: unset !important; position: static !important;
+          display: flex !important; flex-direction: column !important;
+          background: white !important; border-radius: 16px !important;
+          border: 1.5px solid #F3F4F6 !important;
+          box-shadow: 0 1px 4px rgba(0,0,0,.05) !important;
+          padding: 0 !important; overflow: hidden !important;
+          transition: box-shadow .15s, border-color .15s !important;
+          cursor: default !important; min-height: unset !important; position: relative !important;
         }
-        #admin-legacy-wrap .item-card:hover { background: #F0F7F3 !important; }
-        #admin-legacy-wrap .item-card.has-changes { background: rgba(220,38,38,.04) !important; }
+        #admin-legacy-wrap .item-card:hover {
+          box-shadow: 0 4px 20px rgba(30,77,58,.12) !important;
+          border-color: #C6DDD5 !important;
+        }
+        #admin-legacy-wrap .item-card.has-changes {
+          border-color: #FCA5A5 !important;
+          box-shadow: 0 0 0 3px rgba(220,38,38,.08) !important;
+        }
         #admin-legacy-wrap .item-card.has-changes::before { display: none !important; }
 
-        /* Columns */
-        #admin-legacy-wrap .item-thumb,
-        #admin-legacy-wrap .item-info,
-        #admin-legacy-wrap .item-prices,
-        #admin-legacy-wrap .item-actions {
-          display: table-cell !important; vertical-align: middle !important;
-          padding: 10px 14px !important; border-bottom: 1px solid #F3F4F6 !important;
-        }
+        /* Thumbnail: top of card, full width */
         #admin-legacy-wrap .item-thumb {
-          width: 58px !important; padding: 8px 6px 8px 16px !important;
-          background: transparent !important; height: unset !important;
-          flex-shrink: unset !important; border-radius: 0 !important; font-size: 0 !important;
+          display: block !important; width: 100% !important; height: 110px !important;
+          background: #F3F4F6 !important; overflow: hidden !important;
+          border-radius: 0 !important; padding: 0 !important;
+          flex-shrink: 0 !important; border-bottom: 1px solid #F3F4F6 !important;
+          font-size: 0 !important; vertical-align: unset !important;
         }
         #admin-legacy-wrap .item-thumb img {
-          width: 44px !important; height: 44px !important;
-          border-radius: 8px !important; object-fit: cover !important; display: block !important;
+          width: 100% !important; height: 110px !important;
+          object-fit: cover !important; display: block !important; border-radius: 0 !important;
         }
-        #admin-legacy-wrap .item-info { min-width: 160px !important; flex: unset !important; }
+
+        /* Info section */
+        #admin-legacy-wrap .item-info {
+          display: block !important; padding: 12px 14px 8px !important;
+          flex: 1 !important; border-bottom: none !important;
+          min-width: unset !important; vertical-align: unset !important;
+        }
         #admin-legacy-wrap .item-title {
           font-family: 'DM Sans', system-ui !important; font-size: 13px !important;
-          font-weight: 700 !important; color: #111827 !important; white-space: nowrap !important;
-          margin-bottom: 3px !important; overflow: hidden !important; text-overflow: ellipsis !important;
+          font-weight: 700 !important; color: #111827 !important;
+          white-space: normal !important; word-break: break-word !important;
+          margin-bottom: 6px !important; overflow: hidden !important;
+          display: -webkit-box !important; -webkit-line-clamp: 2 !important;
+          -webkit-box-orient: vertical !important; text-overflow: unset !important;
+          line-height: 1.3 !important;
         }
         #admin-legacy-wrap .item-meta { display: flex !important; gap: 4px !important; flex-wrap: wrap !important; }
         #admin-legacy-wrap .item-badge {
@@ -1804,40 +2088,74 @@ export default function AdminClient() {
           border-radius: 6px !important; background: rgba(30,77,58,.08) !important;
           color: #1E4D3A !important; text-transform: none !important; letter-spacing: 0 !important;
         }
+
+        /* Prices: two compact inputs side by side */
         #admin-legacy-wrap .item-prices {
-          display: table-cell !important; white-space: nowrap !important;
-          flex-shrink: unset !important; align-items: unset !important;
+          display: flex !important; flex-direction: column !important;
+          gap: 6px !important; padding: 8px 14px !important;
+          background: #F8FAFC !important; border-top: 1px solid #F3F4F6 !important;
+          white-space: nowrap !important; flex-shrink: unset !important; align-items: unset !important;
+          vertical-align: unset !important;
         }
         #admin-legacy-wrap .price-group {
-          flex-direction: row !important; align-items: center !important;
-          gap: 6px !important; margin-bottom: 4px !important;
+          display: flex !important; flex-direction: row !important;
+          align-items: center !important; gap: 8px !important; margin-bottom: 0 !important;
         }
-        #admin-legacy-wrap .price-group:last-child { margin-bottom: 0 !important; }
         #admin-legacy-wrap .price-group label {
-          font-size: 10px !important; color: #9CA3AF !important; width: 58px !important;
-          text-align: right !important; text-transform: none !important;
-          letter-spacing: 0 !important; font-weight: 500 !important;
+          font-size: 10px !important; color: #9CA3AF !important;
+          width: 62px !important; flex-shrink: 0 !important;
+          text-align: left !important; text-transform: none !important;
+          letter-spacing: 0 !important; font-weight: 600 !important;
         }
         #admin-legacy-wrap .price-input {
-          width: 72px !important; background: #F8FAFC !important;
-          border: 1px solid #E5E7EB !important; color: #111827 !important;
-          border-radius: 8px !important; font-size: 13px !important; font-weight: 700 !important;
-          min-height: 30px !important; padding: 4px 6px !important; text-align: center !important;
+          flex: 1 !important; min-width: 0 !important; width: auto !important;
+          background: white !important; border: 1.5px solid #E5E7EB !important;
+          color: #111827 !important; border-radius: 8px !important;
+          font-size: 13px !important; font-weight: 700 !important;
+          min-height: 32px !important; padding: 4px 8px !important; text-align: center !important;
         }
         #admin-legacy-wrap .price-input:focus {
           border-color: #1E4D3A !important; box-shadow: 0 0 0 3px rgba(30,77,58,.1) !important; outline: none !important;
         }
+
+        /* Actions: full-width row at bottom of card */
         #admin-legacy-wrap .item-actions {
-          text-align: right !important; white-space: nowrap !important;
-          padding-right: 16px !important; flex-shrink: unset !important;
+          display: flex !important; flex-direction: row !important; gap: 8px !important;
+          padding: 10px 14px !important; border-top: 1px solid #F3F4F6 !important;
+          text-align: unset !important; white-space: nowrap !important;
+          padding-right: 14px !important; flex-shrink: unset !important;
+          vertical-align: unset !important;
         }
         #admin-legacy-wrap .btn-icon {
-          width: 30px !important; height: 30px !important; min-height: 30px !important;
-          border-radius: 8px !important; border: 1px solid #E5E7EB !important;
+          flex: 1 !important; height: 34px !important; min-height: 34px !important;
+          border-radius: 10px !important; border: 1.5px solid #E5E7EB !important;
           background: white !important; color: #6B7280 !important;
+          display: flex !important; align-items: center !important; justify-content: center !important;
+          gap: 5px !important; font-size: 11px !important; font-weight: 600 !important;
+          cursor: pointer !important; transition: all .15s !important; width: auto !important;
         }
+        #admin-legacy-wrap .btn-edit::after   { content: 'Modifier' !important; font-size: 10px !important; }
+        #admin-legacy-wrap .btn-delete::after { content: 'Supprimer' !important; font-size: 10px !important; }
         #admin-legacy-wrap .btn-edit:hover  { background: #EEF6F1 !important; border-color: #1E4D3A !important; color: #1E4D3A !important; }
         #admin-legacy-wrap .btn-delete:hover { background: #FEF2F2 !important; border-color: #EF4444 !important; color: #EF4444 !important; }
+
+        /* Responsive: fewer columns on small screens */
+        @media (max-width: 900px) {
+          #admin-legacy-wrap .items-list {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+          }
+        }
+        @media (max-width: 640px) {
+          #admin-legacy-wrap #content { padding: 12px !important; }
+          #admin-legacy-wrap .items-list {
+            grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important;
+          }
+          #admin-legacy-wrap .item-thumb { height: 90px !important; }
+          #admin-legacy-wrap .item-thumb img { height: 90px !important; }
+        }
+        @media (max-width: 380px) {
+          #admin-legacy-wrap .items-list { grid-template-columns: 1fr !important; }
+        }
 
         /* Sidebar category nav */
         #admin-legacy-wrap nav#sidebar { background: white !important; border-right-color: #F1F5F9 !important; }
@@ -2174,6 +2492,7 @@ export default function AdminClient() {
             {tab === 'reservations' && <ReservationsTab reservations={reservations} updateResStatus={updateResStatus} deleteRes={deleteReservation} />}
             {tab === 'feedbacks'    && <FeedbacksTab feedbacks={feedbacks} onRefresh={fetchFeedbacks} />}
             {tab === 'newsletter'   && <NewsletterTab subs={newsletter} onRefresh={fetchNewsletter} />}
+            {tab === 'menu'         && <MenuTab />}
             {tab === 'settings'     && <SettingsTab soundEnabled={soundEnabled} onSoundChange={handleSoundChange} notifEnabled={notifEnabled} notifPermission={notifPermission} onNotifChange={handleNotifChange} onRequestNotif={requestNotifPermission} />}
 
             <div id="admin-legacy-wrap" className={isAdminJsTab ? 'admin-legacy-active' : ''} style={{ display: isAdminJsTab ? 'block' : 'none', minHeight: '100%' }}>
