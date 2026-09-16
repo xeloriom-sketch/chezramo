@@ -3,10 +3,9 @@
    Offline-first · Cache agressif · Pre-cache total
    ═══════════════════════════════════════════════ */
 
-var CACHE = 'ramo-v6';
+var CACHE = 'ramo-v7';
 var STATIC = [
   '/tv',
-  '/tv/menu.js',
   '/tv/style.css',
 ];
 
@@ -76,6 +75,23 @@ self.addEventListener('fetch', function(e) {
 
   /* Next.js build assets : réseau (ne pas cacher les hash changeants) */
   if (url.indexOf('/_next/') !== -1) return;
+
+  /* menu.js : network-first — mise à jour immédiate, cache en fallback offline */
+  if (url.indexOf('/tv/menu.js') !== -1) {
+    e.respondWith(
+      fetch(e.request, { cache: 'no-store' }).then(function(response) {
+        if (response && response.ok) {
+          caches.open(CACHE).then(function(c) { c.put(e.request, response.clone()); });
+        }
+        return response;
+      }).catch(function() {
+        return caches.open(CACHE).then(function(c) {
+          return c.match(e.request) || new Response('', { status: 503 });
+        });
+      })
+    );
+    return;
+  }
 
   /* Tout le reste (images, TV assets) : cache-first */
   e.respondWith(
