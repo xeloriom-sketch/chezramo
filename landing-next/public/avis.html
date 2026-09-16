@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#1E4D3A" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Avis & Roulette – Chez Ramo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,700&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{color-scheme:light}
+    body{font-family:'DM Sans',system-ui,sans-serif;background:#fff;color:#111;-webkit-font-smoothing:antialiased;height:100dvh;overflow:hidden}
+    :root{--green:#1E4D3A;--gold:#E8A93B;--border:#F0F0F0;--gray:#F1F5F9;--shadow:0 4px 32px rgba(0,0,0,.08)}
+
+    .shell{position:fixed;inset:0;display:flex;flex-direction:column;background:#fff}
+
+    /* Header */
+    .hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+    .hdr-name{font-family:'Baloo 2',system-ui;font-size:15px;font-weight:900;color:#111;letter-spacing:.08em;text-transform:uppercase}
+    .hdr-dots{display:flex;align-items:center;gap:5px}
+    .dot{height:5px;border-radius:99px;background:#E0E0E0;width:5px;transition:width .5s,background .5s}
+    .dot.on{width:20px;background:#111}
+
+    /* Screens */
+    .screen{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;padding:28px 22px 40px;gap:20px;text-align:center;overflow-y:auto}
+    .screen.active{display:flex}
+
+    /* Typo */
+    .heading{font-family:'Baloo 2',system-ui;font-size:clamp(26px,8vw,40px);font-weight:900;color:#111;line-height:1.05;text-transform:uppercase;text-wrap:balance}
+    .sub{color:#999;font-size:13px;line-height:1.6;max-width:280px}
+    .eyebrow{font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#AAA}
+
+    /* Logo */
+    .logo-block{width:72px;height:72px;border-radius:24px;background:#111;display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:bounceIn .45s cubic-bezier(.34,1.56,.64,1) both}
+    .logo-block svg{width:38px;height:38px}
+
+    /* ── Stars selector ── */
+    .stars-wrap{display:flex;gap:10px;justify-content:center}
+    .star-btn{font-size:2.6rem;line-height:1;background:none;border:none;cursor:pointer;padding:4px;-webkit-tap-highlight-color:transparent;transition:transform .15s;filter:grayscale(1) opacity(.35)}
+    .star-btn.lit{filter:none;transform:scale(1.15)}
+    .star-btn:active{transform:scale(.9)}
+
+    /* ── Textarea ── */
+    .msg-wrap{width:100%;max-width:300px;position:relative}
+    textarea{width:100%;border:1.5px solid var(--border);border-radius:16px;padding:14px 16px;font-family:'DM Sans',system-ui;font-size:14px;color:#111;resize:none;outline:none;background:#fff;transition:border-color .2s;line-height:1.5}
+    textarea::placeholder{color:#BBB}
+    textarea:focus{border-color:#111}
+
+    /* ── Buttons ── */
+    .btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:300px;padding:17px 24px;border-radius:99px;border:none;font-family:'Baloo 2',system-ui;font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .15s,opacity .15s}
+    .btn:active{transform:scale(.96)}
+    .btn:disabled{opacity:.3;cursor:not-allowed}
+    .btn-black{background:#111;color:#fff}
+    .btn-google{background:#4285F4;color:#fff}
+
+    /* Countdown */
+    .cdown-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transition:opacity .4s;pointer-events:none}
+    .cdown-wrap.show{opacity:1}
+    .cdown-ring{position:relative;width:64px;height:64px}
+    .cdown-ring svg{transform:rotate(-90deg)}
+    .arc{transition:stroke-dashoffset 1s linear}
+    .cdown-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',system-ui;font-size:20px;font-weight:900;color:#111}
+    .cdown-lbl{font-size:11px;color:#AAA;letter-spacing:.05em}
+
+    /* ── Wheel ── */
+    #s-wheel{padding:14px 16px 26px;gap:13px}
+    .wh-title{font-family:'Baloo 2',system-ui;font-size:clamp(16px,5vw,22px);font-weight:900;color:#111;text-transform:uppercase;letter-spacing:.05em}
+    .wheel-wrap{position:relative;width:min(290px,82vw);aspect-ratio:1;flex-shrink:0;animation:bounceIn .45s cubic-bezier(.34,1.56,.64,1) both}
+    .wheel-glow{position:absolute;inset:-16px;border-radius:50%;background:radial-gradient(circle,rgba(0,0,0,.06) 0%,transparent 70%);filter:blur(12px);animation:wglow 2s ease-in-out infinite}
+    canvas#wheel{width:100%;height:100%;border-radius:50%;display:block;position:relative;z-index:1}
+    .wheel-ptr{position:absolute;top:-8px;left:50%;transform:translateX(-50%);z-index:10;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
+    .prog-wrap{width:160px;height:3px;border-radius:99px;background:#EBEBEB;overflow:hidden}
+    .prog-bar{height:100%;background:#111;border-radius:99px;width:0%;transition:none}
+    .prog-bar.go{width:100%;transition:width 5.5s linear}
+
+    /* ── Prize ── */
+    #s-prize{gap:14px}
+    .prize-card{border-radius:28px;padding:44px 22px 28px;text-align:center;box-shadow:var(--shadow);border:1px solid var(--border);background:#fff;max-width:300px;width:100%;animation:cardIn .5s cubic-bezier(.34,1.56,.64,1) both}
+    .prize-emoji{font-size:3.2rem;line-height:1;margin-bottom:12px;display:block}
+    .prize-name{font-family:'Baloo 2',system-ui;font-size:clamp(24px,7vw,36px);font-weight:900;color:#111;text-transform:uppercase;line-height:1.05;margin-bottom:5px}
+    .prize-desc{color:#999;font-size:13px;line-height:1.6;margin-bottom:20px}
+    .prize-code-box{background:var(--gray);border-radius:14px;padding:14px 18px;margin-bottom:16px}
+    .prize-code-lbl{font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#BBB;margin-bottom:5px}
+    .prize-code{font-family:'Baloo 2',system-ui;font-size:2.2rem;font-weight:900;letter-spacing:8px;color:#111;font-variant-numeric:tabular-nums}
+    .prize-note{font-size:12px;color:#AAA;line-height:1.6}
+    .nopriz-card{border-radius:28px;padding:44px 22px 32px;text-align:center;box-shadow:var(--shadow);border:1px solid var(--border);background:#fff;max-width:300px;width:100%;animation:cardIn .5s cubic-bezier(.34,1.56,.64,1) both}
+    .validity{font-size:11px;color:#CCC;letter-spacing:.03em}
+
+    /* ── Keyframes ── */
+    @keyframes bounceIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+    @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
+    @keyframes cardIn{from{transform:translateY(24px) scale(.94);opacity:0}to{transform:none;opacity:1}}
+    @keyframes wglow{0%,100%{opacity:.6}50%{opacity:1}}
+    .a-s{animation:slideUp .4s ease both;animation-delay:var(--d,0s)}
+
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="hdr">
+    <span class="hdr-name">Chez Ramo</span>
+    <div class="hdr-dots">
+      <div class="dot on" id="d0"></div>
+      <div class="dot"    id="d1"></div>
+      <div class="dot"    id="d2"></div>
+    </div>
+  </header>
+
+  <!-- ── ÉCRAN 1 : Avis ── -->
+  <div id="s-review" class="screen active">
+
+    <div class="logo-block">
+      <svg viewBox="0 0 38 38" fill="none" aria-hidden="true">
+        <path d="M10 6v26M10 6c0 0 5 4 5 10s-5 10-5 10" stroke="#E8A93B" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M28 6v9a4 4 0 0 1-4 4v13M24 6v9M28 6v9" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div class="a-s" style="--d:.06s">
+      <p class="heading">Votre avis<br>nous compte&nbsp;!</p>
+      <p class="sub" style="margin-top:9px">Notez votre expérience et tournez la roue pour gagner une surprise.</p>
+    </div>
+
+    <!-- Étoiles -->
+    <div class="a-s" style="--d:.12s">
+      <p class="eyebrow" style="margin-bottom:12px">Votre note</p>
+      <div class="stars-wrap" id="stars-wrap">
+        <button class="star-btn" data-v="1" onclick="setStar(1)" aria-label="1 étoile">★</button>
+        <button class="star-btn" data-v="2" onclick="setStar(2)" aria-label="2 étoiles">★</button>
+        <button class="star-btn" data-v="3" onclick="setStar(3)" aria-label="3 étoiles">★</button>
+        <button class="star-btn" data-v="4" onclick="setStar(4)" aria-label="4 étoiles">★</button>
+        <button class="star-btn" data-v="5" onclick="setStar(5)" aria-label="5 étoiles">★</button>
+      </div>
+    </div>
+
+    <!-- Bouton Google -->
+    <button id="btn-google" class="btn btn-google a-s" style="--d:.22s" onclick="goGoogle()" disabled>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <path fill="#fff" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z"/>
+        <path fill="#fff" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z"/>
+        <path fill="#fff" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z"/>
+        <path fill="#fff" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z"/>
+      </svg>
+      Laisser mon avis Google
+    </button>
+
+    <!-- Countdown -->
+    <div id="cdown-wrap" class="cdown-wrap a-s" style="--d:.26s">
+      <div class="cdown-ring">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="28" fill="none" stroke="#EBEBEB" stroke-width="4"/>
+          <circle class="arc" id="arc" cx="32" cy="32" r="28" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="0"/>
+        </svg>
+        <span class="cdown-num" id="cdown-num">30</span>
+      </div>
+      <span class="cdown-lbl">Laissez votre avis puis revenez ici</span>
+    </div>
+
+    <button id="btn-wheel" class="btn btn-black a-s" style="--d:.28s" onclick="goWheel()" disabled>
+      Tourner la roue →
+    </button>
+
+    <p class="validity a-s" style="--d:.32s">Un tour par visite &nbsp;·&nbsp; Valable aujourd'hui</p>
+  </div>
+
+
+  <!-- ── ÉCRAN 2 : Roue ── -->
+  <div id="s-wheel" class="screen">
+    <p class="wh-title a-s">Tentez votre chance !</p>
+
+    <div class="wheel-wrap">
+      <div class="wheel-glow"></div>
+      <svg class="wheel-ptr" width="22" height="32" viewBox="0 0 22 32" aria-hidden="true">
+        <polygon points="11,30 1,3 21,3" fill="#111"/>
+      </svg>
+      <canvas id="wheel" width="600" height="600"></canvas>
+    </div>
+
+    <div class="prog-wrap"><div class="prog-bar" id="prog"></div></div>
+
+    <button id="btn-spin" class="btn btn-black a-s" style="--d:.1s" onclick="spinWheel()">
+      Tourner 🎰
+    </button>
+  </div>
+
+
+  <!-- ── ÉCRAN 3 : Résultat ── -->
+  <div id="s-prize" class="screen">
+    <div id="prize-display"></div>
+    <p class="validity">Valable aujourd'hui &nbsp;·&nbsp; Non cumulable</p>
+  </div>
+
+</div>
+
+<script>
+const GOOGLE_URL = 'https://www.google.com/maps/place/Chez+Ramo/@45.9032632,5.3460783,17z/data=!3m1!5s0x478b4e6885b57e41:0x173a28184dab4a4d!4m8!3m7!1s0x478b4f4725ed54a9:0xcf26436749d2d9b6!8m2!3d45.9032595!4d5.3486532!9m1!1b1!16s%2Fg%2F11fjy_72r8?entry=ttu';
+const SB_URL = 'https://hqfewokpvjmxezhnurbm.supabase.co';
+const SB_KEY = 'sb_publishable_NmIfxaQb5ncapzCtzI5uNQ_tHdCwAyc';
+const WAIT_SEC = 30;
+
+// ══ Roue (identique à menu-qr) ══════════════════════════
+const SEGS = [
+  { label:["Boisson","offerte"],  bg:"#1E4D3A", fg:"#E8A93B", prizeId:"drink" },
+  { label:["Pas de","chance"],    bg:"#F1F5F9", fg:"#94A3B8", prizeId:null    },
+  { label:["Retente","ta chance"],bg:"#FEF2F2", fg:"#EF4444", prizeId:null    },
+  { label:["Pas de","chance"],    bg:"#F1F5F9", fg:"#94A3B8", prizeId:null    },
+  { label:["Dessert","offert"],   bg:"#E8A93B", fg:"#1E4D3A", prizeId:"cake"  },
+  { label:["Pas de","chance"],    bg:"#F1F5F9", fg:"#94A3B8", prizeId:null    },
+  { label:["Retente","ta chance"],bg:"#FEF2F2", fg:"#EF4444", prizeId:null    },
+  { label:["Pas de","chance"],    bg:"#F1F5F9", fg:"#94A3B8", prizeId:null    },
+  { label:["Pas de","chance"],    bg:"#FEF2F2", fg:"#EF4444", prizeId:null    },
+  { label:["Pas de","chance"],    bg:"#F1F5F9", fg:"#94A3B8", prizeId:null    },
+];
+const PRIZES = {
+  drink: { emoji:"🥤", name:"Boisson\nofferte", desc:"Coca, Fanta, Sprite ou eau plate (33 cl)" },
+  cake:  { emoji:"🍰", name:"Dessert\noffert",  desc:"Trilece ou Tiramisu" },
+};
+
+const N = SEGS.length, SA = (2*Math.PI)/N;
+let curA = 0, spinning = false, selectedStars = 0;
+
+// ══ Navigation ══════════════════════════════════════════
+function step(n){ [0,1,2].forEach(i=>document.getElementById('d'+i).classList.toggle('on',i<=n)); }
+function show(id, n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  step(n);
+}
+
+// ══ Étoiles ═════════════════════════════════════════════
+function setStar(n){
+  selectedStars = n;
+  document.querySelectorAll('.star-btn').forEach(b=>b.classList.toggle('lit',+b.dataset.v<=n));
+  document.getElementById('btn-google').disabled = false;
+}
+
+// ══ Redirect Google + countdown ══════════════════════════
+function goGoogle(){
+  window.open(GOOGLE_URL, '_blank', 'noopener');
+  document.getElementById('btn-google').disabled = true;
+  document.getElementById('cdown-wrap').classList.add('show');
+  fetch(`${SB_URL}/rest/v1/feedbacks`,{method:'POST',headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,Prefer:'return=minimal'},body:JSON.stringify({stars:selectedStars,message:null,prize:null})}).catch(()=>{});
+  startCountdown();
+}
+
+function startCountdown(){
+  let s = WAIT_SEC;
+  const numEl = document.getElementById('cdown-num');
+  const arc   = document.getElementById('arc');
+  const C = 2 * Math.PI * 28;
+  numEl.textContent = s;
+  arc.style.strokeDashoffset = 0;
+  const t = setInterval(()=>{
+    s--;
+    numEl.textContent = s;
+    arc.style.strokeDashoffset = C * (1 - s/WAIT_SEC);
+    if(s <= 0){
+      clearInterval(t);
+      const btn = document.getElementById('btn-wheel');
+      btn.disabled = false;
+      btn.style.animation = 'bounceIn .4s cubic-bezier(.34,1.56,.64,1) both';
+    }
+  }, 1000);
+}
+
+// ══ Aller à la roue ══════════════════════════════════════
+function goWheel(){
+  show('s-wheel', 1);
+  drawWheel(curA);
+}
+
+// ══ Roue canvas ══════════════════════════════════════════
+function drawWheel(angle){
+  const cv=document.getElementById('wheel'), ctx=cv.getContext('2d');
+  const W=cv.width, cx=W/2, cy=W/2, R=cx-6, Rc=38, Rt=R*.62;
+  ctx.clearRect(0,0,W,W);
+  SEGS.forEach((seg,i)=>{
+    const a0=angle+i*SA-Math.PI/2, a1=a0+SA, am=a0+SA/2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,a0,a1); ctx.closePath();
+    ctx.fillStyle=seg.bg; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,a0,a1); ctx.closePath();
+    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=3; ctx.stroke();
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(am);
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    const fs=W*.038;
+    ctx.font=`800 ${fs}px 'Baloo 2',system-ui,sans-serif`;
+    ctx.fillStyle=seg.fg;
+    ctx.fillText(seg.label[0], Rt, -fs*.55);
+    ctx.fillText(seg.label[1], Rt, +fs*.55);
+    ctx.restore();
+  });
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI); ctx.strokeStyle='rgba(0,0,0,.08)'; ctx.lineWidth=6; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,Rc,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.06)'; ctx.lineWidth=3; ctx.stroke();
+  ctx.fillStyle='#111';
+  ctx.font=`900 ${W*.038}px 'Baloo 2',system-ui,sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('RAMO', cx, cy);
+}
+
+// ══ Spin ═════════════════════════════════════════════════
+function spinWheel(){
+  if(spinning) return;
+  spinning = true;
+  document.getElementById('btn-spin').disabled = true;
+
+  const winner = Math.floor(Math.random()*N);
+  const rawT = -(winner*SA + SA/2);
+  const cM = ((curA%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+  const tM = ((rawT%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+  let diff = tM-cM; if(diff<.05) diff+=2*Math.PI;
+  const total = (5+Math.floor(Math.random()*4))*2*Math.PI + diff;
+  const DUR=5500, t0=performance.now(), sA=curA;
+  const ease = t => 1-Math.pow(1-t,4);
+
+  const prog = document.getElementById('prog');
+  prog.classList.remove('go'); void prog.offsetWidth; prog.classList.add('go');
+
+  (function tick(now){
+    const t = Math.min((now-t0)/DUR, 1);
+    curA = sA + total*ease(t);
+    drawWheel(curA);
+    if(t<1) requestAnimationFrame(tick);
+    else setTimeout(()=>revealPrize(winner), 600);
+  })(t0);
+}
+
+// ══ Résultat ═════════════════════════════════════════════
+function revealPrize(idx){
+  const seg=SEGS[idx], el=document.getElementById('prize-display');
+  show('s-prize', 2);
+
+  if(seg.prizeId){
+    const p = PRIZES[seg.prizeId];
+    const code = Math.random().toString(36).slice(2,6).toUpperCase();
+    const [n1,n2] = p.name.split('\n');
+
+    // Mettre à jour l'avis avec le cadeau gagné
+    fetch(`${SB_URL}/rest/v1/feedbacks`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json',apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,Prefer:'return=minimal'},
+      body:JSON.stringify({stars:selectedStars, message:`Code: ${code}`, prize:seg.prizeId})
+    }).catch(()=>{});
+
+    el.innerHTML=`
+      <div class="prize-card">
+        <span class="prize-emoji">${p.emoji}</span>
+        <p class="eyebrow" style="margin-bottom:6px">Félicitations !</p>
+        <p class="prize-name">${n1}<br>${n2}</p>
+        <p class="prize-desc">${p.desc}</p>
+        <div class="prize-code-box">
+          <p class="prize-code-lbl">Votre bon</p>
+          <p class="prize-code">${code}</p>
+        </div>
+        <p class="prize-note">Montrez ce bon à la caisse.<br/><strong>Valable aujourd'hui uniquement.</strong></p>
+      </div>`;
+  } else {
+    el.innerHTML=`
+      <div class="nopriz-card">
+        <span style="font-size:3rem;display:block;margin-bottom:14px">🙏</span>
+        <p class="eyebrow" style="margin-bottom:8px">Merci !</p>
+        <p class="heading" style="font-size:clamp(22px,6vw,30px)">Votre avis<br>compte !</p>
+        <p class="sub" style="margin-top:10px">Chaque avis nous aide à nous améliorer chaque jour.<br/>À très bientôt chez Ramo&nbsp;!</p>
+      </div>`;
+  }
+}
+</script>
+</body>
+</html>

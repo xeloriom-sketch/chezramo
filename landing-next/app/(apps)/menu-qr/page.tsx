@@ -17,7 +17,7 @@ declare global {
   }
 }
 
-const GOOGLE_REVIEW_URL = 'https://www.google.com/maps/search/Chez+Ramo+32+Rue+Pasteur+Lagnieu'
+const GOOGLE_REVIEW_URL = 'https://www.google.com/maps/place/Chez+Ramo/@45.9032632,5.3460783,17z/data=!3m1!5s0x478b4e6885b57e41:0x173a28184dab4a4d!4m8!3m7!1s0x478b4f4725ed54a9:0xcf26436749d2d9b6!8m2!3d45.9032595!4d5.3486532!9m1!1b1!16s%2Fg%2F11fjy_72r8?entry=ttu'
 
 const BASE    = process.env.NEXT_PUBLIC_BASE_PATH    ?? ''
 const SB_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
@@ -281,7 +281,12 @@ export default function MenuQRPage() {
   const [wheelRot,         setWheelRot]         = useState(0)
   const [wheelSpun,        setWheelSpun]        = useState(false)
   const [confetti,         setConfetti]         = useState<ReturnType<typeof makeConfetti>>([])
+  const [priceMap,         setPriceMap]         = useState<Record<string, {price:string, menuPrice:string}>>({})
+  const [cdownSec,         setCdownSec]         = useState(30)
+  const [cdownStarted,     setCdownStarted]     = useState(false)
+  const [cdownDone,        setCdownDone]        = useState(false)
   const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cdownRef    = useRef<ReturnType<typeof setInterval> | null>(null)
   const contentRef  = useRef<HTMLDivElement>(null)
   const audioCtxRef  = useRef<AudioContext | null>(null)
   const audioBufRef  = useRef<AudioBuffer | null>(null)
@@ -331,6 +336,19 @@ export default function MenuQRPage() {
 
   useEffect(() => {
     setMounted(true)
+    // Fetch prices from Supabase (overrides hardcoded MENU_DATA)
+    if (SB_URL && SB_KEY) {
+      fetch(`${SB_URL}/rest/v1/menu_items?select=title,price,menuPrice`, {
+        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+      })
+        .then(r => r.json())
+        .then((rows: {title: string, price: string, menuPrice?: string}[]) => {
+          const map: Record<string, {price:string, menuPrice:string}> = {}
+          rows.forEach(r => { map[r.title] = { price: r.price ?? '', menuPrice: r.menuPrice ?? '' } })
+          setPriceMap(map)
+        })
+        .catch(() => {})
+    }
   }, [])
 
   useEffect(() => {
@@ -413,6 +431,11 @@ export default function MenuQRPage() {
     timerRef.current = setTimeout(() => setShowModal(true), ms)
   }
 
+  function px(item: {title: string, price: string, menu_price?: string}) {
+    const o = priceMap[item.title]
+    return { price: o?.price || item.price, mp: o?.menuPrice || item.menu_price || '' }
+  }
+
   const onFinished = () => {
     const s = getSession()
     saveSession({ ...(s ?? { start: Date.now() }), finished: true, finishedAt: Date.now() })
@@ -424,13 +447,28 @@ export default function MenuQRPage() {
     if (!stars) return
     const s = getSession()
     saveSession({ ...(s ?? { start: Date.now() }), rated: true })
-    if (stars >= 4) {
-      setWheelRot(0)
-      setWheelSpun(false)
-      setPhase('roulette')
-    } else {
-      setPhase('thanks')
-    }
+    // Google redirect + countdown (même flow que avis.html)
+    window.open(GOOGLE_REVIEW_URL, '_blank', 'noopener')
+    saveFeedback(stars, '', table ?? '', null)
+    setCdownStarted(true)
+    setCdownSec(30)
+    setCdownDone(false)
+    if (cdownRef.current) clearInterval(cdownRef.current)
+    let s2 = 30
+    cdownRef.current = setInterval(() => {
+      s2--
+      setCdownSec(s2)
+      if (s2 <= 0) {
+        clearInterval(cdownRef.current!)
+        setCdownDone(true)
+      }
+    }, 1000)
+  }
+
+  const goRoulette = () => {
+    setWheelRot(0)
+    setWheelSpun(false)
+    setPhase('roulette')
   }
 
   const spinWheel = () => {
@@ -519,12 +557,42 @@ export default function MenuQRPage() {
                 ))}
               </div>
               {stars > 0 && <p style={{ fontWeight: 700, color: '#111', fontSize: 14, letterSpacing: '0.03em' }} className="qr-fade-in">{starLabels[stars]}</p>}
-              <button onClick={onRate} disabled={!stars}
-                className="w-full max-w-xs active:scale-[.98] transition-transform qr-slide-up"
-                style={{ '--reveal-delay': '.3s', fontFamily: 'var(--font-baloo)', background: '#111', color: 'white', border: 'none', borderRadius: 99, padding: '16px 24px', fontSize: 13, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', cursor: 'pointer', opacity: stars ? 1 : 0.25, boxShadow: '0 6px 20px rgba(0,0,0,.18)' } as React.CSSProperties}
-              >
-                Valider mon avis
-              </button>
+
+              {/* Bouton Google */}
+              {!cdownStarted && (
+                <button onClick={onRate} disabled={!stars}
+                  className="w-full max-w-xs active:scale-[.98] transition-transform qr-slide-up"
+                  style={{ '--reveal-delay': '.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, fontFamily: 'var(--font-baloo)', background: '#4285F4', color: 'white', border: 'none', borderRadius: 99, padding: '16px 24px', fontSize: 13, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', cursor: 'pointer', opacity: stars ? 1 : 0.25, boxShadow: '0 6px 20px rgba(66,133,244,.35)' } as React.CSSProperties}
+                >
+                  <GoogleIcon />
+                  Laisser mon avis Google
+                </button>
+              )}
+
+              {/* Countdown */}
+              {cdownStarted && (
+                <div className="flex flex-col items-center gap-3 qr-fade-in">
+                  <svg width="72" height="72" viewBox="0 0 72 72" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="36" cy="36" r="30" fill="none" stroke="#EBEBEB" strokeWidth="5" />
+                    <circle cx="36" cy="36" r="30" fill="none" stroke="#111" strokeWidth="5" strokeLinecap="round"
+                      strokeDasharray="188.5"
+                      strokeDashoffset={188.5 * (1 - cdownSec / 30)}
+                      style={{ transition: 'stroke-dashoffset 1s linear' }}
+                    />
+                    <text x="36" y="36" textAnchor="middle" dominantBaseline="central" fill="#111"
+                      fontSize="18" fontWeight="900" style={{ transform: 'rotate(90deg)', transformOrigin: '36px 36px', fontFamily: 'var(--font-baloo)' }}>
+                      {cdownSec}
+                    </text>
+                  </svg>
+                  <p style={{ fontSize: 12, color: '#AAA', letterSpacing: '0.05em' }}>Laissez votre avis puis revenez ici</p>
+                  <button onClick={goRoulette} disabled={!cdownDone}
+                    className="w-full max-w-xs active:scale-[.98] transition-transform"
+                    style={{ fontFamily: 'var(--font-baloo)', background: '#111', color: 'white', border: 'none', borderRadius: 99, padding: '16px 24px', fontSize: 13, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', cursor: cdownDone ? 'pointer' : 'not-allowed', opacity: cdownDone ? 1 : 0.3, boxShadow: cdownDone ? '0 6px 20px rgba(0,0,0,.18)' : 'none', transition: 'opacity .4s, box-shadow .4s' }}
+                  >
+                    Tourner la roue →
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -607,19 +675,6 @@ export default function MenuQRPage() {
                     Montrez cet écran à la caisse
                   </div>
                 </div>
-              </div>
-              <div style={{ '--reveal-delay': '.35s', width: '100%', maxWidth: 320, borderRadius: 28, padding: 20, border: '1px solid #F0F0F0', background: 'white' } as React.CSSProperties} className="qr-slide-up">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <div style={{ display: 'flex', gap: 2 }}>{[...Array(5)].map((_,i) => <StarFilledIcon key={i} size={13} color="#F5A623" opacity={1} />)}</div>
-                  <span style={{ fontFamily: 'var(--font-baloo)', fontWeight: 900, fontSize: 13, color: '#111' }}>Partagez votre avis</span>
-                </div>
-                <p style={{ color: '#BBB', fontSize: 11, lineHeight: 1.6, marginBottom: 16 }}>Un avis Google nous aide vraiment. Ça prend 30 secondes !</p>
-                <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'white', fontFamily: 'var(--font-baloo)', fontWeight: 800, fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.08em', padding: '14px 0', borderRadius: 99, width: '100%', background: '#4285F4', textDecoration: 'none' }}
-                >
-                  <GoogleIcon />
-                  Laisser un avis Google
-                </a>
               </div>
             </div>
           )}
@@ -756,10 +811,10 @@ export default function MenuQRPage() {
                   <p className="text-gray-400 text-sm mt-1.5 leading-relaxed">{selItem.description}</p>
                 </div>
                 <div className="shrink-0 font-extrabold text-2xl" style={{ fontFamily: 'var(--font-baloo)', color: '#1E4D3A' }}>
-                  {selItem.price}&thinsp;€
+                  {px(selItem).price}&thinsp;€
                 </div>
               </div>
-              {selItem.menu_price && (
+              {px(selItem).mp && (
                 <div className="mt-4 p-4 rounded-2xl flex items-center justify-between"
                   style={{ background: '#FFFBF0', border: '1.5px solid rgba(232,169,59,.3)' }}>
                   <div>
@@ -767,7 +822,7 @@ export default function MenuQRPage() {
                     <div className="text-xs text-gray-400 mt-0.5">Boisson + frites incluses</div>
                   </div>
                   <div className="font-extrabold text-xl" style={{ fontFamily: 'var(--font-baloo)', color: '#E8A93B' }}>
-                    {selItem.menu_price}&thinsp;€
+                    {px(selItem).mp}&thinsp;€
                   </div>
                 </div>
               )}
@@ -817,7 +872,7 @@ export default function MenuQRPage() {
                             <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 13, fontWeight: 800, color: '#111', textTransform: 'uppercase' as const }}>{item.title}</div>
                             <div style={{ fontSize: 11, color: '#999', marginTop: 2, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>{item.description}</div>
                           </div>
-                          <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 14, fontWeight: 900, color: '#1E4D3A', flexShrink: 0 }}>{item.price}&thinsp;€</div>
+                          <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 14, fontWeight: 900, color: '#1E4D3A', flexShrink: 0 }}>{px(item).price}&thinsp;€</div>
                         </div>
                       )
                     }) : (
@@ -1047,7 +1102,7 @@ export default function MenuQRPage() {
                             {bs.title}
                           </p>
                           <p style={{ fontFamily: 'var(--font-baloo)', fontSize: 20, fontWeight: 900, color: '#1E4D3A' }}>
-                            {bs.price}&thinsp;€
+                            {px(bs).price}&thinsp;€
                           </p>
                         </div>
                       </div>
@@ -1198,26 +1253,26 @@ export default function MenuQRPage() {
                       <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 13, fontWeight: 800, color: '#111', textTransform: 'uppercase' as const, lineHeight: 1.2, marginBottom: 3 }}>
                         {item.title}
                       </div>
-                      <div style={{ fontSize: 11, color: '#AAA', lineHeight: 1.35, marginBottom: item.menu_price ? 4 : 0,
+                      <div style={{ fontSize: 11, color: '#AAA', lineHeight: 1.35, marginBottom: px(item).mp ? 4 : 0,
                         overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const,
                       }}>
                         {item.description}
                       </div>
-                      {item.menu_price && item.menu_price !== '' && (
+                      {px(item).mp !== '' && (
                         <span style={{
                           display: 'inline-block',
                           background: '#FFF3D6', color: '#B8860B',
                           fontSize: 9, fontWeight: 800, fontFamily: 'var(--font-baloo)',
                           padding: '2px 8px', borderRadius: 99, textTransform: 'uppercase' as const,
                         }}>
-                          Menu {item.menu_price}&thinsp;€
+                          Menu {px(item).mp}&thinsp;€
                         </span>
                       )}
                     </div>
                     {/* Prix */}
                     <div style={{ flexShrink: 0, textAlign: 'right' }}>
                       <div style={{ fontFamily: 'var(--font-baloo)', fontSize: 15, fontWeight: 900, color: '#1E4D3A' }}>
-                        {item.price}&thinsp;€
+                        {px(item).price}&thinsp;€
                       </div>
                     </div>
                   </div>
