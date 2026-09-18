@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E4D3A"/>
+      <stop offset="100%" style="stop-color:#163D2F"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.12)"/>
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Subtle shine overlay -->
+  <rect width="512" height="512" rx="112" fill="url(#shine)"/>
+
+  <!-- "R" letter — main -->
+  <text
+    x="256" y="330"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="268"
+    font-weight="700"
+    fill="#F5ECD9"
+    text-anchor="middle"
+    letter-spacing="-8">R</text>
+
+  <!-- Gold dot accent bottom right -->
+  <circle cx="362" cy="382" r="26" fill="#E8A93B"/>
+
+  <!-- Small decorative line top-left -->
+  <rect x="64" y="68" width="72" height="8" rx="4" fill="rgba(255,255,255,0.18)"/>
+  <rect x="64" y="86" width="44" height="6" rx="3" fill="rgba(255,255,255,0.10)"/>
+</svg>

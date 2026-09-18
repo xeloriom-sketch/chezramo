@@ -10,10 +10,11 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: 'Ramo Admin',
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
   },
   other: {
     'mobile-web-app-capable': 'yes',
+    'apple-touch-icon': `${BASE_PATH}/admin-icon-180.png`,
   },
 }
 

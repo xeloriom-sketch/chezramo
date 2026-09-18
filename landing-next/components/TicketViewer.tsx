@@ -435,27 +435,33 @@ export default function TicketViewer() {
         {/* Content */}
         <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-6 space-y-3"
           style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
-          {tickets.length === 0 ? (
-            <div className="text-center py-14">
-              <div className="w-14 h-14 rounded-full bg-brand/8 flex items-center justify-center mx-auto mb-3">
-                <svg className="w-7 h-7 text-brand/30" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                </svg>
+          {(() => {
+            const visibleTickets = tickets.filter(t => {
+              const s = statusMap[t.orderId]
+              return s !== 'collected' && s !== 'cancelled'
+            })
+            return visibleTickets.length === 0 ? (
+              <div className="text-center py-14">
+                <div className="w-14 h-14 rounded-full bg-brand/8 flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-7 h-7 text-brand/30" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                </div>
+                <p className="text-sm font-bold text-brand/50">Aucune commande en cours</p>
+                <p className="text-xs text-brand/30 mt-1">Vos commandes actives apparaîtront ici.</p>
               </div>
-              <p className="text-sm font-bold text-brand/50">Aucune commande</p>
-              <p className="text-xs text-brand/30 mt-1">Vos commandes apparaîtront ici après paiement.</p>
-            </div>
-          ) : (
-            tickets.map(ticket => (
-              <TicketCard
-                key={ticket.id}
-                ticket={ticket}
-                liveStatus={statusMap[ticket.orderId] ?? null}
-                onPickedUp={() => markCollected(ticket)}
-              />
-            ))
-          )}
+            ) : (
+              visibleTickets.map(ticket => (
+                <TicketCard
+                  key={ticket.id}
+                  ticket={ticket}
+                  liveStatus={statusMap[ticket.orderId] ?? null}
+                  onPickedUp={() => markCollected(ticket)}
+                />
+              ))
+            )
+          })()}
         </div>
       </div>
     </div>
