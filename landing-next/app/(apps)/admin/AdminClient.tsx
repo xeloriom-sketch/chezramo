@@ -22,8 +22,12 @@ async function subscribeToPush() {
   if (!VAPID_PUBLIC_KEY || !('serviceWorker' in navigator) || !('PushManager' in window)) return
   try {
     const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
-    const reg = await navigator.serviceWorker.getRegistration(BASE + '/')
-    if (!reg) return
+    // Enregistrer le SW s'il ne l'est pas déjà (admin PWA)
+    let reg = await navigator.serviceWorker.getRegistration(BASE + '/')
+    if (!reg) {
+      reg = await navigator.serviceWorker.register(BASE + '/sw.js', { scope: BASE + '/' })
+      await navigator.serviceWorker.ready
+    }
     let sub = await reg.pushManager.getSubscription()
     if (!sub) {
       sub = await reg.pushManager.subscribe({
@@ -1992,15 +1996,16 @@ export default function AdminClient() {
       reg.addEventListener('updatefound', () => forceSkip(reg.installing))
       reg.update().catch(() => {})
     }
-    navigator.serviceWorker.getRegistration(BASE + '/').then(reg => {
-      if (reg) setupReg(reg)
-    }).catch(() => {})
+    const getOrRegister = () =>
+      navigator.serviceWorker.getRegistration(BASE + '/').then(r =>
+        r ?? navigator.serviceWorker.register(BASE + '/sw.js', { scope: BASE + '/' })
+      )
+
+    getOrRegister().then(reg => { if (reg) setupReg(reg) }).catch(() => {})
 
     // Vérifie une mise à jour toutes les 5 minutes
     const iv = setInterval(() => {
-      navigator.serviceWorker.getRegistration(BASE + '/').then(reg => {
-        if (reg) reg.update().catch(() => {})
-      }).catch(() => {})
+      getOrRegister().then(reg => { if (reg) reg.update().catch(() => {}) }).catch(() => {})
     }, 5 * 60 * 1000)
     return () => clearInterval(iv)
   }, [])
