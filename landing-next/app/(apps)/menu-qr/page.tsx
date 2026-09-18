@@ -50,71 +50,71 @@ async function saveFeedback(stars: number, message: string, table_num: string, p
 
 const ITEM_IMG: Record<string, string> = {
   // Sandwichs & galettes
-  'Kebab':              '/uploads/cut/Kebab.png',
-  'Kebab Frites':       '/uploads/cut/Kebab%20Frites.png',
-  'Kebab Géant':        '/uploads/cut/Kebab%20Geant.png',
-  'Kofte':              '/uploads/cut/Kofte.png',
-  'Américain':          '/uploads/cut/Americain.png',
-  'Escalope':           '/uploads/cut/Escalope.png',
-  'Cordon Bleu':        '/uploads/cut/Cordon%20Bleu.png',
-  'Galette (Dürum)':    '/uploads/cut/Galette.png',
-  'Miche Kebab':        '/uploads/cut/Miche%20Kebab.png',
+  'Kebab':              '/uploads/cut/Kebab.webp',
+  'Kebab Frites':       '/uploads/cut/Kebab%20Frites.webp',
+  'Kebab Géant':        '/uploads/cut/Kebab%20Geant.webp',
+  'Kofte':              '/uploads/cut/Kofte.webp',
+  'Américain':          '/uploads/cut/Americain.webp',
+  'Escalope':           '/uploads/cut/Escalope.webp',
+  'Cordon Bleu':        '/uploads/cut/Cordon%20Bleu.webp',
+  'Galette (Dürum)':    '/uploads/cut/Galette.webp',
+  'Miche Kebab':        '/uploads/cut/Miche%20Kebab.webp',
   // Tacos
-  'Tacos':              '/uploads/cut/Tacos.png',
-  'Maxi Tacos':         '/uploads/cut/Maxi%20Tacos.png',
+  'Tacos':              '/uploads/cut/Tacos.webp',
+  'Maxi Tacos':         '/uploads/cut/Maxi%20Tacos.webp',
   // Burgers & finger
-  'Chicken Burger':     '/uploads/cut/Chicken%20Burger.png',
-  'Cheese Burger':      '/uploads/cut/Cheese%20Burger.png',
-  'Nuggets (x7)':       '/uploads/cut/Nuggets%20(x7).png',
-  'Wings (x4)':         '/uploads/cut/Wings%20(x8).png',
-  'Tenders (x4)':       '/uploads/cut/Tenders%20(x4).png',
+  'Chicken Burger':     '/uploads/cut/Chicken%20Burger.webp',
+  'Cheese Burger':      '/uploads/cut/Cheese%20Burger.webp',
+  'Nuggets (x7)':       '/uploads/cut/Nuggets%20(x7).webp',
+  'Wings (x4)':         '/uploads/cut/Wings%20(x8).webp',
+  'Tenders (x4)':       '/uploads/cut/Tenders%20(x4).webp',
   // Assiettes
-  'Assiette Kebab':     '/uploads/cut/Assiette%20Kebab.png',
-  'Assiette Escalope':  '/uploads/cut/Assiette%20Escalope.png',
-  'Assiette Kofte':     '/uploads/cut/Assiette%20Kofte.png',
-  'Assiette Steak':     '/uploads/cut/Assiette%20Steak.png',
-  'Assiette Cordon Bleu': '/uploads/cut/Assiette%20Cordon%20Bleu.png',
-  'Assiette Mixte':     '/uploads/cut/Assiette%20Mixte.png',
-  'Assiette Enfant':    '/uploads/cut/Assiette%20Enfant.png',
-  'Assiette Emporter':  '/uploads/cut/Assiette%20Emporter.png',
+  'Assiette Kebab':     '/uploads/cut/Assiette%20Kebab.webp',
+  'Assiette Escalope':  '/uploads/cut/Assiette%20Escalope.webp',
+  'Assiette Kofte':     '/uploads/cut/Assiette%20Kofte.webp',
+  'Assiette Steak':     '/uploads/cut/Assiette%20Steak.webp',
+  'Assiette Cordon Bleu': '/uploads/cut/Assiette%20Cordon%20Bleu.webp',
+  'Assiette Mixte':     '/uploads/cut/Assiette%20Mixte.webp',
+  'Assiette Enfant':    '/uploads/cut/Assiette%20Enfant.webp',
+  'Assiette Emporter':  '/uploads/cut/Assiette%20Emporter.webp',
   // Plats maison
-  'Escalope Crème':     '/uploads/cut/Escalope_Cr%C3%A8me.png',
-  'Filet de Poulet':    '/uploads/cut/Filet_de_Poulet.png',
-  'Pleskavice':         '/uploads/cut/Pleskavice.png',
-  'Makarona':           '/uploads/cut/Makarona.png',
+  'Escalope Crème':     '/uploads/cut/Escalope_Cr%C3%A8me.webp',
+  'Filet de Poulet':    '/uploads/cut/Filet_de_Poulet.webp',
+  'Pleskavice':         '/uploads/cut/Pleskavice.webp',
+  'Makarona':           '/uploads/cut/Makarona.webp',
   // Qofte
-  'Qofte x5':           '/uploads/cut/Qofte_x5.png',
-  'Qofte x7':           '/uploads/cut/Qofte_x7.png',
-  'Qofte x10':          '/uploads/cut/Qofte_x10.png',
+  'Qofte x5':           '/uploads/cut/Qofte_x5.webp',
+  'Qofte x7':           '/uploads/cut/Qofte_x7.webp',
+  'Qofte x10':          '/uploads/cut/Qofte_x10.webp',
   // Salades & burek
-  'Salade Grecque':     '/uploads/cut/Salade_Grecque.png',
-  'Salade du Berger':   '/uploads/cut/Salade%20du%20Berger.png',
-  'Salade Shope':       '/uploads/cut/Salade_Shope.png',
-  'Burek Fromage':      '/uploads/cut/Burek_Fromage.png',
-  'Burek Épinards':     '/uploads/cut/Burek_%C3%89pinards.png',
-  'Burek Viande':       '/uploads/cut/Burek_Viande.png',
-  'Fli - Flija':        '/uploads/cut/Fli_-_Flija.png',
+  'Salade Grecque':     '/uploads/cut/Salade_Grecque.webp',
+  'Salade du Berger':   '/uploads/cut/Salade%20du%20Berger.webp',
+  'Salade Shope':       '/uploads/cut/Salade_Shope.webp',
+  'Burek Fromage':      '/uploads/cut/Burek_Fromage.webp',
+  'Burek Épinards':     '/uploads/cut/Burek_%C3%89pinards.webp',
+  'Burek Viande':       '/uploads/cut/Burek_Viande.webp',
+  'Fli - Flija':        '/uploads/cut/Fli_-_Flija.webp',
   // Desserts
-  'Trilece':            '/uploads/cut/Trilece.png',
-  'Tiramisu':           '/uploads/cut/Tiramisu.png',
+  'Trilece':            '/uploads/cut/Trilece.webp',
+  'Tiramisu':           '/uploads/cut/Tiramisu.webp',
   // Menu enfant
-  'Menu Enfant':        '/uploads/cut/Assiette%20Enfant.png',
+  'Menu Enfant':        '/uploads/cut/Assiette%20Enfant.webp',
   // Accompagnements
-  'Frites':             '/uploads/cut/Frites.png',
-  'Barquette Viande':   '/uploads/cut/Barquette.png',
-  'Nos Sauces':         '/uploads/cut/Nos%20Sauces.png',
+  'Frites':             '/uploads/cut/Frites.webp',
+  'Barquette Viande':   '/uploads/cut/Barquette.webp',
+  'Nos Sauces':         '/uploads/cut/Nos%20Sauces.webp',
   // Boissons
-  'Coca-Cola':          '/uploads/cut/Boissons%2033cl.png',
-  'Fanta Orange':       '/uploads/cut/Boissons%2033cl.png',
-  'Fanta Citron':       '/uploads/cut/Boissons%2033cl.png',
-  'Sprite':             '/uploads/cut/Boissons%2033cl.png',
-  'Ice Tea Pêche':      '/uploads/cut/Boissons%2033cl.png',
-  'Ice Tea Citron':     '/uploads/cut/Boissons%2033cl.png',
-  'Oasis':              '/uploads/cut/Boissons%2033cl.png',
-  'Eau plate':          '/uploads/cut/Boissons%2033cl.png',
-  'Eau gazeuse':        '/uploads/cut/Boissons%2033cl.png',
-  'Café':               '/uploads/cut/Caf%C3%A9.png',
-  'Thé à la menthe':    '/uploads/cut/Th%C3%A9.png',
+  'Coca-Cola':          '/uploads/cut/Boissons%2033cl.webp',
+  'Fanta Orange':       '/uploads/cut/Boissons%2033cl.webp',
+  'Fanta Citron':       '/uploads/cut/Boissons%2033cl.webp',
+  'Sprite':             '/uploads/cut/Boissons%2033cl.webp',
+  'Ice Tea Pêche':      '/uploads/cut/Boissons%2033cl.webp',
+  'Ice Tea Citron':     '/uploads/cut/Boissons%2033cl.webp',
+  'Oasis':              '/uploads/cut/Boissons%2033cl.webp',
+  'Eau plate':          '/uploads/cut/Boissons%2033cl.webp',
+  'Eau gazeuse':        '/uploads/cut/Boissons%2033cl.webp',
+  'Café':               '/uploads/cut/Caf%C3%A9.webp',
+  'Thé à la menthe':    '/uploads/cut/Th%C3%A9.webp',
 }
 
 function getImg(title: string, fallback: string) {
@@ -189,21 +189,21 @@ const CAT_COLORS: Record<string, { bg: string; text: string; accent: string }> =
 const BS_COLORS = ['#FFF3E0', '#E8F5E9', '#E3F2FD', '#FCE4EC', '#F3E5F5']
 
 const CATEGORIES = [
-  { id: 'kebab',     label: 'KEBAB & GALETTES', img: '/uploads/cut/Kebab%20Frites.png',      cats: ['Sandwichs Vedettes','Nos Spécialités','Tradition & Galettes'] },
-  { id: 'tacos',     label: 'TACOS',             img: '/uploads/cut/Maxi%20Tacos.png',         cats: ['Tacos'] },
-  { id: 'burgers',   label: 'BURGERS & FINGER',  img: '/uploads/cut/Cheese%20Burger.png',      cats: ['Burgers','Finger Food'] },
-  { id: 'assiettes', label: 'ASSIETTES',         img: '/uploads/cut/Assiette%20Kebab.png',     cats: ['Assiettes Gourmet','Assiettes Gourmet (Suite)','Assiettes & Salade'] },
-  { id: 'plats',     label: 'NOS PLATS',          img: '/uploads/cut/Kofte.png',                cats: ['Plats Maison','Qofte Grillées','Burek & Spécialités'] },
-  { id: 'salades',   label: 'SALADES & BUREK',   img: '/uploads/cut/Salade%20du%20Berger.png', cats: ['Salades Fraîches','Salades & Burek'] },
-  { id: 'drinks',    label: 'DESSERTS & DRINKS', img: '/uploads/cut/Tiramisu.png',             cats: ['Desserts','Menu Enfants','Accompagnements & Sauces','Boissons & Boissons Chaudes'] },
+  { id: 'kebab',     label: 'KEBAB & GALETTES', img: '/uploads/cut/Kebab%20Frites.webp',      cats: ['Sandwichs Vedettes','Nos Spécialités','Tradition & Galettes'] },
+  { id: 'tacos',     label: 'TACOS',             img: '/uploads/cut/Maxi%20Tacos.webp',         cats: ['Tacos'] },
+  { id: 'burgers',   label: 'BURGERS & FINGER',  img: '/uploads/cut/Cheese%20Burger.webp',      cats: ['Burgers','Finger Food'] },
+  { id: 'assiettes', label: 'ASSIETTES',         img: '/uploads/cut/Assiette%20Kebab.webp',     cats: ['Assiettes Gourmet','Assiettes Gourmet (Suite)','Assiettes & Salade'] },
+  { id: 'plats',     label: 'NOS PLATS',          img: '/uploads/cut/Kofte.webp',                cats: ['Plats Maison','Qofte Grillées','Burek & Spécialités'] },
+  { id: 'salades',   label: 'SALADES & BUREK',   img: '/uploads/cut/Salade%20du%20Berger.webp', cats: ['Salades Fraîches','Salades & Burek'] },
+  { id: 'drinks',    label: 'DESSERTS & DRINKS', img: '/uploads/cut/Tiramisu.webp',             cats: ['Desserts','Menu Enfants','Accompagnements & Sauces','Boissons & Boissons Chaudes'] },
 ]
 
 const BEST_SELLERS = [
-  { title: 'Kebab Frites',   price: '9,50',  img: '/uploads/cut/Kebab%20Frites.png',   catId: 'kebab'   },
-  { title: 'Chicken Burger', price: '7,00',  img: '/uploads/cut/Chicken%20Burger.png', catId: 'burgers' },
-  { title: 'Kebab Géant',    price: '11,00', img: '/uploads/cut/Kebab%20Geant.png',    catId: 'kebab'   },
-  { title: 'Cheese Burger',  price: '6,00',  img: '/uploads/cut/Cheese%20Burger.png',  catId: 'burgers' },
-  { title: 'Miche Kebab',    price: '10,50', img: '/uploads/cut/Miche%20Kebab.png',    catId: 'kebab'   },
+  { title: 'Kebab Frites',   price: '9,50',  img: '/uploads/cut/Kebab%20Frites.webp',   catId: 'kebab'   },
+  { title: 'Chicken Burger', price: '7,00',  img: '/uploads/cut/Chicken%20Burger.webp', catId: 'burgers' },
+  { title: 'Kebab Géant',    price: '11,00', img: '/uploads/cut/Kebab%20Geant.webp',    catId: 'kebab'   },
+  { title: 'Cheese Burger',  price: '6,00',  img: '/uploads/cut/Cheese%20Burger.webp',  catId: 'burgers' },
+  { title: 'Miche Kebab',    price: '10,50', img: '/uploads/cut/Miche%20Kebab.webp',    catId: 'kebab'   },
 ]
 
 const PRIZES = [
@@ -923,9 +923,9 @@ export default function MenuQRPage() {
                   }}>
                     {([
                       { bg: '#D4501E', badgeBg: '#FDEEA3', badgeColor: '#5C2800', badge: '★ Spécialité', title: 'Kebab Artisanal', sub: 'Broche tournée, sauces maison, viande fraîche tranchée à la minute.', btnBg: '#FDEEA3', btnColor: '#5C2800', catId: 'kebab', img: `/uploads/lucid-origin_A_award-winning_professional_studio_food_photography_of_a_gourmet_luxury_kebab._-0.png`, scale: 1 },
-                      { bg: '#1E4D3A', badgeBg: '#E8A93B', badgeColor: '#1E4D3A', badge: 'Nouveau', title: 'Maxi Tacos', sub: 'Généreux, fondant, garni à votre goût avec nos sauces exclusives.', btnBg: '#E8A93B', btnColor: '#1E4D3A', catId: 'tacos', img: `/uploads/cut/Maxi%20Tacos.png`, scale: 1.5 },
-                      { bg: '#C2385A', badgeBg: '#FDEEA3', badgeColor: '#5C0020', badge: 'Finger Food', title: 'Burgers & Chicken', sub: 'Croustillant, juteux, cuit à la demande — nuggets, tenders et burgers.', btnBg: '#FDEEA3', btnColor: '#5C0020', catId: 'burgers', img: `/uploads/cut/Chicken%20Burger.png`, scale: 1.5 },
-                      { bg: '#2C5F8A', badgeBg: '#E8A93B', badgeColor: '#0D2340', badge: 'Gourmet', title: 'Assiettes\nComplètes', sub: 'Plat complet grillé à la commande, avec accompagnements et salades.', btnBg: '#E8A93B', btnColor: '#0D2340', catId: 'assiettes', img: `/uploads/cut/Assiette%20Kebab.png`, scale: 1.5 },
+                      { bg: '#1E4D3A', badgeBg: '#E8A93B', badgeColor: '#1E4D3A', badge: 'Nouveau', title: 'Maxi Tacos', sub: 'Généreux, fondant, garni à votre goût avec nos sauces exclusives.', btnBg: '#E8A93B', btnColor: '#1E4D3A', catId: 'tacos', img: `/uploads/cut/Maxi%20Tacos.webp`, scale: 1.5 },
+                      { bg: '#C2385A', badgeBg: '#FDEEA3', badgeColor: '#5C0020', badge: 'Finger Food', title: 'Burgers & Chicken', sub: 'Croustillant, juteux, cuit à la demande — nuggets, tenders et burgers.', btnBg: '#FDEEA3', btnColor: '#5C0020', catId: 'burgers', img: `/uploads/cut/Chicken%20Burger.webp`, scale: 1.5 },
+                      { bg: '#2C5F8A', badgeBg: '#E8A93B', badgeColor: '#0D2340', badge: 'Gourmet', title: 'Assiettes\nComplètes', sub: 'Plat complet grillé à la commande, avec accompagnements et salades.', btnBg: '#E8A93B', btnColor: '#0D2340', catId: 'assiettes', img: `/uploads/cut/Assiette%20Kebab.webp`, scale: 1.5 },
                     ] as const).map((b, idx) => (
                       <div key={idx} style={{
                         flexShrink: 0, width: '100%',
@@ -1120,11 +1120,11 @@ export default function MenuQRPage() {
                 </div>
                 <div className="qr-noscroll qr-hscroll" style={{ display: 'flex', gap: 12, paddingLeft: 14, paddingRight: 14, paddingBottom: 8 }}>
                   {[
-                    { label: 'Frites',        menuTitle: 'Frites',       price: '3,00', img: '/uploads/cut/Frites.png',              catId: 'extras'  },
-                    { label: 'Boisson 33cl',  menuTitle: 'Boissons 33cl',price: '2,00', img: '/uploads/cut/Boissons%2033cl.png',     catId: 'drinks'  },
-                    { label: 'Nuggets (x7)',  menuTitle: 'Nuggets (x7)', price: '5,50', img: '/uploads/cut/Nuggets%20(x7).png',      catId: 'burgers' },
-                    { label: 'Tiramisu',      menuTitle: 'Tiramisu',     price: '3,50', img: '/uploads/cut/Tiramisu.png',            catId: 'drinks'  },
-                    { label: 'Wings (x4)',    menuTitle: 'Wings (x4)',   price: '5,00', img: '/uploads/cut/Wings%20(x8).png',        catId: 'burgers' },
+                    { label: 'Frites',        menuTitle: 'Frites',       price: '3,00', img: '/uploads/cut/Frites.webp',              catId: 'extras'  },
+                    { label: 'Boisson 33cl',  menuTitle: 'Boissons 33cl',price: '2,00', img: '/uploads/cut/Boissons%2033cl.webp',     catId: 'drinks'  },
+                    { label: 'Nuggets (x7)',  menuTitle: 'Nuggets (x7)', price: '5,50', img: '/uploads/cut/Nuggets%20(x7).webp',      catId: 'burgers' },
+                    { label: 'Tiramisu',      menuTitle: 'Tiramisu',     price: '3,50', img: '/uploads/cut/Tiramisu.webp',            catId: 'drinks'  },
+                    { label: 'Wings (x4)',    menuTitle: 'Wings (x4)',   price: '5,00', img: '/uploads/cut/Wings%20(x8).webp',        catId: 'burgers' },
                   ].map((acc) => {
                     const menuItem = MENU_DATA.find(m => m.title === acc.menuTitle)
                     return (
