@@ -1538,15 +1538,18 @@ function LiveIndicator() {
 
 /* ─── commandes tab ──────────────────────────────────────────── */
 function CommandesTab({ orders, updateStatus }: { orders: Order[]; updateStatus: (id: number, s: string) => void }) {
-  const [filter, setFilter] = useState<'all' | 'pending' | 'preparing' | 'done' | 'cancelled'>('all')
+  const [filter, setFilter] = useState<'all' | 'pending' | 'preparing' | 'done' | 'cancelled' | 'collected'>('all')
   const activeOrders = orders.filter(o => o.status !== 'collected')
-  const filtered = filter === 'all' ? activeOrders : activeOrders.filter(o => o.status === filter)
+  const filtered = filter === 'all' ? activeOrders
+    : filter === 'collected' ? orders.filter(o => o.status === 'collected')
+    : activeOrders.filter(o => o.status === filter)
   const counts = {
     all: activeOrders.length,
     pending: activeOrders.filter(o => o.status === 'pending').length,
     preparing: activeOrders.filter(o => o.status === 'preparing').length,
     done: activeOrders.filter(o => o.status === 'done').length,
     cancelled: activeOrders.filter(o => o.status === 'cancelled').length,
+    collected: orders.filter(o => o.status === 'collected').length,
   }
 
   return (
@@ -1558,15 +1561,15 @@ function CommandesTab({ orders, updateStatus }: { orders: Order[]; updateStatus:
         </div>
         <LiveIndicator />
         <div className="filters-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {(['all', 'pending', 'preparing', 'done', 'cancelled'] as const).map(f => (
+          {(['all', 'pending', 'preparing', 'done', 'cancelled', 'collected'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               style={{
                 padding: '7px 14px', borderRadius: 99, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
-                background: filter === f ? '#1E4D3A' : '#F1F5F9',
+                background: filter === f ? (f === 'collected' ? '#7C3AED' : '#1E4D3A') : '#F1F5F9',
                 color: filter === f ? 'white' : '#64748B',
                 transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5,
               }}>
-              {{ all: 'Toutes', pending: 'En attente', preparing: 'En préparation', done: 'Prêtes', cancelled: 'Annulées' }[f]}
+              {{ all: 'Actives', pending: 'En attente', preparing: 'En préparation', done: 'Prêtes', cancelled: 'Annulées', collected: 'Récupérées' }[f]}
               <span style={{ opacity: .65, fontSize: 11 }}>({counts[f]})</span>
             </button>
           ))}
