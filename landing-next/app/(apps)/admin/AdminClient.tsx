@@ -350,6 +350,12 @@ function IconCopy() {
 function IconClose() {
   return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 }
+function IconGift() {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+}
+function IconMoreHoriz() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+}
 
 /* ─── sidebar ────────────────────────────────────────────────── */
 type NavItem = { id: Tab; label: string; icon: React.ReactNode; badge?: number }
@@ -432,6 +438,41 @@ function Sidebar({ tab, setTab, logout, pendingCount, pendingResCount, mobileOpe
   )
 }
 
+/* ─── mobile header (replaces topbar on mobile) ──────────────── */
+function MobileHeader({ tab, pendingCount, pendingResCount, onHamburger, onBadgeClick }: {
+  tab: Tab; pendingCount: number; pendingResCount: number
+  onHamburger: () => void; onBadgeClick: () => void
+}) {
+  const total = pendingCount + pendingResCount
+  const tabLabel: Record<Tab, string> = {
+    dashboard: 'Dashboard', commandes: 'Commandes', reservations: 'Réservations',
+    feedbacks: 'Avis', newsletter: 'Newsletter', menu: 'Menu', tvs: 'TVs', settings: 'Réglages',
+  }
+  return (
+    <div className="mobile-header-bar" style={{
+      display: 'none', background: 'white', borderBottom: '1px solid #F1F5F9',
+      height: 52, alignItems: 'center', padding: '0 6px 0 16px',
+      gap: 8, flexShrink: 0, zIndex: 30,
+    }}>
+      <span style={{ fontWeight: 800, fontSize: 17, color: '#1E4D3A', fontFamily: "'Baloo 2', system-ui", flex: 1 }}>
+        Chez <span style={{ color: '#E8A93B' }}>Ramo</span>
+        <span style={{ fontSize: 12, fontWeight: 500, color: '#94A3B8', marginLeft: 8 }}>{tabLabel[tab]}</span>
+      </span>
+      {total > 0 && (
+        <button onClick={onBadgeClick}
+          style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#FEF3C7', padding: '6px 10px', borderRadius: 99, border: 'none', cursor: 'pointer' }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F59E0B', display: 'inline-block', animation: 'ping 1s infinite' }} />
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#D97706' }}>{total}</span>
+        </button>
+      )}
+      <button onClick={onHamburger}
+        style={{ width: 44, height: 44, background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10 }}>
+        <IconHamburger />
+      </button>
+    </div>
+  )
+}
+
 /* ─── mobile bottom nav ──────────────────────────────────────── */
 function MobileBottomNav({ tab, setTab, pendingCount, pendingResCount }: { tab: Tab; setTab: (t: Tab) => void; pendingCount: number; pendingResCount: number }) {
   const items: NavItem[] = [
@@ -443,28 +484,33 @@ function MobileBottomNav({ tab, setTab, pendingCount, pendingResCount }: { tab: 
   ]
   return (
     <nav className="mobile-bottom-nav">
-      {items.map(item => (
-        <button key={item.id} onClick={() => setTab(item.id)}
-          style={{
-            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            background: 'none', border: 'none', cursor: 'pointer', padding: '6px 2px',
-            color: tab === item.id ? '#1E4D3A' : '#9CA3AF', gap: 3, position: 'relative',
-            transition: 'color .15s',
-          }}>
-          {tab === item.id && (
-            <span style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 28, height: 3, background: '#1E4D3A', borderRadius: '0 0 4px 4px' }} />
-          )}
-          <span style={{ position: 'relative' }}>
-            {item.icon}
-            {(item.badge ?? 0) > 0 && (
-              <span style={{ position: 'absolute', top: -5, right: -7, background: '#EF4444', color: 'white', borderRadius: 99, fontSize: 8, fontWeight: 800, padding: '1px 4px', lineHeight: 1.2, minWidth: 14, textAlign: 'center' }}>
-                {(item.badge ?? 0) > 9 ? '9+' : item.badge}
-              </span>
+      {items.map(item => {
+        const active = tab === item.id
+        return (
+          <button key={item.id} onClick={() => setTab(item.id)}
+            style={{
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              background: 'none', border: 'none', cursor: 'pointer', padding: '6px 2px',
+              color: active ? '#1E4D3A' : '#9CA3AF', gap: 3, position: 'relative',
+              transition: 'color .15s', minHeight: 56,
+            }}>
+            {active && (
+              <span style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: 32, height: 3, background: '#1E4D3A', borderRadius: '0 0 6px 6px' }} />
             )}
-          </span>
-          <span style={{ fontSize: 10, fontWeight: tab === item.id ? 700 : 500 }}>{item.label}</span>
-        </button>
-      ))}
+            <span style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 28, borderRadius: 10,
+              background: active ? 'rgba(30,77,58,.1)' : 'transparent', transition: 'background .15s' }}>
+              {item.icon}
+              {(item.badge ?? 0) > 0 && (
+                <span style={{ position: 'absolute', top: -2, right: -4, background: '#EF4444', color: 'white', borderRadius: 99, fontSize: 9, fontWeight: 800, padding: '1px 5px', lineHeight: 1.3, minWidth: 16, textAlign: 'center' }}>
+                  {(item.badge ?? 0) > 9 ? '9+' : item.badge}
+                </span>
+              )}
+            </span>
+            <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{item.label}</span>
+          </button>
+        )
+      })}
     </nav>
   )
 }
@@ -1210,8 +1256,8 @@ function FeedbacksTab({ feedbacks, onRefresh }: { feedbacks: Feedback[]; onRefre
                   </span>
                 )}
                 {f.prize && (
-                  <span style={{ fontSize: 11, fontWeight: 600, color: '#1E4D3A', background: 'rgba(30,77,58,.08)', borderRadius: 99, padding: '2px 9px' }}>
-                    🎁 {f.prize}
+                  <span style={{ fontSize: 11, fontWeight: 600, color: '#1E4D3A', background: 'rgba(30,77,58,.08)', borderRadius: 99, padding: '2px 9px', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <IconGift /> {f.prize}
                   </span>
                 )}
                 <span style={{ marginLeft: 'auto', fontSize: 11, color: '#9CA3AF' }}>
@@ -1983,6 +2029,11 @@ export default function AdminClient() {
   const pendingResCount = reservations.filter(r => r.status === 'pending').length
   const isAdminJsTab = tab === 'tvs'
 
+  // iOS PWA : Notification API non supportée en mode standalone sur iOS
+  const isIOSPWA = typeof window !== 'undefined' &&
+    (window.navigator as unknown as { standalone?: boolean }).standalone === true &&
+    /iPad|iPhone|iPod/.test(navigator.userAgent)
+
   if (!authed) return <LoginScreen onLogin={login} />
 
   return (
@@ -2190,6 +2241,7 @@ export default function AdminClient() {
         .admin-sidebar   { transition: transform .28s cubic-bezier(.4,0,.2,1); }
         .mobile-hamburger { display: none !important; }
         .mobile-bottom-nav { display: none; }
+        .mobile-header-bar { display: none; }
         .admin-topbar { display: flex; }
         .sidebar-close-btn { display: none; }
         .toast-pos { bottom: 28px; right: 28px; max-width: 340px; }
@@ -2223,38 +2275,46 @@ export default function AdminClient() {
 
         /* ── mobile ── */
         @media (max-width: 640px) {
-          /* Navigation unique : bottom nav seulement */
+          /* Header mobile */
+          .mobile-header-bar {
+            display: flex !important;
+            position: sticky; top: 0; z-index: 30;
+            padding-top: env(safe-area-inset-top, 0px);
+          }
+          /* Navigation bottom */
           .mobile-bottom-nav {
-            display: flex; position: fixed; bottom: 0; left: 0; right: 0; height: 62px;
+            display: flex; position: fixed; bottom: 0; left: 0; right: 0;
             background: white; border-top: 1px solid #F1F5F9; z-index: 40;
             padding-bottom: env(safe-area-inset-bottom, 0px);
-            box-shadow: 0 -4px 24px rgba(0,0,0,.1);
+            box-shadow: 0 -2px 16px rgba(0,0,0,.08);
           }
-          /* Masquer le top bar sur mobile (bottom nav remplace) */
+          /* Masquer la topbar classique (mobile-header la remplace) */
           .admin-topbar { display: none !important; }
           /* Compensation pour le bottom nav fixe */
-          .admin-tab-content { padding-bottom: 72px !important; }
+          .admin-tab-content { padding-bottom: 80px !important; overscroll-behavior: contain; }
           .dash-hero   { padding: 14px 12px; min-height: auto; }
           .dash-hero-title { font-size: 20px !important; }
           .dash-hero-deco { display: none !important; }
           .dash-padding { padding: 10px; }
           .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
           .commandes-padding { padding: 10px; }
-          .toast-pos { bottom: 74px; right: 10px; left: 10px; max-width: none; }
-          .toast-pos-2 { bottom: 148px; }
+          .toast-pos { bottom: 78px; right: 10px; left: 10px; max-width: none; }
+          .toast-pos-2 { bottom: 156px; }
           /* Mobile: cards au lieu de tables */
           .res-table-wrap { display: none !important; }
           .res-cards { display: block; }
           .orders-table-wrap { display: none !important; }
           .orders-cards { display: block; }
-          /* Bannières notifications compactes */
+          /* Bannières notifications compactes + bouton dismiss visible */
           .notif-banner { flex-direction: column; gap: 8px; padding: 10px 12px; align-items: flex-start !important; }
           .notif-banner-text { font-size: 12px !important; }
-          /* Settings scrollable */
+          /* Settings */
           .settings-wrap { max-width: none !important; }
           /* Filtres scrollables horizontalement */
           .filters-row { flex-wrap: nowrap !important; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
           .filters-row::-webkit-scrollbar { display: none; }
+          /* Boutons d'action commandes plus grands */
+          .admin-tab-content button[style*="padding: '5px 10px'"] { padding: 8px 14px !important; font-size: 12px !important; }
         }
 
         @media (max-width: 420px) {
@@ -2441,7 +2501,13 @@ export default function AdminClient() {
         />
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', marginLeft: 256 }} className="admin-main">
-          {/* Top bar — masqué sur mobile (bottom nav prend le relais) */}
+          {/* Header mobile (visible uniquement sur mobile ≤640px) */}
+          <MobileHeader
+            tab={tab} pendingCount={pendingCount} pendingResCount={pendingResCount}
+            onHamburger={() => setMobileOpen(v => !v)}
+            onBadgeClick={() => { pendingCount > 0 ? goToCommandes() : goToReservations() }}
+          />
+          {/* Top bar — masqué sur mobile (mobile-header prend le relais) */}
           <div className="admin-topbar" style={{ background: 'white', borderBottom: '1px solid #F3F4F6', padding: '0 20px', height: 56, alignItems: 'center', gap: 12, flexShrink: 0 }}>
             <button onClick={() => setMobileOpen(v => !v)} className="mobile-hamburger"
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', padding: 4, alignItems: 'center' }}>
@@ -2459,8 +2525,8 @@ export default function AdminClient() {
             )}
           </div>
 
-          {/* Bannière permission notifications — visible tant que pas accordée */}
-          {notifPermission !== 'granted' && notifPermission !== 'denied' && (
+          {/* Bannière permission notifications — masquée sur iOS PWA (API non supportée) */}
+          {!isIOSPWA && notifPermission !== 'granted' && notifPermission !== 'denied' && (
             <div className="notif-banner" style={{ background: '#FFFBEB', borderBottom: '1px solid #FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ color: '#D97706', display: 'flex', alignItems: 'center', flexShrink: 0 }}><IconBell /></span>
@@ -2475,7 +2541,7 @@ export default function AdminClient() {
               </button>
             </div>
           )}
-          {notifPermission === 'denied' && (
+          {!isIOSPWA && notifPermission === 'denied' && (
             <div className="notif-banner" style={{ background: '#FEF2F2', borderBottom: '1px solid #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
               <div style={{ minWidth: 0 }}>
                 <div className="notif-banner-text" style={{ fontWeight: 700, color: '#991B1B', display: 'flex', alignItems: 'center', gap: 6 }}><IconBellOff /> Notifications bloquées dans le navigateur</div>
