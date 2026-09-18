@@ -2281,25 +2281,18 @@ export default function AdminClient() {
             position: sticky; top: 0; z-index: 30;
             padding-top: env(safe-area-inset-top, 0px);
           }
-          /* Navigation bottom */
-          .mobile-bottom-nav {
-            display: flex; position: fixed; bottom: 0; left: 0; right: 0;
-            background: white; border-top: 1px solid #F1F5F9; z-index: 40;
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-            box-shadow: 0 -2px 16px rgba(0,0,0,.08);
-          }
           /* Masquer la topbar classique (mobile-header la remplace) */
           .admin-topbar { display: none !important; }
-          /* Compensation pour le bottom nav fixe */
-          .admin-tab-content { padding-bottom: 80px !important; overscroll-behavior: contain; }
+          /* Pas de compensation bottom nav */
+          .admin-tab-content { padding-bottom: 16px !important; overscroll-behavior: contain; }
           .dash-hero   { padding: 14px 12px; min-height: auto; }
           .dash-hero-title { font-size: 20px !important; }
           .dash-hero-deco { display: none !important; }
           .dash-padding { padding: 10px; }
           .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
           .commandes-padding { padding: 10px; }
-          .toast-pos { bottom: 78px; right: 10px; left: 10px; max-width: none; }
-          .toast-pos-2 { bottom: 156px; }
+          .toast-pos { bottom: 16px; right: 10px; left: 10px; max-width: none; }
+          .toast-pos-2 { bottom: 90px; }
           /* Mobile: cards au lieu de tables */
           .res-table-wrap { display: none !important; }
           .res-cards { display: block; }
@@ -2635,8 +2628,6 @@ export default function AdminClient() {
         </div>
       </div>
 
-      {/* Mobile bottom navigation */}
-      <MobileBottomNav tab={tab} setTab={t => { setTab(t); if (t === 'commandes') setNewOrderCount(0); if (t === 'reservations') setNewResCount(0) }} pendingCount={pendingCount} pendingResCount={pendingResCount} />
 
       {/* Modals (needed by admin.js) */}
       <div id="edit-modal" className="modal-overlay" style={{ display: 'none' }}>
