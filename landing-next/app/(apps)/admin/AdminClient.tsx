@@ -1499,15 +1499,15 @@ function LiveIndicator() {
 
 /* ─── commandes tab ──────────────────────────────────────────── */
 function CommandesTab({ orders, updateStatus }: { orders: Order[]; updateStatus: (id: number, s: string) => void }) {
-  const [filter, setFilter] = useState<'all' | 'pending' | 'preparing' | 'done' | 'cancelled' | 'collected'>('all')
-  const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter)
+  const [filter, setFilter] = useState<'all' | 'pending' | 'preparing' | 'done' | 'cancelled'>('all')
+  const activeOrders = orders.filter(o => o.status !== 'collected')
+  const filtered = filter === 'all' ? activeOrders : activeOrders.filter(o => o.status === filter)
   const counts = {
-    all: orders.length,
-    pending: orders.filter(o => o.status === 'pending').length,
-    preparing: orders.filter(o => o.status === 'preparing').length,
-    done: orders.filter(o => o.status === 'done').length,
-    cancelled: orders.filter(o => o.status === 'cancelled').length,
-    collected: orders.filter(o => o.status === 'collected').length,
+    all: activeOrders.length,
+    pending: activeOrders.filter(o => o.status === 'pending').length,
+    preparing: activeOrders.filter(o => o.status === 'preparing').length,
+    done: activeOrders.filter(o => o.status === 'done').length,
+    cancelled: activeOrders.filter(o => o.status === 'cancelled').length,
   }
 
   return (
@@ -1515,11 +1515,11 @@ function CommandesTab({ orders, updateStatus }: { orders: Order[]; updateStatus:
       <div style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 900, color: '#0F172A', margin: 0 }}>Commandes</h1>
-          <p style={{ color: '#94A3B8', fontSize: 13, marginTop: 2 }}>{orders.length} commande{orders.length !== 1 ? 's' : ''} au total</p>
+          <p style={{ color: '#94A3B8', fontSize: 13, marginTop: 2 }}>{activeOrders.length} commande{activeOrders.length !== 1 ? 's' : ''} actives</p>
         </div>
         <LiveIndicator />
         <div className="filters-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {(['all', 'pending', 'preparing', 'done', 'collected', 'cancelled'] as const).map(f => (
+          {(['all', 'pending', 'preparing', 'done', 'cancelled'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               style={{
                 padding: '7px 14px', borderRadius: 99, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
@@ -1527,7 +1527,7 @@ function CommandesTab({ orders, updateStatus }: { orders: Order[]; updateStatus:
                 color: filter === f ? 'white' : '#64748B',
                 transition: 'all .15s', display: 'flex', alignItems: 'center', gap: 5,
               }}>
-              {{ all: 'Toutes', pending: 'En attente', preparing: 'En préparation', done: 'Prêtes', collected: 'Récupérées', cancelled: 'Annulées' }[f]}
+              {{ all: 'Toutes', pending: 'En attente', preparing: 'En préparation', done: 'Prêtes', cancelled: 'Annulées' }[f]}
               <span style={{ opacity: .65, fontSize: 11 }}>({counts[f]})</span>
             </button>
           ))}
