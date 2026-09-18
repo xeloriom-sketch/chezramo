@@ -334,6 +334,18 @@ export default function TicketViewer() {
         map[o.order_id] = o.status
       })
       setStatusMap(map)
+
+      // Auto-clean collected/cancelled tickets from localStorage so Header badge is accurate
+      const stored = loadTickets()
+      const active = stored.filter(t => {
+        const s = map[t.orderId]
+        return !s || (s !== 'collected' && s !== 'cancelled')
+      })
+      if (active.length < stored.length) {
+        try { localStorage.setItem('ramo_tickets', JSON.stringify(active)) } catch {}
+        window.dispatchEvent(new CustomEvent('ramo-tickets-updated'))
+      }
+
       const readyCount = data.filter(o => o.status === 'done').length
       window.dispatchEvent(new CustomEvent('ramo-orders-ready', { detail: readyCount }))
     } catch {} finally {
