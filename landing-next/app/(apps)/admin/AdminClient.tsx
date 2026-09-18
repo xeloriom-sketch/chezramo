@@ -1924,6 +1924,7 @@ export default function AdminClient() {
   }, [authed, fetchOrders, fetchReservations, fetchFeedbacks, fetchNewsletter])
 
   // Force le nouveau SW à prendre le contrôle sans intervention DevTools
+  // + vérifie les mises à jour toutes les 5 minutes (auto-update PWA)
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
     let reloading = false
@@ -1932,8 +1933,7 @@ export default function AdminClient() {
       reloading = true
       window.location.reload()
     })
-    navigator.serviceWorker.getRegistration(BASE + '/').then(reg => {
-      if (!reg) return
+    const setupReg = (reg: ServiceWorkerRegistration) => {
       const forceSkip = (sw: ServiceWorker | null) => {
         if (!sw) return
         if (sw.state === 'installed') sw.postMessage('SKIP_WAITING')
@@ -1943,8 +1943,19 @@ export default function AdminClient() {
       }
       forceSkip(reg.waiting)
       reg.addEventListener('updatefound', () => forceSkip(reg.installing))
-      reg.update().catch(() => { /* hors ligne */ })
-    }).catch(() => { /* pas de SW */ })
+      reg.update().catch(() => {})
+    }
+    navigator.serviceWorker.getRegistration(BASE + '/').then(reg => {
+      if (reg) setupReg(reg)
+    }).catch(() => {})
+
+    // Vérifie une mise à jour toutes les 5 minutes
+    const iv = setInterval(() => {
+      navigator.serviceWorker.getRegistration(BASE + '/').then(reg => {
+        if (reg) reg.update().catch(() => {})
+      }).catch(() => {})
+    }, 5 * 60 * 1000)
+    return () => clearInterval(iv)
   }, [])
 
   // Track current tab so onLoad can read it
@@ -2518,8 +2529,8 @@ export default function AdminClient() {
             )}
           </div>
 
-          {/* Bannière permission notifications — masquée sur iOS PWA (API non supportée) */}
-          {!isIOSPWA && notifPermission !== 'granted' && notifPermission !== 'denied' && (
+          {/* Bannière permission notifications */}
+          {typeof Notification !== 'undefined' && notifPermission !== 'granted' && notifPermission !== 'denied' && (
             <div className="notif-banner" style={{ background: '#FFFBEB', borderBottom: '1px solid #FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ color: '#D97706', display: 'flex', alignItems: 'center', flexShrink: 0 }}><IconBell /></span>
@@ -2534,7 +2545,7 @@ export default function AdminClient() {
               </button>
             </div>
           )}
-          {!isIOSPWA && notifPermission === 'denied' && (
+          {typeof Notification !== 'undefined' && notifPermission === 'denied' && (
             <div className="notif-banner" style={{ background: '#FEF2F2', borderBottom: '1px solid #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
               <div style={{ minWidth: 0 }}>
                 <div className="notif-banner-text" style={{ fontWeight: 700, color: '#991B1B', display: 'flex', alignItems: 'center', gap: 6 }}><IconBellOff /> Notifications bloquées dans le navigateur</div>
