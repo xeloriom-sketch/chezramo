@@ -109,6 +109,22 @@ self.addEventListener('fetch', function(e) {
   );
 });
 
+/* Push reçu — affiche la notification même app fermée */
+self.addEventListener('push', function(e) {
+  var data = {}
+  try { data = e.data ? e.data.json() : {} } catch {}
+  var title   = data.title || 'Chez Ramo'
+  var options = {
+    body:              data.body    || 'Nouvelle commande !',
+    icon:              data.icon    || '/chezramo/admin-icon-192.png',
+    badge:             data.badge   || '/chezramo/admin-icon-192.png',
+    tag:               data.tag     || 'ramo-push',
+    requireInteraction: true,
+    vibrate:           [200, 100, 200, 100, 200],
+  }
+  e.waitUntil(self.registration.showNotification(title, options))
+})
+
 /* Clic sur une notification → focus ou ouvre l'onglet admin */
 self.addEventListener('notificationclick', function(e) {
   e.notification.close();

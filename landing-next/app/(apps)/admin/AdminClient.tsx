@@ -6,7 +6,46 @@ import Script from 'next/script'
 const FUNCTIONS_BASE = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? ''
 const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 const SB_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY ?? ''
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ''
 const ADMIN_TOKEN_KEY = 'ramo_admin_token'
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const raw = atob(base64)
+  const output = new Uint8Array(raw.length)
+  for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i)
+  return output
+}
+
+async function subscribeToPush() {
+  if (!VAPID_PUBLIC_KEY || !('serviceWorker' in navigator) || !('PushManager' in window)) return
+  try {
+    const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+    const reg = await navigator.serviceWorker.getRegistration(BASE + '/')
+    if (!reg) return
+    let sub = await reg.pushManager.getSubscription()
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer,
+      })
+    }
+    // Upsert dans Supabase
+    await fetch(`${SB_URL}/rest/v1/push_subscriptions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Prefer': 'return=minimal,resolution=merge-duplicates',
+      },
+      body: JSON.stringify({ endpoint: sub.endpoint, subscription: sub.toJSON() }),
+    })
+  } catch (e) {
+    console.warn('[push subscribe]', e)
+  }
+}
 
 function adminToken() { return typeof window !== 'undefined' ? localStorage.getItem(ADMIN_TOKEN_KEY) ?? '' : '' }
 function adminFetchHeaders(withBody = false): Record<string, string> {
@@ -1775,6 +1814,10 @@ export default function AdminClient() {
       if (typeof Notification !== 'undefined') setNotifPermission(Notification.permission)
     }
     checkPerm()
+    // Si permission déjà accordée, s'abonner aux push (ex. app réinstallée)
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      subscribeToPush()
+    }
     window.addEventListener('focus', checkPerm)
     return () => window.removeEventListener('focus', checkPerm)
   }, [])
@@ -1783,6 +1826,7 @@ export default function AdminClient() {
     if (typeof Notification === 'undefined') return
     const perm = await Notification.requestPermission()
     setNotifPermission(perm)
+    if (perm === 'granted') subscribeToPush()
     return perm
   }, [])
 
