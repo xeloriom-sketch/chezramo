@@ -310,16 +310,14 @@ export default function TicketViewer() {
       })
       setStatusMap(map)
 
-      // Auto-clean collected/cancelled tickets from localStorage so Header badge is accurate
+      // Mettre à jour le badge header avec uniquement les commandes actives
       const stored = loadTickets()
-      const active = stored.filter(t => {
+      const activeCount = stored.filter(t => {
         const s = map[t.orderId]
         return !s || (s !== 'collected' && s !== 'cancelled')
-      })
-      if (active.length < stored.length) {
-        try { localStorage.setItem('ramo_tickets', JSON.stringify(active)) } catch {}
-        window.dispatchEvent(new CustomEvent('ramo-tickets-updated'))
-      }
+      }).length
+      try { localStorage.setItem('ramo_active_count', String(activeCount)) } catch {}
+      window.dispatchEvent(new CustomEvent('ramo-tickets-updated'))
 
       const readyCount = data.filter(o => o.status === 'done').length
       window.dispatchEvent(new CustomEvent('ramo-orders-ready', { detail: readyCount }))
@@ -410,7 +408,19 @@ export default function TicketViewer() {
               const s = statusMap[t.orderId]
               return s !== 'collected' && s !== 'cancelled'
             })
-            return visibleTickets.length === 0 ? (
+            const allDone = tickets.length > 0 && visibleTickets.length === 0
+            if (allDone) return (
+              <div className="text-center py-14">
+                <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <p className="text-sm font-bold text-brand/70">Commandes récupérées !</p>
+                <p className="text-xs text-brand/40 mt-1">Merci — à bientôt chez Ramo !</p>
+              </div>
+            )
+            if (tickets.length === 0) return (
               <div className="text-center py-14">
                 <div className="w-14 h-14 rounded-full bg-brand/8 flex items-center justify-center mx-auto mb-3">
                   <svg className="w-7 h-7 text-brand/30" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
@@ -421,15 +431,14 @@ export default function TicketViewer() {
                 <p className="text-sm font-bold text-brand/50">Aucune commande en cours</p>
                 <p className="text-xs text-brand/30 mt-1">Vos commandes actives apparaîtront ici.</p>
               </div>
-            ) : (
-              visibleTickets.map(ticket => (
-                <TicketCard
-                  key={ticket.id}
-                  ticket={ticket}
-                  liveStatus={statusMap[ticket.orderId] ?? null}
-                />
-              ))
             )
+            return visibleTickets.map(ticket => (
+              <TicketCard
+                key={ticket.id}
+                ticket={ticket}
+                liveStatus={statusMap[ticket.orderId] ?? null}
+              />
+            ))
           })()}
         </div>
       </div>

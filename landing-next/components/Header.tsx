@@ -4,7 +4,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { useStore } from '@/lib/store'
 
 function loadTicketCount(): number {
-  try { return JSON.parse(localStorage.getItem('ramo_tickets') || '[]').length } catch { return 0 }
+  try {
+    const active = localStorage.getItem('ramo_active_count')
+    if (active !== null) return Math.max(0, parseInt(active, 10) || 0)
+    return JSON.parse(localStorage.getItem('ramo_tickets') || '[]').length
+  } catch { return 0 }
 }
 
 function hasOrders(): boolean {
