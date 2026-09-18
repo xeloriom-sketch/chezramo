@@ -6,11 +6,12 @@ const CORS = {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-function sbHeaders() {
+function sbServiceHeaders() {
+  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY') ?? ''
   return {
     'Content-Type': 'application/json',
-    'apikey': Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY') ?? ''}`,
+    'apikey': key,
+    'Authorization': `Bearer ${key}`,
   }
 }
 
@@ -30,7 +31,7 @@ Deno.serve(async (req) => {
         + `?customer_token=eq.${encodeURIComponent(token)}`
         + `&select=order_id,status,items,total,created_at`
         + `&order=created_at.desc&limit=20`
-      const res = await fetch(url, { headers: sbHeaders() })
+      const res = await fetch(url, { headers: sbServiceHeaders() })
       const data = res.ok ? await res.json() : []
       return Response.json(Array.isArray(data) ? data : [], { headers: CORS })
     } catch {
@@ -57,7 +58,7 @@ Deno.serve(async (req) => {
         + `?customer_token=eq.${encodeURIComponent(token)}`
         + `&order_id=eq.${order_id}`
         + `&select=id,status`
-      const check = await fetch(checkUrl, { headers: sbHeaders() })
+      const check = await fetch(checkUrl, { headers: sbServiceHeaders() })
       if (!check.ok) return Response.json({ error: 'Erreur serveur.' }, { status: 500, headers: CORS })
 
       const rows: { id: number; status: string }[] = await check.json()
@@ -73,7 +74,7 @@ Deno.serve(async (req) => {
         + `&order_id=eq.${order_id}`
       await fetch(patchUrl, {
         method: 'PATCH',
-        headers: { ...sbHeaders(), Prefer: 'return=minimal' },
+        headers: { ...sbServiceHeaders(), Prefer: 'return=minimal' },
         body: JSON.stringify({ status: 'collected' }),
       })
 

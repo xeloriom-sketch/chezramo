@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       try {
         const res = await fetch(
           `${SB}/rest/v1/reservations?id=eq.${id}&select=id,status,date,time`,
-          { headers: sbHeaders() }
+          { headers: sbServiceHeaders() }
         )
         const rows = res.ok ? await res.json() : []
         if (!Array.isArray(rows) || !rows.length) {
@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
 
       const res = await fetch(`${SB}/rest/v1/reservations`, {
         method: 'POST',
-        headers: { ...sbHeaders(), Prefer: 'return=representation' },
+        headers: { ...sbServiceHeaders(), Prefer: 'return=representation' },
         body: JSON.stringify({
           fullname: safeName,
           email: safeEmail,
@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
 
   if (req.method === 'GET') {
     const res = await fetch(`${SB}/rest/v1/reservations?select=*&order=date.asc,time.asc&limit=200`, {
-      headers: sbHeaders(),
+      headers: sbServiceHeaders(),
     })
     const data = res.ok ? await res.json() : []
     return Response.json(Array.isArray(data) ? data : [], { headers: CORS })
@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
     }
     const res = await fetch(`${SB}/rest/v1/reservations?id=eq.${id}`, {
       method: 'PATCH',
-      headers: { ...sbHeaders(), Prefer: 'return=minimal' },
+      headers: { ...sbServiceHeaders(), Prefer: 'return=minimal' },
       body: JSON.stringify({ status }),
     })
     if (!res.ok) return Response.json({ error: 'Erreur base de données.' }, { status: 500, headers: CORS })

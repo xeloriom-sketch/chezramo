@@ -74,12 +74,21 @@ Deno.serve(async (req) => {
         ? customerName.trim().replace(/[<>"']/g, '').slice(0, 80) || null
         : null
 
+      const safeCart = cart.map((item: unknown) => {
+        const i = item as Record<string, unknown>
+        return {
+          name: String(i.name ?? '').replace(/[<>"']/g, '').slice(0, 120),
+          qty: Math.max(1, Math.min(50, Number(i.qty) || 1)),
+          price: Math.round(Math.max(0, Math.min(500, Number(i.price) || 0)) * 100) / 100,
+        }
+      })
+
       const res = await fetch(`${SB}/rest/v1/orders`, {
         method: 'POST',
         headers: { ...sbHeaders(), Prefer: 'return=minimal' },
         body: JSON.stringify({
           order_id: orderId,
-          items: cart,
+          items: safeCart,
           total: totalNum,
           status: 'pending',
           customer_token: safeToken,
@@ -115,7 +124,7 @@ Deno.serve(async (req) => {
 
   if (req.method === 'GET') {
     const res = await fetch(`${SB}/rest/v1/orders?select=*&order=created_at.desc&limit=200`, {
-      headers: sbHeaders(),
+      headers: sbServiceHeaders(),
     })
     const data = res.ok ? await res.json() : []
     return Response.json(Array.isArray(data) ? data : [], { headers: CORS })
@@ -131,7 +140,7 @@ Deno.serve(async (req) => {
     }
     const res = await fetch(`${SB}/rest/v1/orders?id=eq.${id}`, {
       method: 'PATCH',
-      headers: { ...sbHeaders(), Prefer: 'return=minimal' },
+      headers: { ...sbServiceHeaders(), Prefer: 'return=minimal' },
       body: JSON.stringify({ status }),
     })
     if (!res.ok) return Response.json({ error: 'Erreur base de données.' }, { status: 500, headers: CORS })

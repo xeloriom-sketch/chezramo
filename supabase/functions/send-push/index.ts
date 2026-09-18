@@ -18,7 +18,7 @@ Deno.serve(async (req: Request) => {
   const VAPID_PUBLIC  = Deno.env.get('VAPID_PUBLIC_KEY') ?? ''
   const VAPID_PRIVATE = Deno.env.get('VAPID_PRIVATE_KEY') ?? ''
   const SB            = Deno.env.get('SUPABASE_URL') ?? ''
-  const SB_KEY        = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+  const SB_KEY        = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
     return Response.json({ error: 'VAPID keys manquantes' }, { status: 500, headers: CORS })

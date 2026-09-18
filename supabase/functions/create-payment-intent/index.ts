@@ -102,11 +102,7 @@ Deno.serve(async (req) => {
         unitPrice = serverPrice(raw.key)
       }
       if (unitPrice === null) {
-        const clientPrice = Number(raw.price)
-        if (!isFinite(clientPrice) || clientPrice < 0.5 || clientPrice > 150) {
-          return Response.json({ error: 'Prix invalide.' }, { status: 400, headers: CORS })
-        }
-        unitPrice = Math.round(clientPrice * 100) / 100
+        return Response.json({ error: 'Article inconnu.' }, { status: 400, headers: CORS })
       }
       total += unitPrice * qty
     }
