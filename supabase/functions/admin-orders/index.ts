@@ -91,6 +91,16 @@ Deno.serve(async (req) => {
         console.error('[orders POST]', res.status, err)
         return Response.json({ error: 'Erreur base de données.' }, { status: 500, headers: CORS })
       }
+
+      // Envoyer push notification — fire and forget
+      const pushSecret = Deno.env.get('PUSH_INTERNAL_SECRET') ?? ''
+      const pushUrl = `${SB}/functions/v1/send-push`
+      fetch(pushUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-push-secret': pushSecret },
+        body: JSON.stringify({ order_id: orderId, total: totalNum }),
+      }).catch(() => {})
+
       return Response.json({ ok: true }, { headers: CORS })
     } catch (e) {
       console.error('[orders POST]', e)
