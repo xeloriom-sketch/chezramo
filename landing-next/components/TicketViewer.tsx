@@ -180,15 +180,13 @@ function StatusBlock({ status }: { status: OrderStatus }) {
 }
 
 /* ── Ticket card ── */
-function TicketCard({ ticket, liveStatus, onPickedUp }: {
+function TicketCard({ ticket, liveStatus }: {
   ticket: SavedTicket
   liveStatus: OrderStatus | null
-  onPickedUp: () => void
 }) {
   const d = new Date(ticket.date)
   const dateStr = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
   const timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-  const [confirming, setConfirming] = useState(false)
 
   const status     = liveStatus ?? 'pending'
   const isDone     = status === 'done'
@@ -262,29 +260,6 @@ function TicketCard({ ticket, liveStatus, onPickedUp }: {
         {/* Bloc statut (animation, bandeaux…) */}
         {liveStatus && <StatusBlock status={status} />}
 
-        {/* Bouton récupéré */}
-        {!isCollected && !isCancelled && (
-          <div className="mt-3">
-            {confirming ? (
-              <div className="flex gap-2">
-                <button onClick={() => setConfirming(false)}
-                  className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-gray-500 text-xs font-bold hover:bg-gray-50 transition">
-                  Annuler
-                </button>
-                <button onClick={onPickedUp}
-                  className="flex-1 px-3 py-2 rounded-xl bg-green-600 text-white text-xs font-bold hover:bg-green-700 transition">
-                  Confirmer
-                </button>
-              </div>
-            ) : (
-              <button onClick={() => setConfirming(true)}
-                className="w-full flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-brand/5 border border-brand/15 text-brand text-xs font-bold hover:bg-brand/10 transition">
-                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                J'ai récupéré ma commande
-              </button>
-            )}
-          </div>
-        )}
       </div>
     </div>
   )
@@ -376,23 +351,6 @@ export default function TicketViewer() {
     return () => { clearInterval(poll); clearInterval(cd) }
   }, [open, fetchStatuses])
 
-  const markCollected = useCallback(async (ticket: SavedTicket) => {
-    const token = getToken()
-    if (token) {
-      try {
-        const patchUrl = FUNCTIONS_BASE ? `${FUNCTIONS_BASE}/customer-orders` : '/api/customer/orders'
-        await fetch(patchUrl, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, order_id: ticket.orderId }),
-        })
-      } catch { /* silent — on supprime quand même localement */ }
-    }
-    const updated = tickets.filter(t => t.id !== ticket.id)
-    localStorage.setItem('ramo_tickets', JSON.stringify(updated))
-    setTickets(updated)
-    window.dispatchEvent(new CustomEvent('ramo-tickets-updated'))
-  }, [tickets])
 
   if (!open) return null
 
@@ -469,7 +427,6 @@ export default function TicketViewer() {
                   key={ticket.id}
                   ticket={ticket}
                   liveStatus={statusMap[ticket.orderId] ?? null}
-                  onPickedUp={() => markCollected(ticket)}
                 />
               ))
             )
